@@ -1,0 +1,844 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#0b0f17">
+  <meta name="description" content="Sistema de Gestão Seven Personalizados — CRM Kanban, Encomendas, Estoque, Financeiro e Propostas">
+  <title>Seven Personalizados — Sistema de Gestão & CRM</title>
+
+  <!-- Google Fonts: Inter e Outfit -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@500;600;700;800;900&display=swap" rel="stylesheet">
+
+  <!-- Chart.js para Gráficos Financeiros -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+
+  <!-- Estilos Customizados -->
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+
+  <div class="app-container">
+
+    <!-- SIDEBAR DE NAVEGAÇÃO -->
+    <aside class="sidebar" id="app-sidebar">
+      <div class="sidebar-header">
+        <div class="brand-logo-icon">7</div>
+        <div class="brand-text">
+          <h1>Seven</h1>
+          <span>Personalizados</span>
+        </div>
+      </div>
+
+      <ul class="nav-menu">
+        <li class="nav-section-title">Principal</li>
+        <li class="nav-item">
+          <button type="button" class="active" data-view="dashboard" id="nav-btn-dashboard">
+            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+            <span>Painel Geral</span>
+          </button>
+        </li>
+        <li class="nav-item">
+          <button type="button" data-view="crm" id="nav-btn-crm">
+            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            <span>CRM & Funil</span>
+            <span class="badge-counter highlight" id="nav-badge-crm">0</span>
+          </button>
+        </li>
+
+        <li class="nav-section-title">Operação & Vendas</li>
+        <li class="nav-item">
+          <button type="button" data-view="encomendas" id="nav-btn-encomendas">
+            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+            <span>Encomendas</span>
+            <span class="badge-counter" id="nav-badge-encomendas">0</span>
+          </button>
+        </li>
+        <li class="nav-item">
+          <button type="button" data-view="estoque" id="nav-btn-estoque">
+            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
+            <span>Estoque Insumos</span>
+            <span class="badge-counter" id="nav-badge-estoque">0</span>
+          </button>
+        </li>
+        <li class="nav-item">
+          <button type="button" data-view="propostas" id="nav-btn-propostas">
+            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+            <span>Gerador Propostas</span>
+          </button>
+        </li>
+
+        <li class="nav-section-title">Financeiro & Sistema</li>
+        <li class="nav-item">
+          <button type="button" data-view="financeiro" id="nav-btn-financeiro">
+            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+            <span>Financeiro</span>
+          </button>
+        </li>
+        <li class="nav-item">
+          <button type="button" data-view="configuracoes" id="nav-btn-configuracoes">
+            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+            <span>Configurações</span>
+          </button>
+        </li>
+      </ul>
+
+      <div class="sidebar-footer">
+        <div class="user-profile">
+          <div class="avatar">SP</div>
+          <div class="user-info">
+            <div class="user-name">Administrador</div>
+            <div class="user-role">Seven Personalizados</div>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- ÁREA PRINCIPAL -->
+    <main class="main-wrapper">
+
+      <!-- TOPBAR SUPERIOR -->
+      <header class="topbar">
+        <div class="topbar-title">
+          <h2 id="topbar-title-text">Painel Geral & Indicadores</h2>
+          <p id="topbar-subtitle-text">Visão executiva do estúdio de personalização</p>
+        </div>
+
+        <div class="topbar-actions">
+          <button type="button" id="cloud-sync-badge" class="btn btn-secondary" onclick="StorageService.syncFromSupabase()" title="Clique para sincronizar com o banco de dados Supabase" style="font-size: 0.78rem; padding: 7px 12px; color: #10b981; border-color: rgba(16, 185, 129, 0.35);">
+            🟢 Supabase Cloud Ativo
+          </button>
+          <button class="btn btn-secondary" onclick="PropostasModule.openNewModal()">
+            <span>📄</span> Nova Proposta
+          </button>
+          <button class="btn btn-primary" onclick="EncomendasModule.openNewModal()">
+            <span>✨</span> Nova Encomenda
+          </button>
+        </div>
+      </header>
+
+      <!-- CONTEÚDO DAS VIEWS -->
+      <div class="content-area">
+
+        <!-- 1. VIEW DASHBOARD -->
+        <section class="view-section active" id="view-dashboard">
+          <div class="kpis-grid">
+            <div class="kpi-card">
+              <div class="kpi-info">
+                <div class="kpi-label">Encomendas em Aberto</div>
+                <div class="kpi-value" id="dash-kpi-enc-abertas">0</div>
+                <div class="kpi-sub">Fila ou Em Produção</div>
+              </div>
+              <div class="kpi-icon-box purple">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/></svg>
+              </div>
+            </div>
+
+            <div class="kpi-card">
+              <div class="kpi-info">
+                <div class="kpi-label">Receita Realizada (Mês)</div>
+                <div class="kpi-value" id="dash-kpi-receita">R$ 0,00</div>
+                <div class="kpi-sub">Valores recebidos</div>
+              </div>
+              <div class="kpi-icon-box green">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+              </div>
+            </div>
+
+            <div class="kpi-card">
+              <div class="kpi-info">
+                <div class="kpi-label">Despesas Operacionais</div>
+                <div class="kpi-value" id="dash-kpi-despesa">R$ 0,00</div>
+                <div class="kpi-sub">Matéria-prima e custos</div>
+              </div>
+              <div class="kpi-icon-box amber">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+              </div>
+            </div>
+
+            <div class="kpi-card">
+              <div class="kpi-info">
+                <div class="kpi-label">Saldo Líquido Estimado</div>
+                <div class="kpi-value" id="dash-kpi-saldo">R$ 0,00</div>
+                <div class="kpi-sub">Balanço do mês</div>
+              </div>
+              <div class="kpi-icon-box blue">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
+              </div>
+            </div>
+          </div>
+
+          <div class="dashboard-grid">
+            <div class="panel-box">
+              <div class="panel-header">
+                <h3>Próximas Entregas de Personalizados</h3>
+                <button class="btn btn-secondary btn-icon" onclick="App.navigate('encomendas')" title="Ver todas as encomendas">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14"/><path d="M12 5l7 7-7 7"/></svg>
+                </button>
+              </div>
+              <div id="dash-proximas-entregas"></div>
+            </div>
+
+            <div class="panel-box">
+              <div class="panel-header">
+                <h3>Alertas de Insumos</h3>
+                <button class="btn btn-secondary btn-icon" onclick="App.navigate('estoque')" title="Ir para o estoque">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14"/><path d="M12 5l7 7-7 7"/></svg>
+                </button>
+              </div>
+              <div id="dash-estoque-critico"></div>
+            </div>
+          </div>
+        </section>
+
+        <!-- 2. VIEW CRM (KANBAN DE LEADS) -->
+        <section class="view-section" id="view-crm">
+          <div class="crm-toolbar">
+            <div style="display: flex; gap: 12px; align-items: center;">
+              <input type="text" class="search-input" id="crm-search-input" placeholder="🔍 Buscar lead, telefone ou mensagem...">
+              <div style="font-size: 0.82rem; color: var(--text-muted);">Total estimado no funil: <strong id="crm-total-funil" style="color: var(--accent);">R$ 0,00</strong></div>
+            </div>
+            <button class="btn btn-primary" onclick="CrmModule.openNewModal()">
+              <span>+</span> Novo Lead no CRM
+            </button>
+          </div>
+
+          <div class="kanban-board">
+            <!-- 1. Conversas -->
+            <div class="kanban-column col-conversas" ondragover="CrmModule.handleDragOver(event)" ondragleave="CrmModule.handleDragLeave(event)" ondrop="CrmModule.handleDrop(event, 'conversas')">
+              <div class="kanban-column-header">
+                <div class="kanban-column-title">
+                  <div class="column-pill"></div>
+                  <span>1. Conversas</span>
+                </div>
+                <span class="kanban-counter" id="kanban-counter-conversas">0</span>
+              </div>
+              <div class="kanban-cards-list" id="kanban-list-conversas"></div>
+            </div>
+
+            <!-- 2. Orçamento Enviado -->
+            <div class="kanban-column col-orcamento" ondragover="CrmModule.handleDragOver(event)" ondragleave="CrmModule.handleDragLeave(event)" ondrop="CrmModule.handleDrop(event, 'orcamento')">
+              <div class="kanban-column-header">
+                <div class="kanban-column-title">
+                  <div class="column-pill"></div>
+                  <span>2. Orçamento Enviado</span>
+                </div>
+                <span class="kanban-counter" id="kanban-counter-orcamento">0</span>
+              </div>
+              <div class="kanban-cards-list" id="kanban-list-orcamento"></div>
+            </div>
+
+            <!-- 3. Aguardando Aprovação -->
+            <div class="kanban-column col-aprovacao" ondragover="CrmModule.handleDragOver(event)" ondragleave="CrmModule.handleDragLeave(event)" ondrop="CrmModule.handleDrop(event, 'aprovacao')">
+              <div class="kanban-column-header">
+                <div class="kanban-column-title">
+                  <div class="column-pill"></div>
+                  <span>3. Aguardando Aprovação</span>
+                </div>
+                <span class="kanban-counter" id="kanban-counter-aprovacao">0</span>
+              </div>
+              <div class="kanban-cards-list" id="kanban-list-aprovacao"></div>
+            </div>
+
+            <!-- 4. Fechado / Ganho -->
+            <div class="kanban-column col-fechado" ondragover="CrmModule.handleDragOver(event)" ondragleave="CrmModule.handleDragLeave(event)" ondrop="CrmModule.handleDrop(event, 'fechado')">
+              <div class="kanban-column-header">
+                <div class="kanban-column-title">
+                  <div class="column-pill"></div>
+                  <span>4. Fechado / Ganho 🎉</span>
+                </div>
+                <span class="kanban-counter" id="kanban-counter-fechado">0</span>
+              </div>
+              <div class="kanban-cards-list" id="kanban-list-fechado"></div>
+            </div>
+
+            <!-- 5. Perdido -->
+            <div class="kanban-column col-perdido" ondragover="CrmModule.handleDragOver(event)" ondragleave="CrmModule.handleDragLeave(event)" ondrop="CrmModule.handleDrop(event, 'perdido')">
+              <div class="kanban-column-header">
+                <div class="kanban-column-title">
+                  <div class="column-pill"></div>
+                  <span>5. Perdido / Arquivado</span>
+                </div>
+                <span class="kanban-counter" id="kanban-counter-perdido">0</span>
+              </div>
+              <div class="kanban-cards-list" id="kanban-list-perdido"></div>
+            </div>
+          </div>
+        </section>
+
+        <!-- 3. VIEW ENCOMENDAS -->
+        <section class="view-section" id="view-encomendas">
+          <div class="crm-toolbar">
+            <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+              <select class="form-control" id="filtro-enc-status" style="width: auto;">
+                <option value="">Todos os Status</option>
+                <option value="Fila">Fila</option>
+                <option value="Em produção">Em produção</option>
+                <option value="Pronto">Pronto</option>
+                <option value="Entregue">Entregue</option>
+                <option value="Cancelada">Cancelada</option>
+              </select>
+
+              <select class="form-control" id="filtro-enc-pagto" style="width: auto;">
+                <option value="">Todos os Pagamentos</option>
+                <option value="Pendente">Pendente</option>
+                <option value="Parcial">Parcial</option>
+                <option value="Pago">Pago</option>
+              </select>
+            </div>
+            <button class="btn btn-primary" onclick="EncomendasModule.openNewModal()">
+              <span>+</span> Nova Encomenda
+            </button>
+          </div>
+
+          <div class="panel-box" style="padding: 0; overflow: hidden;">
+            <div class="table-responsive">
+              <table class="modern-table">
+                <thead>
+                  <tr>
+                    <th>Pedido</th>
+                    <th>Cliente</th>
+                    <th>Itens & Personalização</th>
+                    <th>Status Produção</th>
+                    <th>Financeiro</th>
+                    <th>Previsão Entrega</th>
+                    <th style="text-align: right;">Ações</th>
+                  </tr>
+                </thead>
+                <tbody id="encomendas-table-body"></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- 4. VIEW ESTOQUE -->
+        <section class="view-section" id="view-estoque">
+          <div class="crm-toolbar">
+            <div style="font-size: 0.88rem; color: var(--text-muted);">
+              Controle de consumo de filamentos, resinas, chapas de MDF, acrílicos e copos inox.
+            </div>
+            <button class="btn btn-primary" onclick="EstoqueModule.openNewModal()">
+              <span>+</span> Novo Insumo / Material
+            </button>
+          </div>
+
+          <div class="panel-box" style="padding: 0; overflow: hidden;">
+            <div class="table-responsive">
+              <table class="modern-table">
+                <thead>
+                  <tr>
+                    <th>Insumo / Material</th>
+                    <th>Estoque Atual</th>
+                    <th>Estoque Mínimo</th>
+                    <th>Custo Unitário</th>
+                    <th>Preço Sugerido</th>
+                    <th>Status</th>
+                    <th style="text-align: right;">Ações</th>
+                  </tr>
+                </thead>
+                <tbody id="estoque-table-body"></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- 5. VIEW FINANCEIRO -->
+        <section class="view-section" id="view-financeiro">
+          <div class="kpis-grid">
+            <div class="kpi-card">
+              <div class="kpi-info">
+                <div class="kpi-label">Entradas (Receitas Pagas)</div>
+                <div class="kpi-value" id="fin-total-receitas" style="color: var(--success);">R$ 0,00</div>
+              </div>
+              <div class="kpi-icon-box green">💰</div>
+            </div>
+            <div class="kpi-card">
+              <div class="kpi-info">
+                <div class="kpi-label">Saídas (Despesas Operacionais)</div>
+                <div class="kpi-value" id="fin-total-despesas" style="color: var(--danger);">R$ 0,00</div>
+              </div>
+              <div class="kpi-icon-box amber">📉</div>
+            </div>
+            <div class="kpi-card">
+              <div class="kpi-info">
+                <div class="kpi-label">Saldo em Caixa</div>
+                <div class="kpi-value" id="fin-total-saldo">R$ 0,00</div>
+              </div>
+              <div class="kpi-icon-box blue">🏦</div>
+            </div>
+          </div>
+
+          <div class="dashboard-grid">
+            <div class="panel-box">
+              <div class="panel-header">
+                <h3>Lançamentos de Despesas</h3>
+                <button class="btn btn-primary" onclick="FinanceiroModule.openNewDespesaModal()">
+                  <span>+</span> Registrar Despesa
+                </button>
+              </div>
+              <div class="table-responsive">
+                <table class="modern-table">
+                  <thead>
+                    <tr>
+                      <th>Descrição</th>
+                      <th>Categoria</th>
+                      <th>Data</th>
+                      <th>Valor</th>
+                      <th style="text-align: right;">Ações</th>
+                    </tr>
+                  </thead>
+                  <tbody id="despesas-table-body"></tbody>
+                </table>
+              </div>
+            </div>
+
+            <div class="panel-box">
+              <div class="panel-header">
+                <h3>Demonstrativo do Mês</h3>
+              </div>
+              <div style="height: 260px; position: relative;">
+                <canvas id="financeiro-chart"></canvas>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- 6. VIEW PROPOSTAS -->
+        <section class="view-section" id="view-propostas">
+          <div class="crm-toolbar">
+            <div style="font-size: 0.88rem; color: var(--text-muted);">
+              Crie orçamentos formais com maquetes, especificações, prazos e condições comerciais de alta conversão.
+            </div>
+            <button class="btn btn-primary" onclick="PropostasModule.openNewModal()">
+              <span>+</span> Nova Proposta Comercial
+            </button>
+          </div>
+
+          <div id="propostas-cards-container" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 20px;"></div>
+        </section>
+
+        <!-- 7. VIEW CONFIGURAÇÕES -->
+        <section class="view-section" id="view-configuracoes">
+          <div class="panel-box" style="max-width: 800px;">
+            <div class="panel-header">
+              <h3>Identidade & Dados da Seven Personalizados</h3>
+            </div>
+            <form onsubmit="event.preventDefault(); App.saveConfigForm();">
+              <div class="form-row">
+                <div class="form-group">
+                  <label>Nome da Empresa</label>
+                  <input type="text" id="cfg-empresa" class="form-control" required>
+                </div>
+                <div class="form-group">
+                  <label>Slogan ou Especialidade</label>
+                  <input type="text" id="cfg-slogan" class="form-control">
+                </div>
+              </div>
+
+              <div class="form-row">
+                <div class="form-group">
+                  <label>Telefone Principal</label>
+                  <input type="text" id="cfg-telefone" class="form-control">
+                </div>
+                <div class="form-group">
+                  <label>WhatsApp (apenas números com DDD)</label>
+                  <input type="text" id="cfg-whatsapp" class="form-control" placeholder="5511999999999">
+                </div>
+              </div>
+
+              <div class="form-row">
+                <div class="form-group">
+                  <label>E-mail Comercial</label>
+                  <input type="email" id="cfg-email" class="form-control">
+                </div>
+                <div class="form-group">
+                  <label>Chave Pix para Propostas & Pedidos</label>
+                  <input type="text" id="cfg-pix" class="form-control">
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label>Endereço / Cidade do Estúdio</label>
+                <input type="text" id="cfg-endereco" class="form-control">
+              </div>
+
+              <div style="margin-top: 24px;">
+                <button type="submit" class="btn btn-primary">Salvar Configurações</button>
+              </div>
+            </form>
+          </div>
+        </section>
+
+      </div>
+    </main>
+  </div>
+
+  <!-- ========================================================================
+       MODAIS DO SISTEMA
+       ======================================================================== -->
+
+  <!-- MODAL: CRM LEAD -->
+  <div class="modal-overlay" id="modal-crm">
+    <div class="modal-container">
+      <div class="modal-header">
+        <h3 id="crm-modal-title">Novo Lead no CRM</h3>
+        <button class="btn-icon" style="background: transparent; border: none; color: var(--text-muted); cursor: pointer;" onclick="App.closeModal('modal-crm')">✕</button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="crm-form-id">
+        <div class="form-group">
+          <label>Nome do Cliente ou Empresa *</label>
+          <input type="text" id="crm-form-name" class="form-control" placeholder="Ex: Lucas Ferreira">
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Telefone / WhatsApp</label>
+            <input type="text" id="crm-form-phone" class="form-control" placeholder="(11) 98765-4321">
+          </div>
+          <div class="form-group">
+            <label>Valor Estimado do Pedido (R$)</label>
+            <input type="number" step="0.01" id="crm-form-value" class="form-control" placeholder="0.00">
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Etapa no Funil</label>
+          <select id="crm-form-stage" class="form-control">
+            <option value="conversas">1. Conversas Iniciais</option>
+            <option value="orcamento">2. Orçamento Enviado</option>
+            <option value="aprovacao">3. Aguardando Aprovação</option>
+            <option value="fechado">4. Fechado / Ganho 🎉</option>
+            <option value="perdido">5. Perdido / Arquivado</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Observações & Próximos Passos</label>
+          <textarea id="crm-form-msg" class="form-control" rows="3" placeholder="Detalhes do pedido, arte solicitada, urgência..."></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-danger" id="crm-btn-delete" onclick="CrmModule.deleteCurrent()">Excluir Lead</button>
+        <button type="button" class="btn btn-secondary" onclick="App.closeModal('modal-crm')">Cancelar</button>
+        <button type="button" class="btn btn-primary" onclick="CrmModule.save()">Salvar Lead</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: ENCOMENDA -->
+  <div class="modal-overlay" id="modal-encomenda">
+    <div class="modal-container" style="max-width: 780px;">
+      <div class="modal-header">
+        <h3 id="enc-modal-title">Nova Encomenda</h3>
+        <button class="btn-icon" style="background: transparent; border: none; color: var(--text-muted); cursor: pointer;" onclick="App.closeModal('modal-encomenda')">✕</button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="enc-form-id">
+        <div class="form-row">
+          <div class="form-group">
+            <label>Nome do Cliente *</label>
+            <input type="text" id="enc-form-cliente" class="form-control" placeholder="Nome completo">
+          </div>
+          <div class="form-group">
+            <label>Telefone</label>
+            <input type="text" id="enc-form-telefone" class="form-control" placeholder="(00) 00000-0000">
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>Data do Pedido</label>
+            <input type="date" id="enc-form-data-pedido" class="form-control">
+          </div>
+          <div class="form-group">
+            <label>Previsão de Entrega</label>
+            <input type="date" id="enc-form-data-entrega" class="form-control">
+          </div>
+        </div>
+
+        <!-- Tabela de Itens da Encomenda -->
+        <div style="margin: 16px 0;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+            <label style="font-weight: 700; color: var(--text-primary); font-size: 0.85rem;">Itens & Personalização</label>
+            <button type="button" class="btn btn-secondary" style="padding: 4px 10px; font-size: 0.78rem;" onclick="EncomendasModule.addItemRow()">+ Adicionar Item</button>
+          </div>
+          <div class="table-responsive">
+            <table class="modern-table">
+              <thead>
+                <tr>
+                  <th>Produto</th>
+                  <th>Personalização / Arte</th>
+                  <th>Qtd</th>
+                  <th>Valor Un.</th>
+                  <th>Subtotal</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody id="enc-itens-tbody"></tbody>
+            </table>
+          </div>
+          <div style="text-align: right; margin-top: 10px; font-size: 0.95rem;">
+            Valor Total dos Produtos: <strong id="enc-itens-total-badge" style="color: var(--accent);">R$ 0,00</strong>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>Status de Produção</label>
+            <select id="enc-form-status" class="form-control">
+              <option value="Fila">Fila</option>
+              <option value="Em produção">Em produção</option>
+              <option value="Pronto">Pronto</option>
+              <option value="Entregue">Entregue</option>
+              <option value="Cancelada">Cancelada</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Status de Pagamento</label>
+            <select id="enc-form-pagto-status" class="form-control">
+              <option value="Pendente">Pendente</option>
+              <option value="Parcial">Parcial (Entrada paga)</option>
+              <option value="Pago">Pago Total</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>Forma de Pagamento</label>
+            <select id="enc-form-forma-pagto" class="form-control">
+              <option value="Pix">Pix</option>
+              <option value="Cartão de Crédito">Cartão de Crédito</option>
+              <option value="Cartão de Débito">Cartão de Débito</option>
+              <option value="Dinheiro">Dinheiro</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Valor já Pago (R$)</label>
+            <input type="number" step="0.01" id="enc-form-valor-pago" class="form-control">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Observações do Pedido</label>
+          <textarea id="enc-form-obs" class="form-control" rows="2" placeholder="Instruções de gravação, cores, acabamento..."></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-danger" id="enc-btn-delete" onclick="EncomendasModule.deleteCurrent()">Excluir Encomenda</button>
+        <button type="button" class="btn btn-secondary" onclick="App.closeModal('modal-encomenda')">Cancelar</button>
+        <button type="button" class="btn btn-primary" onclick="EncomendasModule.save()">Salvar Encomenda</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: ESTOQUE -->
+  <div class="modal-overlay" id="modal-estoque">
+    <div class="modal-container">
+      <div class="modal-header">
+        <h3 id="est-modal-title">Novo Insumo em Estoque</h3>
+        <button class="btn-icon" style="background: transparent; border: none; color: var(--text-muted); cursor: pointer;" onclick="App.closeModal('modal-estoque')">✕</button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="est-form-id">
+        <div class="form-group">
+          <label>Nome do Insumo / Material *</label>
+          <input type="text" id="est-form-nome" class="form-control" placeholder="Ex: Filamento PETG Preto">
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>Categoria</label>
+            <select id="est-form-categoria" class="form-control">
+              <option value="Impressão 3D">Impressão 3D</option>
+              <option value="Corte a Laser">Corte a Laser</option>
+              <option value="Brindes">Brindes & Copos</option>
+              <option value="Embalagem">Embalagem</option>
+              <option value="Papelaria / Transfer">Papelaria / Transfer</option>
+              <option value="Outro">Outro</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Unidade de Medida</label>
+            <select id="est-form-unidade" class="form-control">
+              <option value="un">Unidade (un)</option>
+              <option value="kg">Quilo (kg)</option>
+              <option value="g">Grama (g)</option>
+              <option value="m">Metro (m)</option>
+              <option value="fl">Folha (fl)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>Quantidade Atual</label>
+            <input type="number" step="0.1" id="est-form-qtd" class="form-control">
+          </div>
+          <div class="form-group">
+            <label>Estoque Mínimo de Alerta</label>
+            <input type="number" step="0.1" id="est-form-minimo" class="form-control">
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>Custo Unitário (R$)</label>
+            <input type="number" step="0.01" id="est-form-custo" class="form-control">
+          </div>
+          <div class="form-group">
+            <label>Preço Sugerido de Venda (R$)</label>
+            <input type="number" step="0.01" id="est-form-venda" class="form-control">
+          </div>
+        </div>
+
+        <div class="form-group" style="display: flex; align-items: center; gap: 8px;">
+          <input type="checkbox" id="est-form-ativo" checked style="width: 18px; height: 18px;">
+          <label for="est-form-ativo" style="margin: 0; cursor: pointer;">Item ativo para produção</label>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-danger" id="est-btn-delete" onclick="EstoqueModule.deleteCurrent()">Excluir Insumo</button>
+        <button type="button" class="btn btn-secondary" onclick="App.closeModal('modal-estoque')">Cancelar</button>
+        <button type="button" class="btn btn-primary" onclick="EstoqueModule.save()">Salvar Insumo</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: DESPESA -->
+  <div class="modal-overlay" id="modal-despesa">
+    <div class="modal-container">
+      <div class="modal-header">
+        <h3>Registrar Nova Despesa</h3>
+        <button class="btn-icon" style="background: transparent; border: none; color: var(--text-muted); cursor: pointer;" onclick="App.closeModal('modal-despesa')">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label>Descrição da Despesa *</label>
+          <input type="text" id="desp-form-descricao" class="form-control" placeholder="Ex: Compra de Resina UV">
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Categoria</label>
+            <select id="desp-form-categoria" class="form-control">
+              <option value="Matéria-prima">Matéria-prima</option>
+              <option value="Embalagem">Embalagem</option>
+              <option value="Manutenção">Manutenção Máquinas</option>
+              <option value="Fixo">Custo Fixo (Luz/Água)</option>
+              <option value="Marketing">Marketing & Anúncios</option>
+              <option value="Outro">Outro</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Valor (R$) *</label>
+            <input type="number" step="0.01" id="desp-form-valor" class="form-control" placeholder="0.00">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Data</label>
+            <input type="date" id="desp-form-data" class="form-control">
+          </div>
+          <div class="form-group">
+            <label>Forma de Pagamento</label>
+            <select id="desp-form-forma" class="form-control">
+              <option value="Pix">Pix</option>
+              <option value="Cartão de Crédito">Cartão de Crédito</option>
+              <option value="Boleto">Boleto</option>
+              <option value="Dinheiro">Dinheiro</option>
+            </select>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="App.closeModal('modal-despesa')">Cancelar</button>
+        <button type="button" class="btn btn-primary" onclick="FinanceiroModule.saveDespesa()">Confirmar Despesa</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: PROPOSTA COMERCIAL (WIZARD) -->
+  <div class="modal-overlay" id="modal-proposta">
+    <div class="modal-container" style="max-width: 720px;">
+      <div class="modal-header">
+        <h3>Criar Proposta Comercial de Alto Valor</h3>
+        <button class="btn-icon" style="background: transparent; border: none; color: var(--text-muted); cursor: pointer;" onclick="App.closeModal('modal-proposta')">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-row">
+          <div class="form-group">
+            <label>Cliente / Razão Social *</label>
+            <input type="text" id="prop-cliente" class="form-control" placeholder="Ex: Agência Criativa Ltda">
+          </div>
+          <div class="form-group">
+            <label>Pessoa de Contato</label>
+            <input type="text" id="prop-contato" class="form-control" placeholder="Ex: Roberta Lima">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>WhatsApp / Fone</label>
+            <input type="text" id="prop-telefone" class="form-control" placeholder="(00) 00000-0000">
+          </div>
+          <div class="form-group">
+            <label>Título da Proposta *</label>
+            <input type="text" id="prop-titulo" class="form-control">
+          </div>
+        </div>
+        <div class="form-group">
+          <label>1. Escopo e Solução dos Produtos</label>
+          <textarea id="prop-escopo" class="form-control" rows="3"></textarea>
+        </div>
+        <div class="form-group">
+          <label>2. Método & Diferenciais de Fabricação</label>
+          <textarea id="prop-metodo" class="form-control" rows="3"></textarea>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Prazo de Produção</label>
+            <input type="text" id="prop-prazo" class="form-control">
+          </div>
+          <div class="form-group">
+            <label>Investimento Total (R$) *</label>
+            <input type="number" step="0.01" id="prop-investimento" class="form-control" placeholder="0.00">
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Condições de Pagamento</label>
+          <input type="text" id="prop-condicoes" class="form-control">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="App.closeModal('modal-proposta')">Cancelar</button>
+        <button type="button" class="btn btn-primary" onclick="PropostasModule.save()">Gerar Proposta Comercial</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: LIVE PREVIEW DA PROPOSTA TIMBRADA -->
+  <div class="modal-overlay" id="modal-preview-proposta">
+    <div class="modal-container" style="max-width: 820px; background: #ffffff; color: #111827;">
+      <div class="modal-header no-print" style="border-bottom: 1px solid #e5e7eb; background: #f9fafb;">
+        <h3 style="color: #111827;">Proposta Comercial Formatada</h3>
+        <div style="display: flex; gap: 8px;">
+          <button class="btn btn-primary" onclick="PropostasModule.imprimirPropostaAtual()">🖨️ Imprimir / Salvar PDF</button>
+          <button class="btn btn-secondary" onclick="App.closeModal('modal-preview-proposta')">Fechar</button>
+        </div>
+      </div>
+      <div class="modal-body" id="proposta-preview-content" style="padding: 32px;"></div>
+    </div>
+  </div>
+
+  <!-- CONTAINER DE TOASTS -->
+  <div class="toast-container" id="toast-container"></div>
+
+  <!-- SCRIPTS DO SISTEMA -->
+  <script src="js/storage.js"></script>
+  <script src="js/crm.js"></script>
+  <script src="js/encomendas.js"></script>
+  <script src="js/estoque.js"></script>
+  <script src="js/financeiro.js"></script>
+  <script src="js/propostas.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
