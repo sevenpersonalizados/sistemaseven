@@ -116,52 +116,52 @@ const PropostasModule = {
     if (!viewContainer) return;
 
     viewContainer.innerHTML = `
-      <div style="border-bottom: 2px solid #7c3aed; padding-bottom: 20px; margin-bottom: 24px; display: flex; justify-content: space-between; align-items: center;">
+      <div style="background: #05070b; color: #ffffff; border-bottom: 3px solid #00a8f3; border-radius: 10px; padding: 24px 28px; margin-bottom: 24px; display: flex; justify-content: space-between; align-items: center; -webkit-print-color-adjust: exact; print-color-adjust: exact;">
         <div>
-          <h1 style="color: #7c3aed; font-family: 'Outfit', sans-serif; font-size: 1.8rem; font-weight: 800; margin: 0;">${App.escapeHtml(config.nomeEmpresa || 'SEVEN PERSONALIZADOS')}</h1>
-          <p style="color: #4b5563; font-size: 0.85rem; margin: 4px 0 0;">${App.escapeHtml(config.slogan || 'Corte a Laser, Impressão 3D e Brindes Especiais')}</p>
+          <img src="logo.png" alt="${App.escapeHtml(config.nomeEmpresa || 'Seven Personalizados')}" style="height: 46px; width: auto; display: block; margin-bottom: 8px;">
+          <p style="color: #94a3b8; font-size: 0.82rem; margin: 0;">${App.escapeHtml(config.slogan || 'Corte a Laser, Impressão 3D e Brindes Especiais')}</p>
         </div>
-        <div style="text-align: right; font-size: 0.82rem; color: #4b5563;">
-          <div><strong>WhatsApp:</strong> ${App.escapeHtml(config.telefone || '')}</div>
-          <div><strong>E-mail:</strong> ${App.escapeHtml(config.email || '')}</div>
-          <div><strong>Emissão:</strong> ${App.formatDate(p.criada_em)}</div>
+        <div style="text-align: right; font-size: 0.82rem; color: #e2e8f0; line-height: 1.6;">
+          <div><strong style="color: #00a8f3;">WhatsApp:</strong> ${App.escapeHtml(config.telefone || '')}</div>
+          <div><strong style="color: #00a8f3;">E-mail:</strong> ${App.escapeHtml(config.email || '')}</div>
+          <div><strong style="color: #00a8f3;">Emissão:</strong> ${App.formatDate(p.criada_em)}</div>
         </div>
       </div>
 
       <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 18px; margin-bottom: 24px;">
-        <div style="font-size: 0.76rem; text-transform: uppercase; color: #6b7280; font-weight: 700; letter-spacing: 0.05em;">Proposta Comercial Preparada Para</div>
-        <div style="font-size: 1.25rem; font-weight: 700; color: #1e293b; margin-top: 4px;">${App.escapeHtml(p.cliente)}</div>
-        ${p.contato ? `<div style="font-size: 0.88rem; color: #4b5563;">A/C: ${App.escapeHtml(p.contato)} ${p.telefone ? `(${p.telefone})` : ''}</div>` : ''}
+        <div style="font-size: 0.76rem; text-transform: uppercase; color: #0284c7; font-weight: 700; letter-spacing: 0.05em;">Proposta Comercial Preparada Para</div>
+        <div style="font-size: 1.25rem; font-weight: 700; color: #0f172a; margin-top: 4px;">${App.escapeHtml(p.cliente)}</div>
+        ${p.contato ? `<div style="font-size: 0.88rem; color: #475569;">A/C: ${App.escapeHtml(p.contato)} ${p.telefone ? `(${p.telefone})` : ''}</div>` : ''}
       </div>
 
       <div style="margin-bottom: 24px;">
-        <h3 style="color: #1e293b; font-size: 1.05rem; margin-bottom: 8px; border-left: 4px solid #7c3aed; padding-left: 10px;">1. Objetivo e Escopo da Solução</h3>
-        <p style="color: #374151; font-size: 0.95rem; line-height: 1.6; white-space: pre-line;">${App.escapeHtml(p.escopo)}</p>
+        <h3 style="color: #0f172a; font-size: 1.05rem; margin-bottom: 8px; border-left: 4px solid #00a8f3; padding-left: 10px;">1. Objetivo e Escopo da Solução</h3>
+        <p style="color: #334155; font-size: 0.95rem; line-height: 1.6; white-space: pre-line;">${App.escapeHtml(p.escopo)}</p>
       </div>
 
       <div style="margin-bottom: 24px;">
-        <h3 style="color: #1e293b; font-size: 1.05rem; margin-bottom: 8px; border-left: 4px solid #7c3aed; padding-left: 10px;">2. Nosso Método & Padrão de Entrega</h3>
-        <p style="color: #374151; font-size: 0.92rem; line-height: 1.6; white-space: pre-line;">${App.escapeHtml(p.metodo)}</p>
+        <h3 style="color: #0f172a; font-size: 1.05rem; margin-bottom: 8px; border-left: 4px solid #00a8f3; padding-left: 10px;">2. Nosso Método & Padrão de Entrega</h3>
+        <p style="color: #334155; font-size: 0.92rem; line-height: 1.6; white-space: pre-line;">${App.escapeHtml(p.metodo)}</p>
       </div>
 
       <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 28px;">
         <div style="background: #f8fafc; border: 1px solid #e2e8f0; padding: 16px; border-radius: 8px;">
-          <div style="font-size: 0.78rem; font-weight: 700; color: #6b7280; text-transform: uppercase;">Prazo de Produção</div>
-          <div style="font-size: 1rem; font-weight: 600; color: #1e293b; margin-top: 4px;">⏱️ ${App.escapeHtml(p.prazo)}</div>
+          <div style="font-size: 0.78rem; font-weight: 700; color: #64748b; text-transform: uppercase;">Prazo de Produção</div>
+          <div style="font-size: 1rem; font-weight: 600; color: #0f172a; margin-top: 4px;">⏱️ ${App.escapeHtml(p.prazo)}</div>
         </div>
-        <div style="background: #fdf4ff; border: 1px solid #f0abfc; padding: 16px; border-radius: 8px;">
-          <div style="font-size: 0.78rem; font-weight: 700; color: #a21caf; text-transform: uppercase;">Investimento Total</div>
-          <div style="font-size: 1.4rem; font-weight: 800; color: #86198f; margin-top: 2px;">${App.formatMoney(p.investimento)}</div>
+        <div style="background: #f0f9ff; border: 1px solid #7dd3fc; padding: 16px; border-radius: 8px; -webkit-print-color-adjust: exact; print-color-adjust: exact;">
+          <div style="font-size: 0.78rem; font-weight: 700; color: #0284c7; text-transform: uppercase;">Investimento Total</div>
+          <div style="font-size: 1.4rem; font-weight: 800; color: #0369a1; margin-top: 2px;">${App.formatMoney(p.investimento)}</div>
         </div>
       </div>
 
       <div style="margin-bottom: 28px;">
-        <h3 style="color: #1e293b; font-size: 1.05rem; margin-bottom: 8px; border-left: 4px solid #7c3aed; padding-left: 10px;">3. Condições de Pagamento</h3>
-        <p style="color: #374151; font-size: 0.92rem; line-height: 1.6;">${App.escapeHtml(p.condicoes)}</p>
-        ${config.chavePix ? `<p style="margin-top: 8px; font-size: 0.85rem; color: #166534; background: #f0fdf4; padding: 8px 12px; border-radius: 6px; border: 1px solid #bbf7d0;"><strong>Chave Pix:</strong> ${App.escapeHtml(config.chavePix)}</p>` : ''}
+        <h3 style="color: #0f172a; font-size: 1.05rem; margin-bottom: 8px; border-left: 4px solid #00a8f3; padding-left: 10px;">3. Condições de Pagamento</h3>
+        <p style="color: #334155; font-size: 0.92rem; line-height: 1.6;">${App.escapeHtml(p.condicoes)}</p>
+        ${config.chavePix ? `<p style="margin-top: 8px; font-size: 0.85rem; color: #0369a1; background: #f0f9ff; padding: 8px 12px; border-radius: 6px; border: 1px solid #bae6fd;"><strong>Chave Pix:</strong> ${App.escapeHtml(config.chavePix)}</p>` : ''}
       </div>
 
-      <div style="margin-top: 40px; padding-top: 20px; border-top: 1px dashed #cbd5e1; text-align: center; color: #94a3b8; font-size: 0.8rem;">
+      <div style="margin-top: 40px; padding-top: 20px; border-top: 1px dashed #cbd5e1; text-align: center; color: #64748b; font-size: 0.8rem;">
         Seven Personalizados — Excelência, Precisão e Arte em Cada Detalhe.
       </div>
     `;

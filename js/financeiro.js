@@ -75,8 +75,8 @@ const FinanceiroModule = {
         labels: ['Receitas Recebidas', 'Despesas Operacionais'],
         datasets: [{
           data: [receitas, despesas],
-          backgroundColor: ['#10b981', '#ef4444'],
-          borderColor: '#111827',
+          backgroundColor: ['#00a8f3', '#ef4444'],
+          borderColor: '#0f1522',
           borderWidth: 3
         }]
       },
