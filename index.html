@@ -299,16 +299,16 @@
         <!-- 3. VIEW ENCOMENDAS -->
         <section class="view-section" id="view-encomendas">
           <div class="crm-toolbar">
-            <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+            <div style="display: flex; gap: 12px; flex-wrap: wrap; align-items: center;">
               <select class="form-control" id="filtro-enc-status" style="width: auto;">
-                <option value="">Produção Ativa (Em aberto)</option>
-                <option value="TODOS">Todas (Incluindo Finalizadas)</option>
-                <option value="Fila">Fila</option>
-                <option value="Em produção">Em produção</option>
-                <option value="Pronto">Pronto</option>
-                <option value="Entregue">Entregue</option>
-                <option value="Finalizadas">Finalizadas (Quitadas)</option>
-                <option value="Cancelada">Cancelada</option>
+                <option value="">Produção Ativa (Separadas por Status)</option>
+                <option value="TODOS">Todas as Etapas (Separadas)</option>
+                <option value="Em produção">⚙️ Apenas Em Produção</option>
+                <option value="Fila">⏳ Apenas Fila</option>
+                <option value="Pronto">📦 Apenas Prontos</option>
+                <option value="Entregue">🚚 Apenas Entregue</option>
+                <option value="Finalizadas">✅ Finalizadas (Quitadas)</option>
+                <option value="Cancelada">❌ Cancelada</option>
               </select>
 
               <select class="form-control" id="filtro-enc-pagto" style="width: auto;">
@@ -323,24 +323,8 @@
             </button>
           </div>
 
-          <div class="panel-box" style="padding: 0; overflow: hidden;">
-            <div class="table-responsive">
-              <table class="modern-table">
-                <thead>
-                  <tr>
-                    <th>Pedido</th>
-                    <th>Cliente</th>
-                    <th>Itens & Personalização</th>
-                    <th>Status Produção</th>
-                    <th>Financeiro</th>
-                    <th>Previsão Entrega</th>
-                    <th style="text-align: right;">Ações</th>
-                  </tr>
-                </thead>
-                <tbody id="encomendas-table-body"></tbody>
-              </table>
-            </div>
-          </div>
+          <!-- Container com as encomendas separadas por status -->
+          <div id="encomendas-grupos-container"></div>
         </section>
 
         <!-- VIEW FINALIZADOS (HISTÓRICO DE PEDIDOS ENTREGUES E QUITADOS) -->

@@ -22,69 +22,156 @@ const EncomendasModule = {
     const filtroStatus = document.getElementById('filtro-enc-status')?.value || '';
     const filtroPagto = document.getElementById('filtro-enc-pagto')?.value || '';
 
-    const filtradas = encomendas.filter(e => {
-      const isFin = (e.status === 'Entregue' || e.status === 'Pronto') && e.pagamento_status === 'Pago';
-      if (!filtroStatus) {
-        if (isFin) return false;
-      } else if (filtroStatus === 'Finalizadas') {
-        if (!isFin) return false;
-      } else if (filtroStatus !== 'TODOS') {
-        if (e.status !== filtroStatus) return false;
+    const container = document.getElementById('encomendas-grupos-container');
+    if (!container) return;
+
+    // Define grupos a serem exibidos de forma separada
+    let statusGrupos = [];
+    if (!filtroStatus) {
+      statusGrupos = [
+        { key: 'Em produção', title: '⚙️ Em Produção', badge: 'badge-producao', borderColor: 'rgba(56, 189, 248, 0.35)' },
+        { key: 'Fila', title: '⏳ Fila de Espera', badge: 'badge-fila', borderColor: 'rgba(148, 163, 184, 0.35)' },
+        { key: 'Pronto', title: '📦 Prontos (Aguardando Retirada ou Pagamento)', badge: 'badge-pronto', borderColor: 'rgba(99, 102, 241, 0.35)' }
+      ];
+    } else if (filtroStatus === 'TODOS') {
+      statusGrupos = [
+        { key: 'Em produção', title: '⚙️ Em Produção', badge: 'badge-producao', borderColor: 'rgba(56, 189, 248, 0.35)' },
+        { key: 'Fila', title: '⏳ Fila de Espera', badge: 'badge-fila', borderColor: 'rgba(148, 163, 184, 0.35)' },
+        { key: 'Pronto', title: '📦 Prontos', badge: 'badge-pronto', borderColor: 'rgba(99, 102, 241, 0.35)' },
+        { key: 'Entregue', title: '🚚 Entregues', badge: 'badge-entregue', borderColor: 'rgba(16, 185, 129, 0.35)' },
+        { key: 'Cancelada', title: '❌ Canceladas', badge: 'badge-cancelada', borderColor: 'rgba(239, 68, 68, 0.35)' }
+      ];
+    } else if (filtroStatus === 'Finalizadas') {
+      statusGrupos = [
+        { key: 'Finalizadas', title: '✅ Finalizadas (Quitadas e Concluídas)', badge: 'badge-pago', borderColor: 'rgba(16, 185, 129, 0.35)' }
+      ];
+    } else {
+      const gMap = {
+        'Fila': { key: 'Fila', title: '⏳ Fila de Espera', badge: 'badge-fila', borderColor: 'rgba(148, 163, 184, 0.35)' },
+        'Em produção': { key: 'Em produção', title: '⚙️ Em Produção', badge: 'badge-producao', borderColor: 'rgba(56, 189, 248, 0.35)' },
+        'Pronto': { key: 'Pronto', title: '📦 Prontos', badge: 'badge-pronto', borderColor: 'rgba(99, 102, 241, 0.35)' },
+        'Entregue': { key: 'Entregue', title: '🚚 Entregues', badge: 'badge-entregue', borderColor: 'rgba(16, 185, 129, 0.35)' },
+        'Cancelada': { key: 'Cancelada', title: '❌ Canceladas', badge: 'badge-cancelada', borderColor: 'rgba(239, 68, 68, 0.35)' }
+      };
+      if (gMap[filtroStatus]) statusGrupos = [gMap[filtroStatus]];
+    }
+
+    let totalGeralEncontrado = 0;
+
+    const htmlGrupos = statusGrupos.map(grupo => {
+      let ordensGrupo = encomendas.filter(e => {
+        if (grupo.key === 'Finalizadas') {
+          return (e.status === 'Entregue' || e.status === 'Pronto') && e.pagamento_status === 'Pago';
+        }
+        if (!filtroStatus && grupo.key === 'Pronto') {
+          const isFin = (e.status === 'Entregue' || e.status === 'Pronto') && e.pagamento_status === 'Pago';
+          if (isFin) return false;
+        }
+        return e.status === grupo.key;
+      });
+
+      if (filtroPagto) {
+        ordensGrupo = ordensGrupo.filter(e => e.pagamento_status === filtroPagto);
       }
-      const matchPagto = !filtroPagto || e.pagamento_status === filtroPagto;
-      return matchPagto;
-    });
 
-    const tbody = document.getElementById('encomendas-table-body');
-    if (!tbody) return;
+      totalGeralEncontrado += ordensGrupo.length;
+      const totalValor = ordensGrupo.reduce((acc, it) => acc + (Number(it.valor_total) || 0), 0);
 
-    if (filtradas.length === 0) {
-      tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; padding: 32px; color: var(--text-muted);">Nenhuma encomenda encontrada com os filtros selecionados.</td></tr>`;
+      ordensGrupo.sort((a, b) => ((a.data_entrega_prevista || '') > (b.data_entrega_prevista || '') ? 1 : -1));
+
+      return `
+        <div class="panel-box" style="margin-bottom: 24px; padding: 0; overflow: hidden; border-color: ${grupo.borderColor};">
+          <div class="panel-header" style="background: rgba(255, 255, 255, 0.02); padding: 14px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border);">
+            <div style="display: flex; align-items: center; gap: 12px;">
+              <span class="status-badge ${grupo.badge}" style="font-size: 0.85rem; padding: 5px 12px;">
+                ${grupo.title}
+              </span>
+              <span style="font-size: 0.82rem; color: var(--text-muted);">
+                ${ordensGrupo.length} ${ordensGrupo.length === 1 ? 'encomenda' : 'encomendas'} • Total: <strong style="color: var(--text-primary);">${App.formatMoney(totalValor)}</strong>
+              </span>
+            </div>
+          </div>
+          <div class="table-responsive">
+            <table class="modern-table">
+              <thead>
+                <tr>
+                  <th>Pedido</th>
+                  <th>Cliente</th>
+                  <th>Itens & Personalização</th>
+                  <th>Status Produção</th>
+                  <th>Financeiro</th>
+                  <th>Previsão Entrega</th>
+                  <th style="text-align: right;">Ações</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${ordensGrupo.length === 0 ? `
+                  <tr>
+                    <td colspan="7" style="text-align: center; padding: 24px; color: var(--text-muted); font-size: 0.85rem;">
+                      Nenhuma encomenda nesta etapa no momento.
+                    </td>
+                  </tr>
+                ` : ordensGrupo.map(enc => this.renderOrderRow(enc)).join('')}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      `;
+    }).join('');
+
+    if (totalGeralEncontrado === 0 && filtroPagto) {
+      container.innerHTML = `
+        <div class="panel-box" style="text-align: center; padding: 40px; color: var(--text-muted);">
+          Nenhuma encomenda encontrada com o filtro de pagamento selecionado.
+        </div>
+      `;
       return;
     }
 
-    tbody.innerHTML = filtradas.map(enc => {
-      const statusClass = this.getStatusClass(enc.status);
-      const pagtoClass = this.getPagtoClass(enc.pagamento_status);
-      const totalItens = (enc.itens || []).reduce((acc, it) => acc + (Number(it.quantidade) || 0), 0);
-      const nomesProdutos = (enc.itens || []).map(i => `${i.quantidade}x ${i.produto_nome}`).join(', ');
+    container.innerHTML = htmlGrupos;
+  },
 
-      return `
-        <tr class="dash-row-clickable" onclick="EncomendasModule.openEditModal('${enc.id}')" title="Clique para abrir detalhes da encomenda #${enc.id.substring(enc.id.length - 5)}">
-          <td>
-            <strong>#${enc.id.substring(enc.id.length - 5)}</strong>
-            <div style="font-size: 0.76rem; color: var(--text-muted);">${App.formatDate(enc.data_pedido)}</div>
-          </td>
-          <td>
-            <div style="font-weight: 600; color: var(--text-primary);">${App.escapeHtml(enc.cliente_nome)}</div>
-            <div style="font-size: 0.8rem; color: var(--text-muted);">${App.escapeHtml(enc.telefone || 'Sem fone')}</div>
-          </td>
-          <td>
-            <div style="font-size: 0.85rem; max-width: 280px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${App.escapeHtml(nomesProdutos)}">
-              ${App.escapeHtml(nomesProdutos || 'Item personalizado')}
-            </div>
-            <div style="font-size: 0.74rem; color: var(--accent);">Total: ${totalItens} peças</div>
-          </td>
-          <td onclick="event.stopPropagation()">
-            ${this.renderStatusSelect(enc.id, enc.status)}
-          </td>
-          <td onclick="event.stopPropagation()">
-            <div><strong>${App.formatMoney(enc.valor_total)}</strong></div>
-            <div style="margin-top: 4px;">${this.renderPagtoSelect(enc.id, enc.pagamento_status)}</div>
-          </td>
-          <td>
-            <div style="font-weight: 500; color: ${this.isAtrasado(enc.data_entrega_prevista, enc.status) ? 'var(--danger)' : 'var(--text-secondary)'};">
-              📅 ${App.formatDate(enc.data_entrega_prevista)}
-            </div>
-          </td>
-          <td style="text-align: right;" onclick="event.stopPropagation()">
-            <button class="btn btn-secondary btn-icon" onclick="EncomendasModule.openEditModal('${enc.id}')" title="Editar encomenda">
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
-            </button>
-          </td>
-        </tr>
-      `;
-    }).join('');
+  renderOrderRow(enc) {
+    const statusClass = this.getStatusClass(enc.status);
+    const pagtoClass = this.getPagtoClass(enc.pagamento_status);
+    const totalItens = (enc.itens || []).reduce((acc, it) => acc + (Number(it.quantidade) || 0), 0);
+    const nomesProdutos = (enc.itens || []).map(i => `${i.quantidade}x ${i.produto_nome}`).join(', ');
+
+    return `
+      <tr class="dash-row-clickable" onclick="EncomendasModule.openEditModal('${enc.id}')" title="Clique para abrir detalhes da encomenda #${enc.id.substring(enc.id.length - 5)}">
+        <td>
+          <strong>#${enc.id.substring(enc.id.length - 5)}</strong>
+          <div style="font-size: 0.76rem; color: var(--text-muted);">${App.formatDate(enc.data_pedido)}</div>
+        </td>
+        <td>
+          <div style="font-weight: 600; color: var(--text-primary);">${App.escapeHtml(enc.cliente_nome)}</div>
+          <div style="font-size: 0.8rem; color: var(--text-muted);">${App.escapeHtml(enc.telefone || 'Sem fone')}</div>
+        </td>
+        <td>
+          <div style="font-size: 0.85rem; max-width: 280px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${App.escapeHtml(nomesProdutos)}">
+            ${App.escapeHtml(nomesProdutos || 'Item personalizado')}
+          </div>
+          <div style="font-size: 0.74rem; color: var(--accent);">Total: ${totalItens} peças</div>
+        </td>
+        <td onclick="event.stopPropagation()">
+          ${this.renderStatusSelect(enc.id, enc.status)}
+        </td>
+        <td onclick="event.stopPropagation()">
+          <div><strong>${App.formatMoney(enc.valor_total)}</strong></div>
+          <div style="margin-top: 4px;">${this.renderPagtoSelect(enc.id, enc.pagamento_status)}</div>
+        </td>
+        <td>
+          <div style="font-weight: 500; color: ${this.isAtrasado(enc.data_entrega_prevista, enc.status) ? 'var(--danger)' : 'var(--text-secondary)'};">
+            📅 ${App.formatDate(enc.data_entrega_prevista)}
+          </div>
+        </td>
+        <td style="text-align: right;" onclick="event.stopPropagation()">
+          <button class="btn btn-secondary btn-icon" onclick="EncomendasModule.openEditModal('${enc.id}')" title="Editar encomenda">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+          </button>
+        </td>
+      </tr>
+    `;
   },
 
   getStatusClass(status) {

@@ -142,9 +142,12 @@ const App = {
       bEst.className = estoqueBaixo.length > 0 ? 'badge-counter highlight' : 'badge-counter';
     }
 
-    // 4. Próximas Entregas
-    const proximas = encAbertas
-      .filter(e => e.data_entrega_prevista)
+    // 4. Próximas Entregas (Apenas encomendas em Fila ou Em Produção — pedidos 'Pronto' saem daqui)
+    const proximas = enc
+      .filter(e => {
+        if (e.status === 'Cancelada' || e.status === 'Pronto' || e.status === 'Entregue') return false;
+        return !!e.data_entrega_prevista;
+      })
       .sort((a, b) => (a.data_entrega_prevista > b.data_entrega_prevista ? 1 : -1))
       .slice(0, 5);
 
