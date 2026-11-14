@@ -21,6 +21,9 @@ const App = {
 
     window.addEventListener('seven_data_updated', () => {
       this.renderDashboard();
+      if (this.currentView === 'finalizados') {
+        EncomendasModule.renderFinalizados();
+      }
     });
 
     console.log('Seven Personalizados inicializado com sucesso.');
@@ -63,6 +66,7 @@ const App = {
       dashboard: { title: 'Painel Geral & Indicadores', sub: 'Visão executiva do estúdio de personalização' },
       crm: { title: 'CRM & Funil de Vendas', sub: 'Acompanhe contatos, orçamentos e fechamentos' },
       encomendas: { title: 'Encomendas & Produção', sub: 'Controle de prazos, etapas e personalizações' },
+      finalizados: { title: 'Histórico de Finalizados', sub: 'Encomendas entregues e quitadas' },
       estoque: { title: 'Estoque de Insumos', sub: 'Filamentos 3D, chapas laser, copos e embalagens' },
       financeiro: { title: 'Financeiro & Fluxo de Caixa', sub: 'Entradas, despesas operacionais e balanço' },
       propostas: { title: 'Gerador de Propostas Comerciais', sub: 'Crie propostas de alto valor prontas para fechar' },
@@ -77,6 +81,10 @@ const App = {
 
     if (viewName === 'dashboard') {
       this.renderDashboard();
+    } else if (viewName === 'finalizados') {
+      EncomendasModule.renderFinalizados();
+    } else if (viewName === 'encomendas') {
+      EncomendasModule.render();
     }
   },
 
@@ -86,8 +94,18 @@ const App = {
     const est = StorageService.get('estoque');
     const crm = StorageService.get('crm_cards');
 
-    // 1. Encomendas em aberto
-    const encAbertas = enc.filter(e => e.status !== 'Entregue' && e.status !== 'Cancelada');
+    // 1. Encomendas em aberto (exclui canceladas e finalizadas com sucesso)
+    const encFinalizadas = enc.filter(e => {
+      if (e.status === 'Cancelada') return false;
+      return (e.status === 'Entregue' || e.status === 'Pronto') && e.pagamento_status === 'Pago';
+    });
+
+    const encAbertas = enc.filter(e => {
+      if (e.status === 'Cancelada') return false;
+      const isFin = (e.status === 'Entregue' || e.status === 'Pronto') && e.pagamento_status === 'Pago';
+      return !isFin;
+    });
+
     const elEncAbertas = document.getElementById('dash-kpi-enc-abertas');
     if (elEncAbertas) elEncAbertas.textContent = encAbertas.length;
 
@@ -113,6 +131,9 @@ const App = {
 
     const bEnc = document.getElementById('nav-badge-encomendas');
     if (bEnc) bEnc.textContent = encAbertas.length;
+
+    const bFin = document.getElementById('nav-badge-finalizados');
+    if (bFin) bFin.textContent = encFinalizadas.length;
 
     const estoqueBaixo = est.filter(i => Number(i.quantidade_atual) <= Number(i.estoque_minimo));
     const bEst = document.getElementById('nav-badge-estoque');
@@ -164,6 +185,96 @@ const App = {
             </div>
           </div>
         `).join('');
+      }
+    }
+
+    // 6. Campo de Encomendas Prontas (Aguardando Pagamento ou Retirada / Entrega)
+    const prontosPendentes = enc.filter(e => {
+      if (e.status === 'Cancelada') return false;
+      // Pedido Pronto mas não pago
+      if (e.status === 'Pronto' && e.pagamento_status !== 'Pago') return true;
+      // Pedido Entregue mas ainda com pagamento pendente/parcial
+      if (e.status === 'Entregue' && e.pagamento_status !== 'Pago') return true;
+      return false;
+    });
+
+    const containerProntos = document.getElementById('dash-prontos-pendentes');
+    if (containerProntos) {
+      if (prontosPendentes.length === 0) {
+        containerProntos.innerHTML = `
+          <div style="text-align: center; color: var(--text-muted); padding: 28px 16px;">
+            <div style="font-size: 1.5rem; margin-bottom: 6px;">✨</div>
+            Nenhuma encomenda pronta com pagamento pendente no momento. Tudo em dia!
+          </div>
+        `;
+      } else {
+        containerProntos.innerHTML = `
+          <div class="table-responsive">
+            <table class="modern-table">
+              <thead>
+                <tr>
+                  <th>Pedido / Cliente</th>
+                  <th>Itens Produzidos</th>
+                  <th>Status Produção</th>
+                  <th>Financeiro</th>
+                  <th>Falta Pagar</th>
+                  <th style="text-align: right;">Ações Rápidas</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${prontosPendentes.map(e => {
+                  const valorTotal = Number(e.valor_total) || 0;
+                  const valorPago = Number(e.valor_pago) || 0;
+                  const restante = Math.max(0, valorTotal - valorPago);
+                  const itensStr = (e.itens || []).map(i => `${i.quantidade}x ${i.produto_nome}`).join(', ') || 'Pedido Personalizado';
+                  const pagtoClass = EncomendasModule.getPagtoClass(e.pagamento_status);
+                  const foneLimpo = (e.telefone || '').replace(/\D/g, '');
+                  const zapMsg = encodeURIComponent(`Olá ${e.cliente_nome}! Sua encomenda na Seven Personalizados está pronta! 🎉 Total: ${this.formatMoney(valorTotal)}. Saldo restante: ${this.formatMoney(restante)}.`);
+                  const zapLink = foneLimpo ? `https://wa.me/55${foneLimpo}?text=${zapMsg}` : null;
+
+                  return `
+                    <tr>
+                      <td>
+                        <div style="font-weight: 600; color: var(--text-primary);">${this.escapeHtml(e.cliente_nome)}</div>
+                        <div style="font-size: 0.78rem; color: var(--text-muted);">#${e.id.substring(e.id.length - 5)} • ${this.escapeHtml(e.telefone || 'Sem fone')}</div>
+                      </td>
+                      <td>
+                        <div style="font-size: 0.84rem; max-width: 250px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${this.escapeHtml(itensStr)}">
+                          ${this.escapeHtml(itensStr)}
+                        </div>
+                      </td>
+                      <td>
+                        <span class="status-badge badge-pronto">${e.status}</span>
+                      </td>
+                      <td>
+                        <span class="status-badge ${pagtoClass}">${e.pagamento_status}</span>
+                        <div style="font-size: 0.76rem; color: var(--text-muted); margin-top: 3px;">Pago: ${this.formatMoney(valorPago)} de ${this.formatMoney(valorTotal)}</div>
+                      </td>
+                      <td>
+                        <strong style="color: ${restante > 0 ? 'var(--danger)' : 'var(--success)'}; font-size: 0.95rem;">
+                          ${this.formatMoney(restante)}
+                        </strong>
+                      </td>
+                      <td style="text-align: right; white-space: nowrap;">
+                        <button class="btn btn-primary" onclick="EncomendasModule.quitarPagamento('${e.id}')" title="Marcar como Pago e mover para Finalizados" style="padding: 5px 10px; font-size: 0.78rem;">
+                          💰 Quitar
+                        </button>
+                        ${zapLink ? `
+                          <a href="${zapLink}" target="_blank" class="btn btn-secondary" title="Avisar no WhatsApp" style="padding: 5px 10px; font-size: 0.78rem; text-decoration: none; display: inline-flex; align-items: center; gap: 4px;">
+                            💬 Avisar
+                          </a>
+                        ` : ''}
+                        <button class="btn btn-secondary" onclick="EncomendasModule.openEditModal('${e.id}')" title="Editar encomenda" style="padding: 5px 8px; font-size: 0.78rem;">
+                          ✏️
+                        </button>
+                      </td>
+                    </tr>
+                  `;
+                }).join('')}
+              </tbody>
+            </table>
+          </div>
+        `;
       }
     }
   },

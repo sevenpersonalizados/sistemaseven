@@ -10,7 +10,10 @@ const EncomendasModule = {
     this.render();
     this.attachEvents();
     window.addEventListener('seven_data_updated', (e) => {
-      if (e.detail?.table === 'encomendas') this.render();
+      if (!e.detail || e.detail?.table === 'encomendas') {
+        this.render();
+        this.renderFinalizados();
+      }
     });
   },
 
@@ -20,9 +23,16 @@ const EncomendasModule = {
     const filtroPagto = document.getElementById('filtro-enc-pagto')?.value || '';
 
     const filtradas = encomendas.filter(e => {
-      const matchStatus = !filtroStatus || e.status === filtroStatus;
+      const isFin = (e.status === 'Entregue' || e.status === 'Pronto') && e.pagamento_status === 'Pago';
+      if (!filtroStatus) {
+        if (isFin) return false;
+      } else if (filtroStatus === 'Finalizadas') {
+        if (!isFin) return false;
+      } else if (filtroStatus !== 'TODOS') {
+        if (e.status !== filtroStatus) return false;
+      }
       const matchPagto = !filtroPagto || e.pagamento_status === filtroPagto;
-      return matchStatus && matchPagto;
+      return matchPagto;
     });
 
     const tbody = document.getElementById('encomendas-table-body');
@@ -294,6 +304,91 @@ const EncomendasModule = {
       this.render();
     }
   },
+  quitarPagamento(id) {
+    const enc = StorageService.get('encomendas').find(e => e.id === id);
+    if (!enc) return;
+    const total = Number(enc.valor_total) || 0;
+    StorageService.update('encomendas', id, {
+      pagamento_status: 'Pago',
+      valor_pago: total
+    });
+    App.toast('Pagamento quitado! Encomenda movida para Finalizados. 🎉', 'success');
+    this.render();
+    this.renderFinalizados();
+  },
+
+  marcarEntregue(id) {
+    const enc = StorageService.get('encomendas').find(e => e.id === id);
+    if (!enc) return;
+    StorageService.update('encomendas', id, {
+      status: 'Entregue'
+    });
+    App.toast('Encomenda marcada como Entregue!', 'success');
+    this.render();
+    this.renderFinalizados();
+  },
+
+  renderFinalizados() {
+    const encomendas = StorageService.get('encomendas');
+    const finalizadas = encomendas.filter(e => {
+      if (e.status === 'Cancelada') return false;
+      return (e.status === 'Entregue' || e.status === 'Pronto') && e.pagamento_status === 'Pago';
+    }).sort((a, b) => ((b.data_entrega_prevista || b.data_pedido || '') > (a.data_entrega_prevista || a.data_pedido || '') ? 1 : -1));
+
+    const totalFaturado = finalizadas.reduce((acc, e) => acc + (Number(e.valor_pago) || Number(e.valor_total) || 0), 0);
+    const totalEl = document.getElementById('finalizados-total-valor');
+    if (totalEl) totalEl.textContent = App.formatMoney(totalFaturado);
+
+    const tbody = document.getElementById('finalizados-table-body');
+    if (!tbody) return;
+
+    if (finalizadas.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; padding: 36px; color: var(--text-muted);">Nenhuma encomenda finalizada ainda. Quando uma encomenda estiver pronta e com o pagamento quitado, ela aparecerá automaticamente aqui no histórico.</td></tr>`;
+      return;
+    }
+
+    tbody.innerHTML = finalizadas.map(enc => {
+      const totalItens = (enc.itens || []).reduce((acc, it) => acc + (Number(it.quantidade) || 0), 0);
+      const nomesProdutos = (enc.itens || []).map(i => `${i.quantidade}x ${i.produto_nome}`).join(', ');
+
+      return `
+        <tr>
+          <td>
+            <strong>#${enc.id.substring(enc.id.length - 5)}</strong>
+            <div style="font-size: 0.76rem; color: var(--text-muted);">${App.formatDate(enc.data_pedido)}</div>
+          </td>
+          <td>
+            <div style="font-weight: 600; color: var(--text-primary);">${App.escapeHtml(enc.cliente_nome)}</div>
+            <div style="font-size: 0.8rem; color: var(--text-muted);">${App.escapeHtml(enc.telefone || 'Sem fone')}</div>
+          </td>
+          <td>
+            <div style="font-size: 0.85rem; max-width: 280px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${App.escapeHtml(nomesProdutos)}">
+              ${App.escapeHtml(nomesProdutos || 'Item personalizado')}
+            </div>
+            <div style="font-size: 0.74rem; color: var(--accent);">Total: ${totalItens} peças</div>
+          </td>
+          <td>
+            <span class="status-badge badge-entregue">${enc.status === 'Pronto' ? 'Pronto (Concluído)' : enc.status}</span>
+          </td>
+          <td>
+            <div><strong>${App.formatMoney(enc.valor_total)}</strong></div>
+            <span class="status-badge badge-pago" style="margin-top: 4px;">Quitado</span>
+          </td>
+          <td>
+            <div style="font-weight: 500; color: var(--text-secondary);">
+              📅 ${App.formatDate(enc.data_entrega_prevista || enc.data_pedido)}
+            </div>
+          </td>
+          <td style="text-align: right;">
+            <button class="btn btn-secondary btn-icon" onclick="EncomendasModule.openEditModal('${enc.id}')" title="Ver detalhes / reabrir">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+            </button>
+          </td>
+        </tr>
+      `;
+    }).join('');
+  },
+
 
   attachEvents() {
     document.getElementById('filtro-enc-status')?.addEventListener('change', () => this.render());

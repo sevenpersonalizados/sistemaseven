@@ -6,9 +6,13 @@
   <meta name="theme-color" content="#05070b">
   <meta name="description" content="Sistema de Gestão Seven Personalizados — CRM Kanban, Encomendas, Estoque, Financeiro e Propostas">
   <title>Seven Personalizados — Sistema de Gestão & CRM</title>
-  <link rel="icon" type="image/png" sizes="64x64" href="favicon.png">
-  <link rel="icon" type="image/png" sizes="192x192" href="favicon-192.png">
-  <link rel="apple-touch-icon" href="favicon-192.png">
+  <link rel="icon" type="image/x-icon" href="favicon.ico?v=2">
+  <link rel="shortcut icon" type="image/x-icon" href="favicon.ico?v=2">
+  <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png?v=2">
+  <link rel="icon" type="image/png" sizes="16x16" href="favicon-16.png?v=2">
+  <link rel="icon" type="image/png" sizes="64x64" href="favicon.png?v=2">
+  <link rel="icon" type="image/png" sizes="192x192" href="favicon-192.png?v=2">
+  <link rel="apple-touch-icon" href="favicon-192.png?v=2">
 
   <!-- Google Fonts: Inter e Outfit -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -53,6 +57,13 @@
             <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
             <span>Encomendas</span>
             <span class="badge-counter" id="nav-badge-encomendas">0</span>
+          </button>
+        </li>
+        <li class="nav-item">
+          <button type="button" data-view="finalizados" id="nav-btn-finalizados">
+            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+            <span>Finalizados</span>
+            <span class="badge-counter" id="nav-badge-finalizados">0</span>
           </button>
         </li>
         <li class="nav-item">
@@ -190,6 +201,23 @@
               <div id="dash-estoque-critico"></div>
             </div>
           </div>
+
+          <!-- ENCOMENDAS PRONTAS (AGUARDANDO PAGAMENTO OU RETIRADA/ENTREGA) -->
+          <div class="panel-box" style="margin-top: 24px; border-color: rgba(0, 168, 243, 0.35); background: linear-gradient(180deg, rgba(0, 168, 243, 0.05) 0%, rgba(15, 21, 34, 0.95) 100%);">
+            <div class="panel-header">
+              <div style="display: flex; align-items: center; gap: 10px;">
+                <span style="font-size: 1.3rem;">📦</span>
+                <div>
+                  <h3 style="color: var(--primary);">Prontos — Aguardando Pagamento ou Retirada / Entrega</h3>
+                  <p style="font-size: 0.78rem; color: var(--text-muted); margin: 0;">Pedidos já produzidos que aguardam quitação financeira ou envio ao cliente</p>
+                </div>
+              </div>
+              <button class="btn btn-secondary" onclick="App.navigate('encomendas')" style="font-size: 0.8rem; padding: 6px 12px;">
+                Ver Todas Encomendas
+              </button>
+            </div>
+            <div id="dash-prontos-pendentes"></div>
+          </div>
         </section>
 
         <!-- 2. VIEW CRM (KANBAN DE LEADS) -->
@@ -272,11 +300,13 @@
           <div class="crm-toolbar">
             <div style="display: flex; gap: 12px; flex-wrap: wrap;">
               <select class="form-control" id="filtro-enc-status" style="width: auto;">
-                <option value="">Todos os Status</option>
+                <option value="">Produção Ativa (Em aberto)</option>
+                <option value="TODOS">Todas (Incluindo Finalizadas)</option>
                 <option value="Fila">Fila</option>
                 <option value="Em produção">Em produção</option>
                 <option value="Pronto">Pronto</option>
                 <option value="Entregue">Entregue</option>
+                <option value="Finalizadas">Finalizadas (Quitadas)</option>
                 <option value="Cancelada">Cancelada</option>
               </select>
 
@@ -307,6 +337,37 @@
                   </tr>
                 </thead>
                 <tbody id="encomendas-table-body"></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- VIEW FINALIZADOS (HISTÓRICO DE PEDIDOS ENTREGUES E QUITADOS) -->
+        <section class="view-section" id="view-finalizados">
+          <div class="crm-toolbar">
+            <div style="font-size: 0.88rem; color: var(--text-muted);">
+              Histórico de encomendas finalizadas, 100% quitadas e entregues aos clientes.
+            </div>
+            <div style="font-size: 0.82rem; color: var(--text-muted);">
+              Total recebido em finalizados: <strong id="finalizados-total-valor" style="color: var(--success);">R$ 0,00</strong>
+            </div>
+          </div>
+
+          <div class="panel-box" style="padding: 0; overflow: hidden;">
+            <div class="table-responsive">
+              <table class="modern-table">
+                <thead>
+                  <tr>
+                    <th>Pedido</th>
+                    <th>Cliente</th>
+                    <th>Itens & Personalização</th>
+                    <th>Status Produção</th>
+                    <th>Pagamento</th>
+                    <th>Data Entrega</th>
+                    <th style="text-align: right;">Ações</th>
+                  </tr>
+                </thead>
+                <tbody id="finalizados-table-body"></tbody>
               </table>
             </div>
           </div>
