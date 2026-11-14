@@ -2,8 +2,8 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <meta name="theme-color" content="#05070b">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#07090e">
   <meta name="color-scheme" content="dark">
   <meta name="description" content="Sistema de Gestão Seven Personalizados — CRM Kanban, Encomendas, Estoque, Financeiro e Propostas">
   <title>Seven Personalizados — Sistema de Gestão & CRM</title>
@@ -46,8 +46,9 @@
 
     <!-- SIDEBAR DE NAVEGAÇÃO -->
     <aside class="sidebar" id="app-sidebar">
-      <div class="sidebar-header">
+      <div class="sidebar-header" style="display: flex; justify-content: space-between; align-items: center;">
         <img src="logo.png" alt="Seven Personalizados" class="brand-logo-img">
+        <button type="button" class="btn-icon mobile-only" onclick="App.closeSidebar()" style="background: rgba(255, 255, 255, 0.08); border: 1px solid rgba(255, 255, 255, 0.15); border-radius: 8px; color: #ffffff; font-size: 1.2rem; cursor: pointer; width: 34px; height: 34px; display: flex; align-items: center; justify-content: center;" title="Fechar Menu">✕</button>
       </div>
 
       <ul class="nav-menu">
@@ -126,23 +127,30 @@
 
       <!-- TOPBAR SUPERIOR -->
       <header class="topbar">
-        <div class="topbar-title">
-          <h2 id="topbar-title-text">Painel Geral & Indicadores</h2>
-          <p id="topbar-subtitle-text">Visão executiva do estúdio de personalização</p>
+        <div class="topbar-left">
+          <div style="display: flex; align-items: center; gap: 12px;">
+            <button type="button" class="mobile-menu-toggle mobile-only" onclick="App.toggleSidebar()" title="Abrir menu lateral">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+            </button>
+            <div class="topbar-title">
+              <h2 id="topbar-title-text">Painel Geral & Indicadores</h2>
+              <p id="topbar-subtitle-text">Visão executiva do estúdio de personalização</p>
+            </div>
+          </div>
         </div>
 
         <div class="topbar-actions">
-          <button type="button" id="notification-toggle-btn" class="btn btn-secondary" onclick="NotificationModule.requestPermission()" title="Ativar Notificações no iPhone / Computador" style="font-size: 0.78rem; padding: 7px 12px; color: #38bdf8; border-color: rgba(56, 189, 248, 0.35);">
-            <span>🔔</span> Notificações
+          <button type="button" id="notification-toggle-btn" class="btn btn-secondary btn-sm" onclick="NotificationModule.requestPermission()" title="Ativar Notificações no iPhone / Computador">
+            <span>🔔</span> <span class="desktop-only">Notificações</span>
           </button>
-          <button type="button" id="cloud-sync-badge" class="btn btn-secondary" onclick="StorageService.syncFromSupabase()" title="Clique para sincronizar com o banco de dados Supabase" style="font-size: 0.78rem; padding: 7px 12px; color: #10b981; border-color: rgba(16, 185, 129, 0.35);">
-            🟢 Tempo Real Ativo ⚡
+          <button type="button" id="cloud-sync-badge" class="btn btn-secondary btn-sm" onclick="StorageService.syncFromSupabase()" title="Clique para sincronizar com o banco de dados Supabase">
+            🟢 <span class="desktop-only">Tempo Real ⚡</span>
           </button>
-          <button class="btn btn-secondary" onclick="PropostasModule.openNewModal()">
+          <button class="btn btn-secondary btn-sm desktop-only" onclick="PropostasModule.openNewModal()">
             <span>📄</span> Nova Proposta
           </button>
-          <button class="btn btn-primary" onclick="EncomendasModule.openNewModal()">
-            <span>✨</span> Nova Encomenda
+          <button class="btn btn-primary btn-sm" onclick="EncomendasModule.openNewModal()">
+            <span>✨</span> <span>Nova Encomenda</span>
           </button>
         </div>
       </header>
@@ -1038,6 +1046,39 @@
       <div class="modal-body" id="proposta-preview-content" style="padding: 32px;"></div>
     </div>
   </div>
+
+  <!-- BARRA DE NAVEGAÇÃO INFERIOR PARA CELULAR (ESTILO APP IPHONE) -->
+  <nav class="mobile-bottom-nav" id="mobile-bottom-nav">
+    <button type="button" class="bottom-nav-item active" data-view="dashboard" onclick="App.navigate('dashboard')">
+      <svg class="bottom-nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+      <span>Início</span>
+    </button>
+    <button type="button" class="bottom-nav-item" data-view="encomendas" onclick="App.navigate('encomendas')">
+      <div style="position: relative; display: inline-flex;">
+        <svg class="bottom-nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+        <span class="bottom-nav-badge" id="bottom-badge-encomendas" style="display: none;">0</span>
+      </div>
+      <span>Encomendas</span>
+    </button>
+    <button type="button" class="bottom-nav-item" data-view="crm" onclick="App.navigate('crm')">
+      <div style="position: relative; display: inline-flex;">
+        <svg class="bottom-nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        <span class="bottom-nav-badge" id="bottom-badge-crm" style="display: none;">0</span>
+      </div>
+      <span>CRM</span>
+    </button>
+    <button type="button" class="bottom-nav-item" data-view="finalizados" onclick="App.navigate('finalizados')">
+      <svg class="bottom-nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+      <span>Finalizados</span>
+    </button>
+    <button type="button" class="bottom-nav-item" id="bottom-nav-btn-menu" onclick="App.toggleSidebar()">
+      <svg class="bottom-nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+      <span>Menu</span>
+    </button>
+  </nav>
+
+  <!-- OVERLAY ESCURO PARA QUANDO A GAVETA DO MENU ABRIR NO CELULAR -->
+  <div class="sidebar-backdrop" id="sidebar-backdrop" onclick="App.closeSidebar()"></div>
 
   <!-- CONTAINER DE TOASTS -->
   <div class="toast-container" id="toast-container"></div>

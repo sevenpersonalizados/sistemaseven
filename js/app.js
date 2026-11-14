@@ -45,7 +45,7 @@ const App = {
   navigate(viewName) {
     this.currentView = viewName;
 
-    // Atualiza botões
+    // Atualiza botões do sidebar desktop
     document.querySelectorAll('.nav-item button[data-view]').forEach(btn => {
       if (btn.getAttribute('data-view') === viewName) {
         btn.classList.add('active');
@@ -53,6 +53,21 @@ const App = {
         btn.classList.remove('active');
       }
     });
+
+    // Atualiza botões da barra inferior mobile (estilo App iOS)
+    document.querySelectorAll('.bottom-nav-item[data-view]').forEach(btn => {
+      if (btn.getAttribute('data-view') === viewName) {
+        btn.classList.add('active');
+      } else {
+        btn.classList.remove('active');
+      }
+    });
+
+    // Fecha a gaveta lateral no celular se estiver aberta
+    this.closeSidebar();
+
+    // Rola para o topo suavemente
+    window.scrollTo({ top: 0, behavior: 'smooth' });
 
     // Alterna seções
     document.querySelectorAll('.view-section').forEach(sec => {
@@ -128,12 +143,22 @@ const App = {
       elSaldo.style.color = saldo >= 0 ? '#10b981' : '#ef4444';
     }
 
-    // 3. Atualiza Badges de alerta no menu lateral
+    // 3. Atualiza Badges de alerta no menu lateral e na barra inferior mobile
     const bCrm = document.getElementById('nav-badge-crm');
     if (bCrm) bCrm.textContent = crm.length;
+    const bbCrm = document.getElementById('bottom-badge-crm');
+    if (bbCrm) {
+      bbCrm.textContent = crm.length;
+      bbCrm.style.display = crm.length > 0 ? 'inline-block' : 'none';
+    }
 
     const bEnc = document.getElementById('nav-badge-encomendas');
     if (bEnc) bEnc.textContent = encAbertas.length;
+    const bbEnc = document.getElementById('bottom-badge-encomendas');
+    if (bbEnc) {
+      bbEnc.textContent = encAbertas.length;
+      bbEnc.style.display = encAbertas.length > 0 ? 'inline-block' : 'none';
+    }
 
     const bFin = document.getElementById('nav-badge-finalizados');
     if (bFin) bFin.textContent = encFinalizadas.length;
@@ -400,6 +425,33 @@ const App = {
 
     StorageService.saveConfig(config);
     this.toast('Configurações da Seven Personalizados salvas!', 'success');
+  },
+
+  // Gerenciamento da Gaveta Lateral no Celular
+  toggleSidebar() {
+    const sb = document.getElementById('app-sidebar');
+    if (!sb) return;
+    if (sb.classList.contains('open')) {
+      this.closeSidebar();
+    } else {
+      this.openSidebar();
+    }
+  },
+
+  openSidebar() {
+    const sb = document.getElementById('app-sidebar');
+    const bd = document.getElementById('sidebar-backdrop');
+    if (sb) sb.classList.add('open');
+    if (bd) bd.classList.add('active');
+    document.body.style.overflow = 'hidden';
+  },
+
+  closeSidebar() {
+    const sb = document.getElementById('app-sidebar');
+    const bd = document.getElementById('sidebar-backdrop');
+    if (sb) sb.classList.remove('open');
+    if (bd) bd.classList.remove('active');
+    document.body.style.overflow = '';
   }
 };
 
