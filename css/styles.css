@@ -3,6 +3,7 @@
    ========================================================================== */
 
 :root {
+  color-scheme: dark;
   /* Paleta Primária & Cores de Marca Seven (Azul, Branco e Preto) */
   --primary: #00a8f3;
   --primary-hover: #0284c7;
@@ -724,6 +725,7 @@ body {
   font-weight: 600;
   cursor: pointer;
   border: 1px solid transparent;
+  color-scheme: dark;
   background-position: right 6px center;
   background-repeat: no-repeat;
   background-size: 10px;
@@ -745,9 +747,10 @@ body {
 }
 
 .quick-select option {
-  background: #0f1522;
-  color: #fff;
+  background-color: #0d121f !important;
+  color: #ffffff !important;
   font-weight: 500;
+  font-size: 0.85rem;
 }
 
 .dash-row-clickable {
@@ -844,7 +847,7 @@ body {
 
 .form-control {
   width: 100%;
-  background: rgba(255, 255, 255, 0.05);
+  background: #0d121f;
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
   padding: 10px 14px;
@@ -852,12 +855,48 @@ body {
   font-family: var(--font-main);
   font-size: 0.9rem;
   transition: var(--transition);
+  color-scheme: dark;
 }
 
+select.form-control {
+  background-color: #0d121f;
+  color: #ffffff;
+  cursor: pointer;
+  background-position: right 12px center;
+  background-repeat: no-repeat;
+  background-size: 12px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+  padding-right: 36px;
+  appearance: none;
+  -webkit-appearance: none;
+}
+
+select.form-control:focus,
 .form-control:focus {
   outline: none;
   border-color: var(--primary);
   box-shadow: 0 0 0 3px var(--primary-glow);
+}
+
+/* Garante que TODAS as opções de caixas select abertas tenham fundo escuro e texto 100% legível */
+select,
+select option,
+select optgroup,
+option,
+optgroup {
+  background-color: #0d121f !important;
+  color: #ffffff !important;
+  font-family: var(--font-main);
+}
+
+select option {
+  padding: 8px 12px;
+}
+
+select option:checked {
+  background-color: #00a8f3 !important;
+  color: #ffffff !important;
+  font-weight: 600;
 }
 
 .form-row {
