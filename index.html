@@ -182,35 +182,52 @@
           </div>
 
           <div class="dashboard-grid">
-            <div class="panel-box">
-              <div class="panel-header">
-                <h3>Próximas Entregas de Personalizados</h3>
+            <div class="themed-panel theme-blue">
+              <div class="themed-header">
+                <div style="display: flex; align-items: center; gap: 12px;">
+                  <span class="themed-icon-box">📅</span>
+                  <div>
+                    <h3 class="themed-title">Próximas Entregas de Personalizados</h3>
+                    <div class="themed-subtitle">Cronograma de pedidos para entrega e produção</div>
+                  </div>
+                </div>
                 <button class="btn btn-secondary btn-icon" onclick="App.navigate('encomendas')" title="Ver todas as encomendas">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14"/><path d="M12 5l7 7-7 7"/></svg>
                 </button>
               </div>
-              <div id="dash-proximas-entregas"></div>
+              <div id="dash-proximas-entregas" style="padding: 12px;"></div>
             </div>
 
-            <div class="panel-box">
-              <div class="panel-header">
-                <h3>Alertas de Insumos</h3>
+            <div class="themed-panel theme-amber">
+              <div class="themed-header">
+                <div style="display: flex; align-items: center; gap: 12px;">
+                  <span class="themed-icon-box">⚠️</span>
+                  <div>
+                    <h3 class="themed-title">Alertas de Insumos</h3>
+                    <div class="themed-subtitle">Materiais e filamentos em nível crítico</div>
+                  </div>
+                </div>
                 <button class="btn btn-secondary btn-icon" onclick="App.navigate('estoque')" title="Ir para o estoque">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14"/><path d="M12 5l7 7-7 7"/></svg>
                 </button>
               </div>
-              <div id="dash-estoque-critico"></div>
+              <div id="dash-estoque-critico" style="padding: 12px;"></div>
             </div>
           </div>
 
           <!-- ENCOMENDAS PRONTAS (AGUARDANDO PAGAMENTO OU RETIRADA/ENTREGA) -->
-          <div class="panel-box" style="margin-top: 24px; border-color: rgba(0, 168, 243, 0.35); background: linear-gradient(180deg, rgba(0, 168, 243, 0.05) 0%, rgba(15, 21, 34, 0.95) 100%);">
-            <div class="panel-header">
-              <div style="display: flex; align-items: center; gap: 10px;">
-                <span style="font-size: 1.3rem;">📦</span>
+          <div class="themed-panel theme-purple" style="margin-top: 24px;">
+            <div class="themed-header">
+              <div style="display: flex; align-items: center; gap: 14px; flex-wrap: wrap;">
+                <span class="themed-icon-box">📦</span>
                 <div>
-                  <h3 style="color: var(--primary);">Prontos — Aguardando Pagamento ou Retirada / Entrega</h3>
-                  <p style="font-size: 0.78rem; color: var(--text-muted); margin: 0;">Pedidos já produzidos que aguardam quitação financeira ou envio ao cliente</p>
+                  <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+                    <h3 class="themed-title">Prontos — Aguardando Pagamento ou Retirada / Entrega</h3>
+                    <span style="font-size: 0.72rem; font-weight: 700; text-transform: uppercase; padding: 3px 10px; border-radius: 999px; background: rgba(168, 85, 247, 0.22); color: #c084fc; border: 1px solid rgba(168, 85, 247, 0.55);">
+                      AGUARDANDO QUITAÇÃO OU ENTREGA
+                    </span>
+                  </div>
+                  <div class="themed-subtitle">Pedidos já produzidos que aguardam quitação financeira ou envio ao cliente</div>
                 </div>
               </div>
               <button class="btn btn-secondary" onclick="App.navigate('encomendas')" style="font-size: 0.8rem; padding: 6px 12px;">
@@ -223,14 +240,32 @@
 
         <!-- 2. VIEW CRM (KANBAN DE LEADS) -->
         <section class="view-section" id="view-crm">
-          <div class="crm-toolbar">
-            <div style="display: flex; gap: 12px; align-items: center;">
-              <input type="text" class="search-input" id="crm-search-input" placeholder="🔍 Buscar lead, telefone ou mensagem...">
-              <div style="font-size: 0.82rem; color: var(--text-muted);">Total estimado no funil: <strong id="crm-total-funil" style="color: var(--accent);">R$ 0,00</strong></div>
+          <div class="themed-panel theme-blue" style="margin-bottom: 22px;">
+            <div class="themed-header">
+              <div style="display: flex; align-items: center; gap: 14px; flex-wrap: wrap;">
+                <span class="themed-icon-box">💬</span>
+                <div>
+                  <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+                    <h3 class="themed-title">CRM & Funil de Vendas WhatsApp</h3>
+                    <span style="font-size: 0.72rem; font-weight: 700; text-transform: uppercase; padding: 3px 10px; border-radius: 999px; background: rgba(0, 168, 243, 0.22); color: #38bdf8; border: 1px solid rgba(0, 168, 243, 0.55);">
+                      NEGOCIAÇÕES ATIVAS
+                    </span>
+                  </div>
+                  <div class="themed-subtitle">
+                    Acompanhe conversas, envie orçamentos e feche encomendas com 1 clique
+                  </div>
+                </div>
+              </div>
+              <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+                <input type="text" class="search-input" id="crm-search-input" placeholder="🔍 Buscar lead, telefone ou mensagem..." style="min-width: 240px;">
+                <span class="themed-chip-highlight" style="border: 1px solid rgba(0, 168, 243, 0.45); color: #38bdf8;">
+                  💰 Total no Funil: <strong id="crm-total-funil" style="color: #ffffff; margin-left: 4px;">R$ 0,00</strong>
+                </span>
+                <button class="btn btn-primary" onclick="CrmModule.openNewModal()">
+                  <span>+</span> Novo Lead
+                </button>
+              </div>
             </div>
-            <button class="btn btn-primary" onclick="CrmModule.openNewModal()">
-              <span>+</span> Novo Lead no CRM
-            </button>
           </div>
 
           <div class="kanban-board">
@@ -329,16 +364,31 @@
 
         <!-- VIEW FINALIZADOS (HISTÓRICO DE PEDIDOS ENTREGUES E QUITADOS) -->
         <section class="view-section" id="view-finalizados">
-          <div class="crm-toolbar">
-            <div style="font-size: 0.88rem; color: var(--text-muted);">
-              Histórico de encomendas finalizadas, 100% quitadas e entregues aos clientes.
+          <div class="themed-panel theme-green">
+            <div class="themed-header">
+              <div style="display: flex; align-items: center; gap: 14px; flex-wrap: wrap;">
+                <span class="themed-icon-box">✅</span>
+                <div>
+                  <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+                    <h3 class="themed-title">Encomendas Finalizadas</h3>
+                    <span style="font-size: 0.72rem; font-weight: 700; text-transform: uppercase; padding: 3px 10px; border-radius: 999px; background: rgba(16, 185, 129, 0.22); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.55);">
+                      100% QUITADO & ENTREGUE
+                    </span>
+                  </div>
+                  <div class="themed-subtitle">
+                    Histórico de encomendas produzidas, 100% quitadas e entregues aos clientes
+                  </div>
+                </div>
+              </div>
+              <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+                <span class="themed-chip">
+                  📦 <strong id="finalizados-total-qtd" style="color: #ffffff;">0</strong> finalizadas
+                </span>
+                <span class="themed-chip-highlight" style="border: 1px solid rgba(16, 185, 129, 0.45); color: #34d399;">
+                  💰 Total Recebido: <strong id="finalizados-total-valor" style="color: #ffffff; margin-left: 4px;">R$ 0,00</strong>
+                </span>
+              </div>
             </div>
-            <div style="font-size: 0.82rem; color: var(--text-muted);">
-              Total recebido em finalizados: <strong id="finalizados-total-valor" style="color: var(--success);">R$ 0,00</strong>
-            </div>
-          </div>
-
-          <div class="panel-box" style="padding: 0; overflow: hidden;">
             <div class="table-responsive">
               <table class="modern-table">
                 <thead>
@@ -360,16 +410,31 @@
 
         <!-- 4. VIEW ESTOQUE -->
         <section class="view-section" id="view-estoque">
-          <div class="crm-toolbar">
-            <div style="font-size: 0.88rem; color: var(--text-muted);">
-              Controle de consumo de filamentos, resinas, chapas de MDF, acrílicos e copos inox.
+          <div class="themed-panel theme-cyan">
+            <div class="themed-header">
+              <div style="display: flex; align-items: center; gap: 14px; flex-wrap: wrap;">
+                <span class="themed-icon-box">🧱</span>
+                <div>
+                  <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+                    <h3 class="themed-title">Controle de Insumos & Matéria-Prima</h3>
+                    <span style="font-size: 0.72rem; font-weight: 700; text-transform: uppercase; padding: 3px 10px; border-radius: 999px; background: rgba(6, 182, 212, 0.22); color: #22d3ee; border: 1px solid rgba(6, 182, 212, 0.55);">
+                      ESTOQUE ATIVO
+                    </span>
+                  </div>
+                  <div class="themed-subtitle">
+                    Filamentos 3D, chapas de MDF, acrílicos, resinas e copos inox
+                  </div>
+                </div>
+              </div>
+              <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+                <span class="themed-chip">
+                  📦 <strong id="estoque-total-qtd" style="color: #ffffff;">0</strong> insumos
+                </span>
+                <button class="btn btn-primary" onclick="EstoqueModule.openNewModal()">
+                  <span>+</span> Novo Insumo / Material
+                </button>
+              </div>
             </div>
-            <button class="btn btn-primary" onclick="EstoqueModule.openNewModal()">
-              <span>+</span> Novo Insumo / Material
-            </button>
-          </div>
-
-          <div class="panel-box" style="padding: 0; overflow: hidden;">
             <div class="table-responsive">
               <table class="modern-table">
                 <thead>
@@ -416,9 +481,15 @@
           </div>
 
           <div class="dashboard-grid">
-            <div class="panel-box">
-              <div class="panel-header">
-                <h3>Lançamentos de Despesas</h3>
+            <div class="themed-panel theme-rose">
+              <div class="themed-header">
+                <div style="display: flex; align-items: center; gap: 12px;">
+                  <span class="themed-icon-box">💸</span>
+                  <div>
+                    <h3 class="themed-title">Lançamentos de Despesas</h3>
+                    <div class="themed-subtitle">Custos fixos, matéria-prima e manutenção</div>
+                  </div>
+                </div>
                 <button class="btn btn-primary" onclick="FinanceiroModule.openNewDespesaModal()">
                   <span>+</span> Registrar Despesa
                 </button>
@@ -439,11 +510,17 @@
               </div>
             </div>
 
-            <div class="panel-box">
-              <div class="panel-header">
-                <h3>Demonstrativo do Mês</h3>
+            <div class="themed-panel theme-indigo">
+              <div class="themed-header">
+                <div style="display: flex; align-items: center; gap: 12px;">
+                  <span class="themed-icon-box">📊</span>
+                  <div>
+                    <h3 class="themed-title">Demonstrativo do Mês</h3>
+                    <div class="themed-subtitle">Balanço comparativo de receitas e despesas</div>
+                  </div>
+                </div>
               </div>
-              <div style="height: 260px; position: relative;">
+              <div style="height: 260px; position: relative; padding: 18px;">
                 <canvas id="financeiro-chart"></canvas>
               </div>
             </div>
@@ -452,13 +529,31 @@
 
         <!-- 6. VIEW PROPOSTAS -->
         <section class="view-section" id="view-propostas">
-          <div class="crm-toolbar">
-            <div style="font-size: 0.88rem; color: var(--text-muted);">
-              Crie orçamentos formais com maquetes, especificações, prazos e condições comerciais de alta conversão.
+          <div class="themed-panel theme-purple" style="margin-bottom: 24px;">
+            <div class="themed-header">
+              <div style="display: flex; align-items: center; gap: 14px; flex-wrap: wrap;">
+                <span class="themed-icon-box">📄</span>
+                <div>
+                  <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+                    <h3 class="themed-title">Gerador de Propostas Comerciais</h3>
+                    <span style="font-size: 0.72rem; font-weight: 700; text-transform: uppercase; padding: 3px 10px; border-radius: 999px; background: rgba(168, 85, 247, 0.22); color: #c084fc; border: 1px solid rgba(168, 85, 247, 0.55);">
+                      ORÇAMENTOS DE ALTA CONVERSÃO
+                    </span>
+                  </div>
+                  <div class="themed-subtitle">
+                    Crie orçamentos com itens detalhados e aprove direto para Encomendas
+                  </div>
+                </div>
+              </div>
+              <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+                <span class="themed-chip">
+                  📑 <strong id="propostas-total-qtd" style="color: #ffffff;">0</strong> propostas
+                </span>
+                <button class="btn btn-primary" onclick="PropostasModule.openNewModal()">
+                  <span>+</span> Nova Proposta Comercial
+                </button>
+              </div>
             </div>
-            <button class="btn btn-primary" onclick="PropostasModule.openNewModal()">
-              <span>+</span> Nova Proposta Comercial
-            </button>
           </div>
 
           <div id="propostas-cards-container" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 20px;"></div>
@@ -466,11 +561,25 @@
 
         <!-- 7. VIEW CONFIGURAÇÕES -->
         <section class="view-section" id="view-configuracoes">
-          <div class="panel-box" style="max-width: 800px;">
-            <div class="panel-header">
-              <h3>Identidade & Dados da Seven Personalizados</h3>
+          <div class="themed-panel theme-indigo" style="max-width: 800px;">
+            <div class="themed-header">
+              <div style="display: flex; align-items: center; gap: 14px; flex-wrap: wrap;">
+                <span class="themed-icon-box">⚙️</span>
+                <div>
+                  <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+                    <h3 class="themed-title">Identidade & Dados da Seven Personalizados</h3>
+                    <span style="font-size: 0.72rem; font-weight: 700; text-transform: uppercase; padding: 3px 10px; border-radius: 999px; background: rgba(99, 102, 241, 0.22); color: #a5b4fc; border: 1px solid rgba(99, 102, 241, 0.55);">
+                      SISTEMA & PIX
+                    </span>
+                  </div>
+                  <div class="themed-subtitle">
+                    Configure os dados da sua empresa, chave PIX para cobrança e mensagens automáticas
+                  </div>
+                </div>
+              </div>
             </div>
-            <form onsubmit="event.preventDefault(); App.saveConfigForm();">
+            <div style="padding: 24px;">
+              <form onsubmit="event.preventDefault(); App.saveConfigForm();">
               <div class="form-row">
                 <div class="form-group">
                   <label>Nome da Empresa</label>

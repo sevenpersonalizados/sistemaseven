@@ -13,11 +13,14 @@ const EstoqueModule = {
 
   render() {
     const itens = StorageService.get('estoque');
+    const totalQtdEl = document.getElementById('estoque-total-qtd');
+    if (totalQtdEl) totalQtdEl.textContent = itens.length;
+
     const tbody = document.getElementById('estoque-table-body');
     if (!tbody) return;
 
     if (itens.length === 0) {
-      tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; padding: 32px; color: var(--text-muted);">Nenhum item em estoque cadastrado.</td></tr>`;
+      tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; padding: 36px; color: var(--text-muted);"><div style="font-size: 1.5rem; margin-bottom: 8px;">🧱</div>Nenhum item em estoque cadastrado no momento.</td></tr>`;
       return;
     }
 

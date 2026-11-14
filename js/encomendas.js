@@ -580,11 +580,14 @@ const EncomendasModule = {
     const totalEl = document.getElementById('finalizados-total-valor');
     if (totalEl) totalEl.textContent = App.formatMoney(totalFaturado);
 
+    const totalQtdEl = document.getElementById('finalizados-total-qtd');
+    if (totalQtdEl) totalQtdEl.textContent = finalizadas.length;
+
     const tbody = document.getElementById('finalizados-table-body');
     if (!tbody) return;
 
     if (finalizadas.length === 0) {
-      tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; padding: 36px; color: var(--text-muted);">Nenhuma encomenda finalizada ainda. Quando uma encomenda estiver pronta e com o pagamento quitado, ela aparecerá automaticamente aqui no histórico.</td></tr>`;
+      tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; padding: 36px; color: var(--text-muted);"><div style="font-size: 1.5rem; margin-bottom: 8px;">✅</div>Nenhuma encomenda finalizada ainda. Quando uma encomenda estiver pronta e com o pagamento quitado, ela aparecerá automaticamente aqui no histórico.</td></tr>`;
       return;
     }
 

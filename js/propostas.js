@@ -15,11 +15,14 @@ const PropostasModule = {
 
   renderList() {
     const propostas = StorageService.get('propostas');
+    const totalQtdEl = document.getElementById('propostas-total-qtd');
+    if (totalQtdEl) totalQtdEl.textContent = propostas.length;
+
     const container = document.getElementById('propostas-cards-container');
     if (!container) return;
 
     if (propostas.length === 0) {
-      container.innerHTML = `<div style="grid-column: 1/-1; text-align: center; padding: 40px; color: var(--text-muted);">Nenhuma proposta gerada ainda. Clique em "Nova Proposta Comercial" para criar a primeira!</div>`;
+      container.innerHTML = `<div style="grid-column: 1/-1; text-align: center; padding: 40px; color: var(--text-muted);"><div style="font-size: 1.5rem; margin-bottom: 8px;">📄</div>Nenhuma proposta gerada ainda. Clique em "Nova Proposta Comercial" para criar a primeira!</div>`;
       return;
     }
 
