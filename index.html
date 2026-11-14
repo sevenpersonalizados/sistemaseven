@@ -135,11 +135,11 @@
         <!-- 1. VIEW DASHBOARD -->
         <section class="view-section active" id="view-dashboard">
           <div class="kpis-grid">
-            <div class="kpi-card">
+            <div class="kpi-card dash-row-clickable" onclick="App.navigate('encomendas')" title="Clique para ver todas as encomendas em aberto">
               <div class="kpi-info">
                 <div class="kpi-label">Encomendas em Aberto</div>
                 <div class="kpi-value" id="dash-kpi-enc-abertas">0</div>
-                <div class="kpi-sub">Fila ou Em Produção</div>
+                <div class="kpi-sub">Fila, Em Produção ou Prontos</div>
               </div>
               <div class="kpi-icon-box purple">
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/></svg>

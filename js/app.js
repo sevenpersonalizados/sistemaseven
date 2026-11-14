@@ -154,14 +154,15 @@ const App = {
         containerEntregas.innerHTML = `<div style="text-align: center; color: var(--text-muted); padding: 24px;">Nenhuma entrega pendente no momento! 🎉</div>`;
       } else {
         containerEntregas.innerHTML = proximas.map(e => `
-          <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px; border-bottom: 1px solid var(--border);">
-            <div>
-              <div style="font-weight: 600; color: var(--text-primary);">${this.escapeHtml(e.cliente_nome)}</div>
-              <div style="font-size: 0.78rem; color: var(--text-muted);">${(e.itens || []).map(i => i.produto_nome).join(', ') || 'Pedido Personalizado'}</div>
+          <div class="dash-row-clickable" onclick="EncomendasModule.openEditModal('${e.id}')" title="Clique para abrir detalhes da encomenda #${e.id.substring(e.id.length - 5)}" style="display: flex; justify-content: space-between; align-items: center; padding: 12px; border-bottom: 1px solid var(--border); border-radius: 6px;">
+            <div style="flex: 1; min-width: 0; padding-right: 12px;">
+              <div style="font-weight: 600; color: var(--text-primary);">${this.escapeHtml(e.cliente_nome)} <span style="font-size: 0.76rem; color: var(--text-muted); font-weight: normal;">#${e.id.substring(e.id.length - 5)}</span></div>
+              <div style="font-size: 0.78rem; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${(e.itens || []).map(i => i.produto_nome).join(', ') || 'Pedido Personalizado'}</div>
             </div>
-            <div style="text-align: right;">
-              <span class="status-badge ${EncomendasModule.getStatusClass(e.status)}">${e.status}</span>
-              <div style="font-size: 0.76rem; color: var(--accent); margin-top: 4px;">📅 ${this.formatDate(e.data_entrega_prevista)}</div>
+            <div style="display: flex; align-items: center; gap: 8px; flex-shrink: 0;" onclick="event.stopPropagation()">
+              ${EncomendasModule.renderStatusSelect(e.id, e.status)}
+              ${EncomendasModule.renderPagtoSelect(e.id, e.pagamento_status)}
+              <div style="font-size: 0.76rem; color: var(--accent); margin-left: 4px; white-space: nowrap;">📅 ${this.formatDate(e.data_entrega_prevista)}</div>
             </div>
           </div>
         `).join('');
@@ -233,7 +234,7 @@ const App = {
                   const zapLink = foneLimpo ? `https://wa.me/55${foneLimpo}?text=${zapMsg}` : null;
 
                   return `
-                    <tr>
+                    <tr class="dash-row-clickable" onclick="EncomendasModule.openEditModal('${e.id}')" title="Clique para abrir detalhes da encomenda #${e.id.substring(e.id.length - 5)}">
                       <td>
                         <div style="font-weight: 600; color: var(--text-primary);">${this.escapeHtml(e.cliente_nome)}</div>
                         <div style="font-size: 0.78rem; color: var(--text-muted);">#${e.id.substring(e.id.length - 5)} • ${this.escapeHtml(e.telefone || 'Sem fone')}</div>
@@ -243,11 +244,11 @@ const App = {
                           ${this.escapeHtml(itensStr)}
                         </div>
                       </td>
-                      <td>
-                        <span class="status-badge badge-pronto">${e.status}</span>
+                      <td onclick="event.stopPropagation()">
+                        ${EncomendasModule.renderStatusSelect(e.id, e.status)}
                       </td>
-                      <td>
-                        <span class="status-badge ${pagtoClass}">${e.pagamento_status}</span>
+                      <td onclick="event.stopPropagation()">
+                        ${EncomendasModule.renderPagtoSelect(e.id, e.pagamento_status)}
                         <div style="font-size: 0.76rem; color: var(--text-muted); margin-top: 3px;">Pago: ${this.formatMoney(valorPago)} de ${this.formatMoney(valorTotal)}</div>
                       </td>
                       <td>
@@ -255,7 +256,7 @@ const App = {
                           ${this.formatMoney(restante)}
                         </strong>
                       </td>
-                      <td style="text-align: right; white-space: nowrap;">
+                      <td style="text-align: right; white-space: nowrap;" onclick="event.stopPropagation()">
                         <button class="btn btn-primary" onclick="EncomendasModule.quitarPagamento('${e.id}')" title="Marcar como Pago e mover para Finalizados" style="padding: 5px 10px; font-size: 0.78rem;">
                           💰 Quitar
                         </button>

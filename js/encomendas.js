@@ -50,7 +50,7 @@ const EncomendasModule = {
       const nomesProdutos = (enc.itens || []).map(i => `${i.quantidade}x ${i.produto_nome}`).join(', ');
 
       return `
-        <tr>
+        <tr class="dash-row-clickable" onclick="EncomendasModule.openEditModal('${enc.id}')" title="Clique para abrir detalhes da encomenda #${enc.id.substring(enc.id.length - 5)}">
           <td>
             <strong>#${enc.id.substring(enc.id.length - 5)}</strong>
             <div style="font-size: 0.76rem; color: var(--text-muted);">${App.formatDate(enc.data_pedido)}</div>
@@ -65,19 +65,19 @@ const EncomendasModule = {
             </div>
             <div style="font-size: 0.74rem; color: var(--accent);">Total: ${totalItens} peças</div>
           </td>
-          <td>
-            <span class="status-badge ${statusClass}">${enc.status}</span>
+          <td onclick="event.stopPropagation()">
+            ${this.renderStatusSelect(enc.id, enc.status)}
           </td>
-          <td>
+          <td onclick="event.stopPropagation()">
             <div><strong>${App.formatMoney(enc.valor_total)}</strong></div>
-            <span class="status-badge ${pagtoClass}" style="margin-top: 4px;">${enc.pagamento_status}</span>
+            <div style="margin-top: 4px;">${this.renderPagtoSelect(enc.id, enc.pagamento_status)}</div>
           </td>
           <td>
             <div style="font-weight: 500; color: ${this.isAtrasado(enc.data_entrega_prevista, enc.status) ? 'var(--danger)' : 'var(--text-secondary)'};">
               📅 ${App.formatDate(enc.data_entrega_prevista)}
             </div>
           </td>
-          <td style="text-align: right;">
+          <td style="text-align: right;" onclick="event.stopPropagation()">
             <button class="btn btn-secondary btn-icon" onclick="EncomendasModule.openEditModal('${enc.id}')" title="Editar encomenda">
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
             </button>
@@ -111,6 +111,73 @@ const EncomendasModule = {
     if (!dataEntrega || status === 'Entregue' || status === 'Cancelada') return false;
     const hoje = new Date().toISOString().split('T')[0];
     return dataEntrega < hoje;
+  },
+
+  renderStatusSelect(id, currentStatus) {
+    const statusClass = this.getStatusClass(currentStatus);
+    const statuses = ['Fila', 'Em produção', 'Pronto', 'Entregue', 'Cancelada'];
+    return `
+      <select class="quick-select ${statusClass}" 
+              onclick="event.stopPropagation()" 
+              onchange="EncomendasModule.quickUpdateStatus('${id}', this.value)" 
+              title="Clique para alterar status de produção">
+        ${statuses.map(s => `<option value="${s}" ${s === currentStatus ? 'selected' : ''}>${s}</option>`).join('')}
+      </select>
+    `;
+  },
+
+  renderPagtoSelect(id, currentPagto) {
+    const pagtoClass = this.getPagtoClass(currentPagto);
+    const pagtos = ['Pendente', 'Parcial', 'Pago'];
+    return `
+      <select class="quick-select ${pagtoClass}" 
+              onclick="event.stopPropagation()" 
+              onchange="EncomendasModule.quickUpdatePagamento('${id}', this.value)" 
+              title="Clique para alterar status financeiro">
+        ${pagtos.map(p => `<option value="${p}" ${p === currentPagto ? 'selected' : ''}>${p}</option>`).join('')}
+      </select>
+    `;
+  },
+
+  quickUpdateStatus(id, newStatus) {
+    const enc = StorageService.get('encomendas').find(e => e.id === id);
+    if (!enc) return;
+    
+    StorageService.update('encomendas', id, { status: newStatus });
+    
+    if ((newStatus === 'Pronto' || newStatus === 'Entregue') && enc.pagamento_status === 'Pago') {
+      App.toast(`Status alterado para "${newStatus}"! Encomenda movida para Finalizados. 🎉`, 'success');
+    } else {
+      App.toast(`Status da encomenda #${id.substring(id.length - 5)} alterado para "${newStatus}".`, 'info');
+    }
+    
+    this.render();
+    this.renderFinalizados();
+    App.renderDashboard();
+  },
+
+  quickUpdatePagamento(id, newPagto) {
+    const enc = StorageService.get('encomendas').find(e => e.id === id);
+    if (!enc) return;
+    
+    const updateData = { pagamento_status: newPagto };
+    if (newPagto === 'Pago') {
+      updateData.valor_pago = Number(enc.valor_total) || 0;
+    } else if (newPagto === 'Pendente') {
+      updateData.valor_pago = 0;
+    }
+    
+    StorageService.update('encomendas', id, updateData);
+    
+    if (newPagto === 'Pago' && (enc.status === 'Pronto' || enc.status === 'Entregue')) {
+      App.toast(`Pagamento quitado! Encomenda movida para Finalizados. 🎉`, 'success');
+    } else {
+      App.toast(`Financeiro da encomenda #${id.substring(id.length - 5)} alterado para "${newPagto}".`, 'info');
+    }
+    
+    this.render();
+    this.renderFinalizados();
+    App.renderDashboard();
   },
 
   openNewModal() {
@@ -352,7 +419,7 @@ const EncomendasModule = {
       const nomesProdutos = (enc.itens || []).map(i => `${i.quantidade}x ${i.produto_nome}`).join(', ');
 
       return `
-        <tr>
+        <tr class="dash-row-clickable" onclick="EncomendasModule.openEditModal('${enc.id}')" title="Clique para abrir detalhes da encomenda #${enc.id.substring(enc.id.length - 5)}">
           <td>
             <strong>#${enc.id.substring(enc.id.length - 5)}</strong>
             <div style="font-size: 0.76rem; color: var(--text-muted);">${App.formatDate(enc.data_pedido)}</div>
@@ -367,19 +434,19 @@ const EncomendasModule = {
             </div>
             <div style="font-size: 0.74rem; color: var(--accent);">Total: ${totalItens} peças</div>
           </td>
-          <td>
-            <span class="status-badge badge-entregue">${enc.status === 'Pronto' ? 'Pronto (Concluído)' : enc.status}</span>
+          <td onclick="event.stopPropagation()">
+            ${this.renderStatusSelect(enc.id, enc.status)}
           </td>
-          <td>
+          <td onclick="event.stopPropagation()">
             <div><strong>${App.formatMoney(enc.valor_total)}</strong></div>
-            <span class="status-badge badge-pago" style="margin-top: 4px;">Quitado</span>
+            <div style="margin-top: 4px;">${this.renderPagtoSelect(enc.id, enc.pagamento_status)}</div>
           </td>
           <td>
             <div style="font-weight: 500; color: var(--text-secondary);">
               📅 ${App.formatDate(enc.data_entrega_prevista || enc.data_pedido)}
             </div>
           </td>
-          <td style="text-align: right;">
+          <td style="text-align: right;" onclick="event.stopPropagation()">
             <button class="btn btn-secondary btn-icon" onclick="EncomendasModule.openEditModal('${enc.id}')" title="Ver detalhes / reabrir">
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
             </button>
