@@ -91,6 +91,12 @@ const CrmModule = {
               <span class="kanban-card-value">${card.value ? App.formatMoney(card.value) : 'Sob Consulta'}</span>
               <span>${card.updated_at ? App.formatRelativeDate(card.updated_at) : 'Recente'}</span>
             </div>
+
+            <div class="kanban-card-action">
+              <button type="button" class="btn btn-fechar-encomenda" onclick="CrmModule.fecharEncomenda('${card.id}')" title="Cliente fechou! Transformar em encomenda e abrir produção">
+                <span>🛒 Fechou Encomenda</span>
+              </button>
+            </div>
           </div>
         `;
       }).join('');
@@ -203,6 +209,22 @@ const CrmModule = {
       App.closeModal('modal-crm');
       this.render();
     }
+  },
+
+  fecharEncomenda(cardId) {
+    const card = StorageService.get('crm_cards').find(c => c.id === cardId);
+    if (!card) return;
+
+    // 1. Move lead para etapa "fechado"
+    StorageService.update('crm_cards', cardId, { stage: 'fechado' });
+
+    // 2. Navega diretamente para a tela de Encomendas
+    App.navigate('encomendas');
+
+    // 3. Abre modal de nova encomenda pré-preenchido com os dados do cliente
+    EncomendasModule.openNewModalFromLead(card);
+
+    App.toast(`Pedido fechado! Complete os dados da encomenda de ${card.lead_name}.`, 'success');
   },
 
   attachEvents() {

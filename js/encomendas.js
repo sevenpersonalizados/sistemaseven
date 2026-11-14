@@ -104,21 +104,38 @@ const EncomendasModule = {
   },
 
   openNewModal() {
-    document.getElementById('enc-modal-title').textContent = 'Nova Encomenda de Personalizados';
+    this.openNewModalFromLead(null);
+  },
+
+  openNewModalFromLead(lead = null) {
+    document.getElementById('enc-modal-title').textContent = lead 
+      ? `Nova Encomenda — ${lead.lead_name}` 
+      : 'Nova Encomenda de Personalizados';
     document.getElementById('enc-form-id').value = '';
-    document.getElementById('enc-form-cliente').value = '';
-    document.getElementById('enc-form-telefone').value = '';
+    document.getElementById('enc-form-cliente').value = lead?.lead_name || '';
+    document.getElementById('enc-form-telefone').value = lead?.phone || '';
     document.getElementById('enc-form-data-pedido').value = new Date().toISOString().split('T')[0];
-    document.getElementById('enc-form-data-entrega').value = '';
-    document.getElementById('enc-form-status').value = 'Fila';
+    
+    // Sugere entrega para 5 dias úteis à frente
+    const dataEntregaDefault = new Date(Date.now() + 5 * 24 * 3600 * 1000).toISOString().split('T')[0];
+    document.getElementById('enc-form-data-entrega').value = dataEntregaDefault;
+    
+    document.getElementById('enc-form-status').value = 'Em produção';
     document.getElementById('enc-form-pagto-status').value = 'Pendente';
     document.getElementById('enc-form-forma-pagto').value = 'Pix';
     document.getElementById('enc-form-valor-pago').value = '0';
-    document.getElementById('enc-form-obs').value = '';
+    document.getElementById('enc-form-obs').value = lead?.last_message || '';
     document.getElementById('enc-btn-delete').style.display = 'none';
 
+    const valorEstimado = parseFloat(lead?.value) || 0;
     encomendaItensTemp = [
-      { produto_nome: '', personalizacao: '', quantidade: 1, preco_unitario: 0, subtotal: 0 }
+      {
+        produto_nome: lead?.last_message ? 'Pedido Personalizado' : '',
+        personalizacao: lead?.last_message || '',
+        quantidade: 1,
+        preco_unitario: valorEstimado,
+        subtotal: valorEstimado
+      }
     ];
     this.renderItensTable();
 
