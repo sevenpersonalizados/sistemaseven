@@ -25,35 +25,103 @@ const EncomendasModule = {
     const container = document.getElementById('encomendas-grupos-container');
     if (!container) return;
 
-    // Define grupos a serem exibidos de forma separada
+    // Dicionário de estilos e identidades visuais por categoria de status
+    const definicoesGrupos = {
+      'Em produção': {
+        key: 'Em produção',
+        icon: '⚙️',
+        title: 'Em Produção',
+        subtitle: 'Pedidos atualmente em produção / confecção',
+        themeColor: '#00a8f3',
+        titleColor: '#38bdf8',
+        borderColor: 'rgba(0, 168, 243, 0.45)',
+        headerBg: 'linear-gradient(90deg, rgba(0, 168, 243, 0.22) 0%, rgba(13, 18, 31, 0.95) 100%)',
+        glowShadow: '0 6px 24px rgba(0, 168, 243, 0.12)',
+        badgeStyle: 'background: rgba(0, 168, 243, 0.22); color: #38bdf8; border: 1px solid rgba(0, 168, 243, 0.55);'
+      },
+      'Fila': {
+        key: 'Fila',
+        icon: '⏳',
+        title: 'Fila de Espera',
+        subtitle: 'Aguardando corte, matéria-prima ou início da produção',
+        themeColor: '#f59e0b',
+        titleColor: '#fbbf24',
+        borderColor: 'rgba(245, 158, 11, 0.45)',
+        headerBg: 'linear-gradient(90deg, rgba(245, 158, 11, 0.22) 0%, rgba(13, 18, 31, 0.95) 100%)',
+        glowShadow: '0 6px 24px rgba(245, 158, 11, 0.12)',
+        badgeStyle: 'background: rgba(245, 158, 11, 0.22); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.55);'
+      },
+      'Pronto': {
+        key: 'Pronto',
+        icon: '📦',
+        title: 'Prontos para Retirada / Envio',
+        subtitle: 'Produção finalizada (aguardando entrega ao cliente ou quitação)',
+        themeColor: '#a855f7',
+        titleColor: '#c084fc',
+        borderColor: 'rgba(168, 85, 247, 0.45)',
+        headerBg: 'linear-gradient(90deg, rgba(168, 85, 247, 0.22) 0%, rgba(13, 18, 31, 0.95) 100%)',
+        glowShadow: '0 6px 24px rgba(168, 85, 247, 0.12)',
+        badgeStyle: 'background: rgba(168, 85, 247, 0.22); color: #c084fc; border: 1px solid rgba(168, 85, 247, 0.55);'
+      },
+      'Entregue': {
+        key: 'Entregue',
+        icon: '🚚',
+        title: 'Entregues ao Cliente',
+        subtitle: 'Pedidos entregues / despachados',
+        themeColor: '#10b981',
+        titleColor: '#34d399',
+        borderColor: 'rgba(16, 185, 129, 0.45)',
+        headerBg: 'linear-gradient(90deg, rgba(16, 185, 129, 0.22) 0%, rgba(13, 18, 31, 0.95) 100%)',
+        glowShadow: '0 6px 24px rgba(16, 185, 129, 0.12)',
+        badgeStyle: 'background: rgba(16, 185, 129, 0.22); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.55);'
+      },
+      'Cancelada': {
+        key: 'Cancelada',
+        icon: '❌',
+        title: 'Canceladas',
+        subtitle: 'Pedidos cancelados ou estornados',
+        themeColor: '#ef4444',
+        titleColor: '#f87171',
+        borderColor: 'rgba(239, 68, 68, 0.45)',
+        headerBg: 'linear-gradient(90deg, rgba(239, 68, 68, 0.22) 0%, rgba(13, 18, 31, 0.95) 100%)',
+        glowShadow: '0 6px 24px rgba(239, 68, 68, 0.12)',
+        badgeStyle: 'background: rgba(239, 68, 68, 0.22); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.55);'
+      },
+      'Finalizadas': {
+        key: 'Finalizadas',
+        icon: '✅',
+        title: 'Finalizadas (Quitadas e Concluídas)',
+        subtitle: 'Histórico de pedidos concluídos e totalmente pagos',
+        themeColor: '#10b981',
+        titleColor: '#34d399',
+        borderColor: 'rgba(16, 185, 129, 0.45)',
+        headerBg: 'linear-gradient(90deg, rgba(16, 185, 129, 0.22) 0%, rgba(13, 18, 31, 0.95) 100%)',
+        glowShadow: '0 6px 24px rgba(16, 185, 129, 0.12)',
+        badgeStyle: 'background: rgba(16, 185, 129, 0.22); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.55);'
+      }
+    };
+
     let statusGrupos = [];
     if (!filtroStatus) {
       statusGrupos = [
-        { key: 'Em produção', title: '⚙️ Em Produção', badge: 'badge-producao', borderColor: 'rgba(56, 189, 248, 0.35)' },
-        { key: 'Fila', title: '⏳ Fila de Espera', badge: 'badge-fila', borderColor: 'rgba(148, 163, 184, 0.35)' },
-        { key: 'Pronto', title: '📦 Prontos (Aguardando Retirada ou Pagamento)', badge: 'badge-pronto', borderColor: 'rgba(99, 102, 241, 0.35)' }
+        definicoesGrupos['Em produção'],
+        definicoesGrupos['Fila'],
+        definicoesGrupos['Pronto']
       ];
     } else if (filtroStatus === 'TODOS') {
       statusGrupos = [
-        { key: 'Em produção', title: '⚙️ Em Produção', badge: 'badge-producao', borderColor: 'rgba(56, 189, 248, 0.35)' },
-        { key: 'Fila', title: '⏳ Fila de Espera', badge: 'badge-fila', borderColor: 'rgba(148, 163, 184, 0.35)' },
-        { key: 'Pronto', title: '📦 Prontos', badge: 'badge-pronto', borderColor: 'rgba(99, 102, 241, 0.35)' },
-        { key: 'Entregue', title: '🚚 Entregues', badge: 'badge-entregue', borderColor: 'rgba(16, 185, 129, 0.35)' },
-        { key: 'Cancelada', title: '❌ Canceladas', badge: 'badge-cancelada', borderColor: 'rgba(239, 68, 68, 0.35)' }
+        definicoesGrupos['Em produção'],
+        definicoesGrupos['Fila'],
+        definicoesGrupos['Pronto'],
+        definicoesGrupos['Entregue'],
+        definicoesGrupos['Cancelada']
       ];
     } else if (filtroStatus === 'Finalizadas') {
-      statusGrupos = [
-        { key: 'Finalizadas', title: '✅ Finalizadas (Quitadas e Concluídas)', badge: 'badge-pago', borderColor: 'rgba(16, 185, 129, 0.35)' }
-      ];
+      statusGrupos = [definicoesGrupos['Finalizadas']];
     } else {
-      const gMap = {
-        'Fila': { key: 'Fila', title: '⏳ Fila de Espera', badge: 'badge-fila', borderColor: 'rgba(148, 163, 184, 0.35)' },
-        'Em produção': { key: 'Em produção', title: '⚙️ Em Produção', badge: 'badge-producao', borderColor: 'rgba(56, 189, 248, 0.35)' },
-        'Pronto': { key: 'Pronto', title: '📦 Prontos', badge: 'badge-pronto', borderColor: 'rgba(99, 102, 241, 0.35)' },
-        'Entregue': { key: 'Entregue', title: '🚚 Entregues', badge: 'badge-entregue', borderColor: 'rgba(16, 185, 129, 0.35)' },
-        'Cancelada': { key: 'Cancelada', title: '❌ Canceladas', badge: 'badge-cancelada', borderColor: 'rgba(239, 68, 68, 0.35)' }
-      };
-      if (gMap[filtroStatus]) statusGrupos = [gMap[filtroStatus]];
+      if (definicoesGrupos[filtroStatus]) {
+        statusGrupos = [definicoesGrupos[filtroStatus]];
+      }
     }
 
     let totalGeralEncontrado = 0;
@@ -80,14 +148,32 @@ const EncomendasModule = {
       ordensGrupo.sort((a, b) => ((a.data_entrega_prevista || '') > (b.data_entrega_prevista || '') ? 1 : -1));
 
       return `
-        <div class="panel-box" style="margin-bottom: 24px; padding: 0; overflow: hidden; border-color: ${grupo.borderColor};">
-          <div class="panel-header" style="background: rgba(255, 255, 255, 0.02); padding: 14px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border);">
-            <div style="display: flex; align-items: center; gap: 12px;">
-              <span class="status-badge ${grupo.badge}" style="font-size: 0.85rem; padding: 5px 12px;">
-                ${grupo.title}
+        <div class="panel-box" style="margin-bottom: 28px; padding: 0; overflow: hidden; border: 1px solid ${grupo.borderColor}; border-left: 6px solid ${grupo.themeColor}; box-shadow: ${grupo.glowShadow}; border-radius: var(--radius-md);">
+          <div class="panel-header" style="background: ${grupo.headerBg}; padding: 16px 22px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid ${grupo.borderColor}; flex-wrap: wrap; gap: 14px;">
+            <div style="display: flex; align-items: center; gap: 14px; flex-wrap: wrap;">
+              <span style="display: inline-flex; align-items: center; justify-content: center; width: 42px; height: 42px; border-radius: 12px; background: rgba(0, 0, 0, 0.4); border: 1px solid ${grupo.borderColor}; font-size: 1.3rem; box-shadow: 0 2px 8px rgba(0,0,0,0.3);">
+                ${grupo.icon}
               </span>
-              <span style="font-size: 0.82rem; color: var(--text-muted);">
-                ${ordensGrupo.length} ${ordensGrupo.length === 1 ? 'encomenda' : 'encomendas'} • Total: <strong style="color: var(--text-primary);">${App.formatMoney(totalValor)}</strong>
+              <div>
+                <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+                  <h3 style="font-family: var(--font-display); font-size: 1.15rem; font-weight: 700; color: #ffffff; margin: 0; letter-spacing: 0.02em;">
+                    ${grupo.title}
+                  </h3>
+                  <span style="font-size: 0.72rem; font-weight: 700; text-transform: uppercase; padding: 3px 10px; border-radius: 999px; ${grupo.badgeStyle}">
+                    ${grupo.key}
+                  </span>
+                </div>
+                <div style="font-size: 0.78rem; color: var(--text-muted); margin-top: 2px;">
+                  ${grupo.subtitle}
+                </div>
+              </div>
+            </div>
+            <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+              <span style="font-size: 0.8rem; font-weight: 600; padding: 6px 12px; background: rgba(0, 0, 0, 0.45); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: var(--radius-sm); color: var(--text-secondary);">
+                📦 <strong style="color: #ffffff;">${ordensGrupo.length}</strong> ${ordensGrupo.length === 1 ? 'encomenda' : 'encomendas'}
+              </span>
+              <span style="font-size: 0.82rem; font-weight: 700; padding: 6px 14px; background: rgba(0, 0, 0, 0.45); border: 1px solid ${grupo.borderColor}; border-radius: var(--radius-sm); color: ${grupo.titleColor};">
+                💰 ${App.formatMoney(totalValor)}
               </span>
             </div>
           </div>
@@ -107,7 +193,8 @@ const EncomendasModule = {
               <tbody>
                 ${ordensGrupo.length === 0 ? `
                   <tr>
-                    <td colspan="7" style="text-align: center; padding: 24px; color: var(--text-muted); font-size: 0.85rem;">
+                    <td colspan="7" style="text-align: center; padding: 32px 20px; color: var(--text-muted); font-size: 0.88rem;">
+                      <div style="font-size: 1.4rem; margin-bottom: 6px; opacity: 0.6;">${grupo.icon}</div>
                       Nenhuma encomenda nesta etapa no momento.
                     </td>
                   </tr>
