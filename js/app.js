@@ -12,6 +12,9 @@ const App = {
     this.renderDashboard();
 
     // Inicializa os submódulos
+    if (typeof NotificationModule !== 'undefined') {
+      NotificationModule.init();
+    }
     CrmModule.init();
     EncomendasModule.init();
     EstoqueModule.init();

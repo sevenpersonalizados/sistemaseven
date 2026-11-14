@@ -246,9 +246,29 @@ const INITIAL_DATA = {
   ]
 };
 
-// Objeto de Operações de Banco (Local Cache + Sincronização Supabase)
+// Objeto de Operações de Banco (Local Cache + Sincronização Supabase Realtime)
 const StorageService = {
   isCloudConnected: false,
+  clientId: 'cli_' + Math.random().toString(36).substring(2, 9),
+  recentLocalActions: new Map(),
+  supabaseClient: null,
+  _pollingInterval: null,
+
+  recordLocalAction(id) {
+    if (!id) return;
+    this.recentLocalActions.set(id, Date.now());
+    // Limpa ações antigas após 12 segundos
+    setTimeout(() => {
+      this.recentLocalActions.delete(id);
+    }, 12000);
+  },
+
+  isLocalAction(id) {
+    if (!id) return false;
+    const time = this.recentLocalActions.get(id);
+    if (!time) return false;
+    return (Date.now() - time) < 12000;
+  },
 
   init() {
     Object.keys(INITIAL_DATA).forEach(key => {
@@ -258,7 +278,133 @@ const StorageService = {
       }
     });
 
-    this.syncFromSupabase();
+    this.syncFromSupabase().then(() => {
+      this.initRealtime();
+    });
+
+    this.startPollingFallback();
+  },
+
+  initRealtime() {
+    if (!window.supabase || !window.supabase.createClient) {
+      console.warn('Supabase JS não carregado para Realtime. Usando sincronização periódica de alta velocidade.');
+      return;
+    }
+
+    try {
+      this.supabaseClient = window.supabase.createClient(SUPABASE_CONFIG.url, SUPABASE_CONFIG.anonKey);
+      const channel = this.supabaseClient.channel('seven-realtime-master');
+
+      const tables = ['encomendas', 'crm_cards', 'estoque', 'despesas', 'propostas'];
+      tables.forEach(table => {
+        channel.on('postgres_changes', { event: '*', schema: 'public', table: table }, (payload) => {
+          console.log(`⚡ [Realtime Supabase] Alteração detectada em ${table}:`, payload);
+          this.handleRealtimeEvent(table, payload);
+        });
+      });
+
+      channel.subscribe((status) => {
+        console.log('📡 Status Supabase Realtime:', status);
+        if (status === 'SUBSCRIBED') {
+          this.isCloudConnected = true;
+          this.updateSyncBadge('online', 'Tempo Real Ativo ⚡');
+        } else if (status === 'CLOSED' || status === 'CHANNEL_ERROR') {
+          this.updateSyncBadge('offline', 'Reconectando nuvem...');
+        }
+      });
+    } catch (err) {
+      console.error('Erro ao inicializar Supabase Realtime:', err);
+    }
+  },
+
+  handleRealtimeEvent(table, payload) {
+    const { eventType, new: newRecord, old: oldRecord } = payload;
+    const key = STORAGE_KEYS[table.toUpperCase()];
+    if (!key) return;
+
+    let items = this.get(table);
+    const targetId = newRecord?.id || oldRecord?.id;
+    const isMine = this.isLocalAction(targetId);
+
+    if (eventType === 'INSERT' && newRecord) {
+      if (!items.some(i => i.id === newRecord.id)) {
+        items.unshift(newRecord);
+        localStorage.setItem(key, JSON.stringify(items));
+        window.dispatchEvent(new CustomEvent('seven_data_updated', { detail: { table } }));
+
+        if (!isMine) {
+          let title = 'Seven Personalizados ⚡';
+          let body = `Novo registro adicionado em ${table}!`;
+          if (table === 'encomendas') {
+            title = '✨ Nova Encomenda!';
+            body = `Pedido de ${newRecord.cliente_nome || 'Cliente'} adicionado ao sistema!`;
+          } else if (table === 'crm_cards') {
+            title = '💬 Novo Lead no Funil!';
+            body = `${newRecord.lead_name || 'Lead'} entrou no CRM.`;
+          } else if (table === 'propostas') {
+            title = '📄 Nova Proposta Comercial!';
+            body = `Orçamento para ${newRecord.cliente_nome || 'Cliente'} gerado.`;
+          }
+
+          if (typeof NotificationModule !== 'undefined') {
+            NotificationModule.show({ title, body, tag: `ins-${newRecord.id}` });
+          }
+          if (typeof App !== 'undefined' && App.toast) {
+            App.toast(body, 'info');
+          }
+        }
+      }
+    } else if (eventType === 'UPDATE' && newRecord) {
+      const idx = items.findIndex(i => i.id === newRecord.id);
+      if (idx !== -1) {
+        items[idx] = newRecord;
+      } else {
+        items.unshift(newRecord);
+      }
+      localStorage.setItem(key, JSON.stringify(items));
+      window.dispatchEvent(new CustomEvent('seven_data_updated', { detail: { table } }));
+
+      if (!isMine) {
+        let title = 'Seven Personalizados — Atualização ⚡';
+        let body = `Alteração em ${table}`;
+        if (table === 'encomendas') {
+          title = '⚙️ Encomenda Atualizada!';
+          body = `Pedido #${newRecord.id.substring(newRecord.id.length - 5)} (${newRecord.cliente_nome}) agora está: "${newRecord.status}" (${newRecord.pagamento_status})!`;
+        } else if (table === 'crm_cards') {
+          title = '💬 Lead Atualizado no CRM!';
+          body = `${newRecord.lead_name} avançou para etapa: ${newRecord.stage}!`;
+        }
+
+        if (typeof NotificationModule !== 'undefined') {
+          NotificationModule.show({ title, body, tag: `upd-${newRecord.id}` });
+        }
+        if (typeof App !== 'undefined' && App.toast) {
+          App.toast(body, 'info');
+        }
+      }
+    } else if (eventType === 'DELETE' && oldRecord) {
+      items = items.filter(i => i.id !== oldRecord.id);
+      localStorage.setItem(key, JSON.stringify(items));
+      window.dispatchEvent(new CustomEvent('seven_data_updated', { detail: { table } }));
+    }
+  },
+
+  startPollingFallback() {
+    if (this._pollingInterval) return;
+    // Sincronização periódica a cada 15s como garantia total de rede móvel (iPhone)
+    this._pollingInterval = setInterval(() => {
+      this.syncFromSupabase(true);
+    }, 15000);
+
+    // E sincronização instantânea ao reabrir o iPhone ou voltar para a aba
+    window.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible') {
+        this.syncFromSupabase(true);
+      }
+    });
+    window.addEventListener('focus', () => {
+      this.syncFromSupabase(true);
+    });
   },
 
   getHeaders(prefer = 'return=representation') {
@@ -288,8 +434,10 @@ const StorageService = {
     }
   },
 
-  async syncFromSupabase() {
-    this.updateSyncBadge('syncing', 'Sincronizando nuvem...');
+  async syncFromSupabase(isSilent = false) {
+    if (!isSilent) {
+      this.updateSyncBadge('syncing', 'Sincronizando nuvem...');
+    }
     const tables = ['crm_cards', 'encomendas', 'estoque', 'despesas', 'propostas'];
 
     try {
@@ -301,8 +449,12 @@ const StorageService = {
           const rows = await res.json();
           if (Array.isArray(rows)) {
             const key = STORAGE_KEYS[table.toUpperCase()];
-            localStorage.setItem(key, JSON.stringify(rows));
-            window.dispatchEvent(new CustomEvent('seven_data_updated', { detail: { table } }));
+            const prevStr = localStorage.getItem(key) || '[]';
+            const newStr = JSON.stringify(rows);
+            if (prevStr !== newStr) {
+              localStorage.setItem(key, newStr);
+              window.dispatchEvent(new CustomEvent('seven_data_updated', { detail: { table } }));
+            }
           }
         }
       }));
@@ -314,19 +466,25 @@ const StorageService = {
       if (cfgRes.ok) {
         const cfgRows = await cfgRes.json();
         if (Array.isArray(cfgRows) && cfgRows.length > 0) {
-          localStorage.setItem(STORAGE_KEYS.CONFIG, JSON.stringify(cfgRows[0]));
-          window.dispatchEvent(new CustomEvent('seven_data_updated', { detail: { table: 'config' } }));
-          if (typeof App !== 'undefined' && App.loadConfigView) {
-            App.loadConfigView();
+          const cfgStr = JSON.stringify(cfgRows[0]);
+          const curCfgStr = localStorage.getItem(STORAGE_KEYS.CONFIG);
+          if (curCfgStr !== cfgStr) {
+            localStorage.setItem(STORAGE_KEYS.CONFIG, cfgStr);
+            window.dispatchEvent(new CustomEvent('seven_data_updated', { detail: { table: 'config' } }));
+            if (typeof App !== 'undefined' && App.loadConfigView) {
+              App.loadConfigView();
+            }
           }
         }
       }
 
       this.isCloudConnected = true;
-      this.updateSyncBadge('online', 'Supabase Cloud Ativo');
+      this.updateSyncBadge('online', 'Tempo Real Ativo ⚡');
     } catch (err) {
-      console.warn('Aviso ao sincronizar com Supabase (usando cache local):', err);
-      this.updateSyncBadge('offline', 'Cache Local');
+      if (!isSilent) {
+        console.warn('Aviso ao sincronizar com Supabase (usando cache local):', err);
+        this.updateSyncBadge('offline', 'Cache Local');
+      }
     }
   },
 
@@ -357,6 +515,7 @@ const StorageService = {
       created_at: item.created_at || new Date().toISOString(),
       updated_at: new Date().toISOString()
     };
+    this.recordLocalAction(newItem.id);
     list.unshift(newItem);
     this.set(table, list);
 
@@ -368,7 +527,7 @@ const StorageService = {
       body: JSON.stringify(newItem)
     })
       .then(res => {
-        if (res.ok) this.updateSyncBadge('online', 'Supabase Cloud Ativo');
+        if (res.ok) this.updateSyncBadge('online', 'Tempo Real Ativo ⚡');
         else this.updateSyncBadge('offline', 'Erro ao salvar');
       })
       .catch(() => this.updateSyncBadge('offline', 'Modo Offline'));
@@ -381,6 +540,7 @@ const StorageService = {
     const index = list.findIndex(i => i.id === id);
     if (index === -1) return null;
     const updatedAt = new Date().toISOString();
+    this.recordLocalAction(id);
     list[index] = {
       ...list[index],
       ...updates,
@@ -396,7 +556,7 @@ const StorageService = {
       body: JSON.stringify({ ...updates, updated_at: updatedAt })
     })
       .then(res => {
-        if (res.ok) this.updateSyncBadge('online', 'Supabase Cloud Ativo');
+        if (res.ok) this.updateSyncBadge('online', 'Tempo Real Ativo ⚡');
         else this.updateSyncBadge('offline', 'Erro ao atualizar');
       })
       .catch(() => this.updateSyncBadge('offline', 'Modo Offline'));
@@ -405,6 +565,7 @@ const StorageService = {
   },
 
   delete(table, id) {
+    this.recordLocalAction(id);
     const list = this.get(table);
     const filtered = list.filter(i => i.id !== id);
     this.set(table, filtered);
@@ -416,7 +577,7 @@ const StorageService = {
       headers: this.getHeaders()
     })
       .then(res => {
-        if (res.ok) this.updateSyncBadge('online', 'Supabase Cloud Ativo');
+        if (res.ok) this.updateSyncBadge('online', 'Tempo Real Ativo ⚡');
         else this.updateSyncBadge('offline', 'Erro ao remover');
       })
       .catch(() => this.updateSyncBadge('offline', 'Modo Offline'));
