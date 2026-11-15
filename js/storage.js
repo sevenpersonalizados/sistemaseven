@@ -386,7 +386,11 @@ const StorageService = {
 
     try {
       this.supabaseClient = window.supabase.createClient(SUPABASE_CONFIG.url, SUPABASE_CONFIG.anonKey);
-      this.realtimeChannel = this.supabaseClient.channel('seven-realtime-master');
+      this.realtimeChannel = this.supabaseClient.channel('seven-realtime-master', {
+        config: {
+          broadcast: { self: false }
+        }
+      });
 
       // Escuta canal broadcast para testes e alertas instantâneos entre celulares/PCs
       this.realtimeChannel.on('broadcast', { event: 'alerta-teste' }, (event) => {
@@ -402,13 +406,12 @@ const StorageService = {
         }
       });
 
-      // Escuta mudanças no PostgreSQL em todas as tabelas públicas publicadas no realtime
-      const tables = ['encomendas', 'crm_cards', 'estoque', 'despesas', 'propostas', 'filamentos', 'calc_3d_historico', 'calc_3d_config', 'config'];
-      tables.forEach(table => {
-        this.realtimeChannel.on('postgres_changes', { event: '*', schema: 'public', table: table }, (payload) => {
-          console.log(`⚡ [Realtime Supabase] Alteração detectada em ${table}:`, payload);
-          this.handleRealtimeEvent(table, payload);
-        });
+      // Escuta global de mudanças em qualquer tabela do schema public publicada no Realtime
+      this.realtimeChannel.on('postgres_changes', { event: '*', schema: 'public' }, (payload) => {
+        console.log(`⚡ [Realtime Supabase Global] Alteração detectada em ${payload.table}:`, payload);
+        if (payload.table) {
+          this.handleRealtimeEvent(payload.table, payload);
+        }
       });
 
       this.realtimeChannel.subscribe((status) => {

@@ -1668,15 +1668,15 @@ select option:checked {
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  background: rgba(0, 168, 243, 0.12);
-  color: #38bdf8;
-  border: 1px solid rgba(0, 168, 243, 0.38);
-  padding: 3px 9px;
+  background: rgba(14, 165, 233, 0.12) !important;
+  color: #38bdf8 !important;
+  border: 1px solid rgba(14, 165, 233, 0.42) !important;
+  padding: 3px 10px;
   border-radius: 999px;
-  font-size: 0.74rem;
+  font-size: 0.75rem;
   font-weight: 600;
   white-space: nowrap;
-  box-shadow: 0 1px 4px rgba(0, 168, 243, 0.1);
+  box-shadow: 0 1px 4px rgba(14, 165, 233, 0.12);
 }
 
 /* ==========================================================================

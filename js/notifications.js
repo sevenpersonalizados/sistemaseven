@@ -1,6 +1,6 @@
 /**
  * SEVEN PERSONALIZADOS — NOTIFICATION & PWA MODULE
- * Gerenciador de Service Worker, Notificações Nativas e Alerta Sonoro
+ * Gerenciador de Service Worker, Notificações Nativas, Alerta Sonoro e Atualização Forçada
  */
 
 const NotificationModule = {
@@ -8,16 +8,59 @@ const NotificationModule = {
   audioCtx: null,
 
   async init() {
+    this.setupAudioUnlock();
     await this.registerServiceWorker();
     this.updateNotificationBadge();
+  },
+
+  setupAudioUnlock() {
+    const unlock = () => {
+      this.unlockAudio();
+    };
+    ['click', 'touchstart', 'touchend', 'pointerdown', 'keydown'].forEach(evt => {
+      window.addEventListener(evt, unlock, { passive: true });
+    });
+  },
+
+  unlockAudio() {
+    try {
+      const AudioCtxClass = window.AudioContext || window.webkitAudioContext;
+      if (!AudioCtxClass) return;
+      if (!this.audioCtx) {
+        this.audioCtx = new AudioCtxClass();
+      }
+      if (this.audioCtx.state === 'suspended') {
+        this.audioCtx.resume().catch(() => {});
+      }
+    } catch (e) {}
   },
 
   async registerServiceWorker() {
     if ('serviceWorker' in navigator) {
       try {
-        await navigator.serviceWorker.register('./service-worker.js', { scope: './' });
-        this.swRegistration = await navigator.serviceWorker.ready;
-        console.log('✅ Service Worker PWA pronto e registrado com sucesso');
+        const registration = await navigator.serviceWorker.register('./service-worker.js', { scope: './' });
+        this.swRegistration = registration;
+        console.log('✅ Service Worker PWA registrado com sucesso');
+
+        // Se uma nova versão for encontrada, força ativação e recarrega
+        registration.addEventListener('updatefound', () => {
+          const newWorker = registration.installing;
+          if (newWorker) {
+            newWorker.addEventListener('statechange', () => {
+              if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                console.log('⚡ Nova versão do sistema encontrada. Atualizando...');
+                if (typeof App !== 'undefined' && App.toast) {
+                  App.toast('Nova versão do sistema aplicada!', 'success');
+                }
+                setTimeout(() => window.location.reload(), 800);
+              }
+            });
+          }
+        });
+
+        navigator.serviceWorker.addEventListener('controllerchange', () => {
+          console.log('🔄 Controlador do Service Worker alterado.');
+        });
       } catch (err) {
         console.warn('Falha ao registrar Service Worker:', err);
       }
@@ -25,29 +68,35 @@ const NotificationModule = {
   },
 
   isSupported() {
-    return 'Notification' in window;
+    return ('Notification' in window) || ('serviceWorker' in navigator);
   },
 
   getPermission() {
-    return this.isSupported() ? Notification.permission : 'unsupported';
+    if ('Notification' in window) {
+      return Notification.permission;
+    }
+    return 'unsupported';
   },
 
   async requestPermission() {
-    if (!this.isSupported()) {
-      App.toast('Notificações não suportadas diretamente. No iPhone, toque em Compartilhar e "Adicionar à Tela de Início"!', 'warning');
+    this.unlockAudio();
+    this.playChime();
+
+    if (!('Notification' in window)) {
+      if (typeof App !== 'undefined' && App.toast) {
+        App.toast('No iPhone, toque no botão Compartilhar (quadrado com seta) e escolha "Adicionar à Tela de Início" para permitir notificações!', 'warning');
+      }
       return false;
     }
 
     try {
-      // Cria áudio context no gesto do clique para liberar no iOS/Safari
-      this.playChime();
-
-      // Se já estava autorizada, dispara o teste imediatamente
       if (Notification.permission === 'granted') {
-        App.toast('Notificações já estão autorizadas! Disparando teste...', 'info');
+        if (typeof App !== 'undefined' && App.toast) {
+          App.toast('Notificações já estão autorizadas! Disparando teste...', 'info');
+        }
         this.show({
           title: 'Seven Personalizados 🔔',
-          body: 'Notificações estão ativas e funcionando perfeitamente no seu dispositivo!'
+          body: 'Notificações estão ativas e funcionando perfeitamente no seu aparelho!'
         });
         return true;
       }
@@ -56,14 +105,18 @@ const NotificationModule = {
       this.updateNotificationBadge();
 
       if (permission === 'granted') {
-        App.toast('Notificações ativadas com sucesso! 🎉', 'success');
+        if (typeof App !== 'undefined' && App.toast) {
+          App.toast('Notificações ativadas com sucesso! 🎉', 'success');
+        }
         this.show({
           title: 'Seven Personalizados 🎉',
           body: 'Notificações ativas! Você receberá alertas sonoros e avisos de novas encomendas.'
         });
         return true;
       } else if (permission === 'denied') {
-        App.toast('Permissão de notificação bloqueada. Habilite nas configurações do seu navegador ou aparelho.', 'warning');
+        if (typeof App !== 'undefined' && App.toast) {
+          App.toast('Permissão de notificação bloqueada. Habilite nas configurações do seu navegador ou aparelho.', 'warning');
+        }
         return false;
       }
     } catch (e) {
@@ -73,6 +126,7 @@ const NotificationModule = {
   },
 
   testar() {
+    this.unlockAudio();
     this.playChime();
     if (this.getPermission() !== 'granted') {
       return this.requestPermission();
@@ -106,14 +160,8 @@ const NotificationModule = {
 
   playChime() {
     try {
-      const AudioContext = window.AudioContext || window.webkitAudioContext;
-      if (!AudioContext) return;
-      if (!this.audioCtx) {
-        this.audioCtx = new AudioContext();
-      }
-      if (this.audioCtx.state === 'suspended') {
-        this.audioCtx.resume();
-      }
+      this.unlockAudio();
+      if (!this.audioCtx) return;
 
       const now = this.audioCtx.currentTime;
 
@@ -123,7 +171,7 @@ const NotificationModule = {
       osc1.type = 'sine';
       osc1.frequency.setValueAtTime(587.33, now);
       gain1.gain.setValueAtTime(0, now);
-      gain1.gain.linearRampToValueAtTime(0.18, now + 0.02);
+      gain1.gain.linearRampToValueAtTime(0.20, now + 0.02);
       gain1.gain.exponentialRampToValueAtTime(0.001, now + 0.22);
       osc1.connect(gain1);
       gain1.connect(this.audioCtx.destination);
@@ -136,7 +184,7 @@ const NotificationModule = {
       osc2.type = 'sine';
       osc2.frequency.setValueAtTime(880.00, now + 0.12);
       gain2.gain.setValueAtTime(0, now + 0.12);
-      gain2.gain.linearRampToValueAtTime(0.22, now + 0.14);
+      gain2.gain.linearRampToValueAtTime(0.25, now + 0.14);
       gain2.gain.exponentialRampToValueAtTime(0.001, now + 0.45);
       osc2.connect(gain2);
       gain2.connect(this.audioCtx.destination);
@@ -151,11 +199,15 @@ const NotificationModule = {
     // 1. Toca som suave
     this.playChime();
 
-    // 2. Se a permissão nativa foi concedida, dispara notificação do sistema
+    // 2. Se a permissão nativa foi concedida, dispara notificação do sistema / banner do celular
     if (this.getPermission() === 'granted') {
       try {
         if ('serviceWorker' in navigator) {
-          const reg = this.swRegistration || await navigator.serviceWorker.ready;
+          const reg = this.swRegistration || (await Promise.race([
+            navigator.serviceWorker.ready,
+            new Promise(resolve => setTimeout(resolve, 1500))
+          ]));
+
           if (reg && reg.showNotification) {
             await reg.showNotification(title, {
               body: body,
@@ -189,5 +241,27 @@ const NotificationModule = {
         }
       } catch (e) {}
     }
+  },
+
+  // Força limpeza total de caches e Service Worker no celular
+  async forcarAtualizacaoApp() {
+    try {
+      if ('serviceWorker' in navigator) {
+        const regs = await navigator.serviceWorker.getRegistrations();
+        for (let reg of regs) {
+          await reg.unregister();
+        }
+      }
+      if ('caches' in window) {
+        const keys = await caches.keys();
+        for (let k of keys) {
+          await caches.delete(k);
+        }
+      }
+    } catch (e) {
+      console.warn('Erro ao limpar cache:', e);
+    }
+    // Recarrega forçado sem cache
+    window.location.href = window.location.pathname + '?t=' + Date.now();
   }
 };

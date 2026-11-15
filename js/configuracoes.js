@@ -148,10 +148,10 @@ const ConfiguracoesModule = {
             </div>
 
             <!-- 2. GRUPO: CORES DISPONÍVEIS -->
-            <div class="cfg-group-box" style="background: rgba(255, 255, 255, 0.02); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 1.25rem; border-left: 4px solid #ec4899;">
+            <div class="cfg-group-box" style="background: rgba(255, 255, 255, 0.02); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 1.25rem; border-left: 4px solid #00a8f3;">
               <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.5rem;">
                 <div>
-                  <h4 style="margin: 0; font-size: 1rem; font-weight: 700; color: #ec4899; display: flex; align-items: center; gap: 6px;">
+                  <h4 style="margin: 0; font-size: 1rem; font-weight: 700; color: #38bdf8; display: flex; align-items: center; gap: 6px;">
                     <span>🎨</span> Cores de Personalização
                   </h4>
                   <p style="margin: 3px 0 0 0; font-size: 0.76rem; color: var(--text-muted);">
@@ -172,7 +172,7 @@ const ConfiguracoesModule = {
               <!-- Lista de cores -->
               <div class="cfg-tags-list" style="display: flex; flex-wrap: wrap; gap: 0.5rem;">
                 ${coresDisponiveis.map((cor, idx) => `
-                  <div class="cfg-tag-item" style="display: inline-flex; align-items: center; gap: 0.45rem; background: rgba(236, 72, 153, 0.08); border: 1px solid rgba(236, 72, 153, 0.35); border-radius: 8px; padding: 0.4rem 0.75rem; font-size: 0.84rem; color: #ffffff;">
+                  <div class="cfg-tag-item" style="display: inline-flex; align-items: center; gap: 0.45rem; background: rgba(0, 168, 243, 0.08); border: 1px solid rgba(0, 168, 243, 0.35); border-radius: 8px; padding: 0.4rem 0.75rem; font-size: 0.84rem; color: #ffffff;">
                     <span style="font-weight: 600;">${App.escapeHtml(cor)}</span>
                     <div style="display: inline-flex; align-items: center; gap: 4px; margin-left: 4px;">
                       <button type="button" class="btn-icon" style="background: transparent; border: none; color: var(--text-muted); cursor: pointer; font-size: 0.75rem; padding: 2px;" title="Renomear" onclick="ConfiguracoesModule.editarCor(${idx})">✏️</button>
@@ -473,6 +473,9 @@ const ConfiguracoesModule = {
             </button>
             <button type="button" class="btn btn-secondary" onclick="StorageService.enviarAlertaTesteBroadcast('🔔 Teste Seven Personalizados', 'Alerta em tempo real transmitido via nuvem para todos os aparelhos!');" style="border-color: #34d399; color: #34d399; font-weight: 600;">
               ⚡ Disparar Teste para Todos os Celulares Conectados
+            </button>
+            <button type="button" class="btn btn-secondary" onclick="NotificationModule.forcarAtualizacaoApp()" style="border-color: #fbbf24; color: #fbbf24; font-weight: 600;" title="Limpa o cache do PWA no celular e carrega a versão mais recente">
+              🔄 Forçar Atualização / Limpar Cache
             </button>
           </div>
 

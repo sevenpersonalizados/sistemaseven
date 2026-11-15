@@ -3,17 +3,21 @@
  * Suporte a modo standalone no iPhone (iOS), cache e Notificações Push
  */
 
-const CACHE_NAME = 'seven-cache-v15';
+const CACHE_NAME = 'seven-cache-v17';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
   './css/styles.css',
+  './js/notifications.js',
   './js/storage.js',
-  './js/app.js',
-  './js/configuracoes.js',
-  './js/calculadora.js',
-  './js/propostas.js',
+  './js/crm.js',
   './js/encomendas.js',
+  './js/estoque.js',
+  './js/financeiro.js',
+  './js/propostas.js',
+  './js/calculadora.js',
+  './js/configuracoes.js',
+  './js/app.js',
   './manifest.json',
   './favicon.ico',
   './favicon-192.png',
@@ -24,7 +28,15 @@ self.addEventListener('install', (event) => {
   self.skipWaiting();
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
-      return cache.addAll(ASSETS_TO_CACHE).catch(() => {});
+      return Promise.all(
+        ASSETS_TO_CACHE.map((url) => {
+          return fetch(url, { cache: 'no-cache' })
+            .then((res) => {
+              if (res.ok) return cache.put(url, res);
+            })
+            .catch(() => {});
+        })
+      );
     })
   );
 });
@@ -47,8 +59,14 @@ self.addEventListener('fetch', (event) => {
   }
   
   event.respondWith(
-    fetch(event.request)
+    fetch(event.request, { cache: 'no-cache' })
       .then((networkResponse) => {
+        if (networkResponse && networkResponse.status === 200 && networkResponse.type === 'basic') {
+          const responseToCache = networkResponse.clone();
+          caches.open(CACHE_NAME).then((cache) => {
+            cache.put(event.request, responseToCache);
+          });
+        }
         return networkResponse;
       })
       .catch(() => {
