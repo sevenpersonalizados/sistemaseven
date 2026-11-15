@@ -259,10 +259,12 @@ const EncomendasModule = {
     const totalItens = (enc.itens || []).reduce((acc, it) => acc + (Number(it.quantidade) || 0), 0);
     const nomesProdutos = (enc.itens || []).map(i => {
       const corStr = i.cor ? ` [${i.cor}]` : '';
-      return `${i.quantidade}x ${i.produto_nome || 'Item'}${corStr}`;
+      const obsStr = i.observacao ? ` (Obs: ${i.observacao})` : '';
+      return `${i.quantidade}x ${i.produto_nome || 'Item'}${corStr}${obsStr}`;
     }).join(', ');
 
     const coresList = [...new Set((enc.itens || []).filter(i => i.cor).map(i => i.cor))];
+    const hasItemObs = (enc.itens || []).some(i => i.observacao && i.observacao.trim());
 
     return `
       <tr class="dash-row-clickable" onclick="EncomendasModule.openEditModal('${enc.id}')" title="Clique para abrir detalhes da encomenda #${enc.id.substring(enc.id.length - 5)}">
@@ -286,6 +288,16 @@ const EncomendasModule = {
             ${coresList.length > 0 ? `
               <span class="badge-cor-tag" title="Cores personalizadas: ${coresList.join(', ')}">
                 🎨 ${App.escapeHtml(coresList.join(', '))}
+              </span>
+            ` : ''}
+            ${hasItemObs ? `
+              <span class="badge-cor-tag" style="background: rgba(14, 165, 233, 0.12); color: #38bdf8; border-color: rgba(14, 165, 233, 0.35);" title="Há observações nos produtos">
+                📌 Obs no Item
+              </span>
+            ` : ''}
+            ${enc.observacoes ? `
+              <span class="badge-cor-tag" style="background: rgba(245, 158, 11, 0.12); color: #fbbf24; border-color: rgba(245, 158, 11, 0.35);" title="Observações Gerais: ${App.escapeHtml(enc.observacoes)}">
+                📝 Obs Geral
               </span>
             ` : ''}
           </div>
@@ -443,6 +455,7 @@ const EncomendasModule = {
         produto_nome: lead?.last_message ? 'Pedido Personalizado' : '',
         cor: '',
         personalizacao: lead?.last_message || '',
+        observacao: '',
         quantidade: 1,
         preco_unitario: valorEstimado,
         subtotal: valorEstimado
@@ -484,11 +497,12 @@ const EncomendasModule = {
           produto_nome: it.produto_nome || '',
           cor: it.cor || '',
           personalizacao: it.personalizacao || '',
+          observacao: it.observacao || it.obs || '',
           quantidade: Number(it.quantidade) || 1,
           preco_unitario: Number(it.preco_unitario) || 0,
           subtotal: Number(it.subtotal) || 0
         }))
-      : [{ produto_nome: '', cor: '', personalizacao: '', quantidade: 1, preco_unitario: 0, subtotal: 0 }];
+      : [{ produto_nome: '', cor: '', personalizacao: '', observacao: '', quantidade: 1, preco_unitario: 0, subtotal: 0 }];
 
     this.renderItensTable();
     App.openModal('modal-encomenda');
@@ -499,6 +513,7 @@ const EncomendasModule = {
       produto_nome: '',
       cor: '',
       personalizacao: '',
+      observacao: '',
       quantidade: 1,
       preco_unitario: 0,
       subtotal: 0
@@ -511,6 +526,36 @@ const EncomendasModule = {
       encomendaItensTemp.splice(index, 1);
       this.renderItensTable();
     }
+  },
+
+  updateItemField(index, field, value) {
+    const item = encomendaItensTemp[index];
+    if (!item) return;
+    item[field] = value;
+    if (field === 'produto_nome') {
+      const titleEl = document.getElementById(`enc-item-title-${index}`);
+      if (titleEl) {
+        titleEl.textContent = value.trim() || 'Selecione ou digite o produto';
+      }
+    }
+  },
+
+  updateItemCalc(index, field, value) {
+    const item = encomendaItensTemp[index];
+    if (!item) return;
+    item[field] = value;
+    const q = Number(item.quantidade) || 0;
+    const p = Number(item.preco_unitario) || 0;
+    item.subtotal = q * p;
+
+    const subtotalEl = document.getElementById(`enc-item-subtotal-${index}`);
+    if (subtotalEl) {
+      subtotalEl.textContent = App.formatMoney(item.subtotal);
+    }
+
+    const total = encomendaItensTemp.reduce((acc, it) => acc + (Number(it.subtotal) || 0), 0);
+    const totalEl = document.getElementById('enc-itens-total-badge');
+    if (totalEl) totalEl.textContent = App.formatMoney(total);
   },
 
   updateItemRow(index, field, value) {
@@ -562,14 +607,14 @@ const EncomendasModule = {
       const corAtual = item.cor || '';
 
       return `
-        <div class="enc-item-card" style="background: rgba(255, 255, 255, 0.025); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 10px; padding: 14px 16px; margin-bottom: 12px; box-shadow: 0 4px 14px rgba(0,0,0,0.25);">
+        <div class="enc-item-card" style="background: rgba(255, 255, 255, 0.025); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 10px; padding: 14px 16px; margin-bottom: 14px; box-shadow: 0 4px 14px rgba(0,0,0,0.25);">
           <!-- Topo do Item -->
-          <div style="display: flex; justify-content: space-between; align-items: center; padding-bottom: 8px; margin-bottom: 10px; border-bottom: 1px solid rgba(255, 255, 255, 0.07);">
+          <div style="display: flex; justify-content: space-between; align-items: center; padding-bottom: 8px; margin-bottom: 12px; border-bottom: 1px solid rgba(255, 255, 255, 0.07);">
             <div style="display: flex; align-items: center; gap: 8px;">
               <span style="font-size: 0.72rem; font-weight: 800; text-transform: uppercase; padding: 2px 8px; border-radius: 999px; background: rgba(0, 168, 243, 0.18); color: #38bdf8; border: 1px solid rgba(0, 168, 243, 0.45);">
                 Item #${idx + 1}
               </span>
-              <span style="font-size: 0.82rem; font-weight: 600; color: #ffffff;">
+              <span id="enc-item-title-${idx}" style="font-size: 0.84rem; font-weight: 600; color: #ffffff;">
                 ${App.escapeHtml(item.produto_nome || 'Selecione ou digite o produto')}
               </span>
             </div>
@@ -582,18 +627,18 @@ const EncomendasModule = {
           </div>
 
           <!-- Linha 1: Produto e Cor -->
-          <div class="form-row" style="margin-bottom: 8px;">
-            <div class="form-group" style="flex: 2; margin-bottom: 6px;">
+          <div class="form-row" style="margin-bottom: 10px;">
+            <div class="form-group" style="margin-bottom: 0;">
               <label style="font-size: 0.78rem; font-weight: 600; color: var(--text-primary);">Produto *</label>
               <input type="text" list="enc-datalist-produtos" class="form-control" style="height: 38px;" 
                      value="${App.escapeHtml(item.produto_nome || '')}" 
                      placeholder="Selecione da lista ou digite..." 
-                     onchange="EncomendasModule.updateItemRow(${idx}, 'produto_nome', this.value)">
+                     oninput="EncomendasModule.updateItemField(${idx}, 'produto_nome', this.value)">
             </div>
-            <div class="form-group" style="flex: 1.2; margin-bottom: 6px;">
+            <div class="form-group" style="margin-bottom: 0;">
               <label style="font-size: 0.78rem; font-weight: 600; color: var(--text-primary);">Cor</label>
               <select class="form-control" style="height: 38px;" 
-                      onchange="EncomendasModule.updateItemRow(${idx}, 'cor', this.value)">
+                      onchange="EncomendasModule.updateItemField(${idx}, 'cor', this.value)">
                 <option value="">(Sem cor / Padrão)</option>
                 ${coresDisponiveis.map(c => `
                   <option value="${App.escapeHtml(c)}" ${c === corAtual ? 'selected' : ''}>
@@ -604,36 +649,47 @@ const EncomendasModule = {
             </div>
           </div>
 
-          <!-- Linha 2: Personalização / Arte -->
-          <div class="form-group" style="margin-bottom: 8px;">
-            <label style="font-size: 0.78rem; font-weight: 600; color: var(--text-primary);">Personalização / Arte (Instruções ou Nome)</label>
-            <input type="text" class="form-control" style="height: 38px;" 
-                   value="${App.escapeHtml(item.personalizacao || '')}" 
-                   placeholder="Ex: Nome da Aniversariante, Frase, Logo..." 
-                   onchange="EncomendasModule.updateItemRow(${idx}, 'personalizacao', this.value)">
+          <!-- Linha 2: Personalização / Arte e Observação do Produto -->
+          <div class="form-row" style="margin-bottom: 10px;">
+            <div class="form-group" style="margin-bottom: 0;">
+              <label style="font-size: 0.78rem; font-weight: 600; color: var(--text-primary);">Personalização / Arte (Instruções ou Nome)</label>
+              <input type="text" class="form-control" style="height: 38px;" 
+                     value="${App.escapeHtml(item.personalizacao || '')}" 
+                     placeholder="Ex: Nome da Aniversariante, Frase, Logo..." 
+                     oninput="EncomendasModule.updateItemField(${idx}, 'personalizacao', this.value)">
+            </div>
+            <div class="form-group" style="margin-bottom: 0;">
+              <label style="font-size: 0.78rem; font-weight: 600; color: var(--text-primary);">Observação do Produto</label>
+              <input type="text" class="form-control" style="height: 38px;" 
+                     value="${App.escapeHtml(item.observacao || '')}" 
+                     placeholder="Ex: Acabamento especial, tamanho, embalagem..." 
+                     oninput="EncomendasModule.updateItemField(${idx}, 'observacao', this.value)">
+            </div>
           </div>
 
           <!-- Linha 3: Quantidade, Valor Unitário e Subtotal -->
           <div class="form-row" style="margin-bottom: 0; align-items: flex-end;">
-            <div class="form-group" style="flex: 1; margin-bottom: 4px;">
+            <div class="form-group" style="margin-bottom: 0;">
               <label style="font-size: 0.78rem; font-weight: 600; color: var(--text-primary);">Quantidade</label>
               <input type="number" min="1" class="form-control" style="height: 38px;" 
                      value="${item.quantidade || 1}" 
-                     onchange="EncomendasModule.updateItemRow(${idx}, 'quantidade', this.value)">
+                     oninput="EncomendasModule.updateItemCalc(${idx}, 'quantidade', this.value)">
             </div>
-            <div class="form-group" style="flex: 1.3; margin-bottom: 4px;">
+            <div class="form-group" style="margin-bottom: 0;">
               <label style="font-size: 0.78rem; font-weight: 600; color: var(--text-primary);">Valor Unitário (R$)</label>
               <input type="number" step="0.5" class="form-control" style="height: 38px;" 
                      value="${item.preco_unitario || 0}" 
                      placeholder="0,00"
-                     onchange="EncomendasModule.updateItemRow(${idx}, 'preco_unitario', this.value)">
+                     oninput="EncomendasModule.updateItemCalc(${idx}, 'preco_unitario', this.value)">
             </div>
-            <div class="form-group" style="flex: 1.2; margin-bottom: 4px; text-align: right;">
-              <label style="font-size: 0.72rem; color: var(--text-muted); display: block;">Subtotal</label>
-              <div style="font-size: 1.15rem; font-weight: 800; color: #34d399; padding-top: 5px;">
-                ${App.formatMoney(item.subtotal || 0)}
-              </div>
-            </div>
+          </div>
+
+          <!-- Subtotal do Item -->
+          <div style="display: flex; justify-content: flex-end; align-items: center; gap: 8px; margin-top: 10px; padding-top: 8px; border-top: 1px dashed rgba(255, 255, 255, 0.08);">
+            <span style="font-size: 0.76rem; color: var(--text-muted); text-transform: uppercase; font-weight: 600;">Subtotal do Item:</span>
+            <span id="enc-item-subtotal-${idx}" style="font-size: 1.15rem; font-weight: 800; color: #34d399;">
+              ${App.formatMoney(item.subtotal || 0)}
+            </span>
           </div>
         </div>
       `;
@@ -750,10 +806,12 @@ const EncomendasModule = {
       const totalItens = (enc.itens || []).reduce((acc, it) => acc + (Number(it.quantidade) || 0), 0);
       const nomesProdutos = (enc.itens || []).map(i => {
         const corStr = i.cor ? ` [${i.cor}]` : '';
-        return `${i.quantidade}x ${i.produto_nome || 'Item'}${corStr}`;
+        const obsStr = i.observacao ? ` (Obs: ${i.observacao})` : '';
+        return `${i.quantidade}x ${i.produto_nome || 'Item'}${corStr}${obsStr}`;
       }).join(', ');
 
       const coresList = [...new Set((enc.itens || []).filter(i => i.cor).map(i => i.cor))];
+      const hasItemObs = (enc.itens || []).some(i => i.observacao && i.observacao.trim());
 
       return `
         <tr class="dash-row-clickable" onclick="EncomendasModule.openEditModal('${enc.id}')" title="Clique para abrir detalhes da encomenda #${enc.id.substring(enc.id.length - 5)}">
@@ -777,6 +835,16 @@ const EncomendasModule = {
               ${coresList.length > 0 ? `
                 <span class="badge-cor-tag" title="Cores: ${coresList.join(', ')}">
                   🎨 ${App.escapeHtml(coresList.join(', '))}
+                </span>
+              ` : ''}
+              ${hasItemObs ? `
+                <span class="badge-cor-tag" style="background: rgba(14, 165, 233, 0.12); color: #38bdf8; border-color: rgba(14, 165, 233, 0.35);" title="Há observações nos produtos">
+                  📌 Obs no Item
+                </span>
+              ` : ''}
+              ${enc.observacoes ? `
+                <span class="badge-cor-tag" style="background: rgba(245, 158, 11, 0.12); color: #fbbf24; border-color: rgba(245, 158, 11, 0.35);" title="Observações Gerais: ${App.escapeHtml(enc.observacoes)}">
+                  📝 Obs Geral
                 </span>
               ` : ''}
             </div>

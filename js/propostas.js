@@ -339,10 +339,20 @@ const PropostasModule = {
     const dataEntregaDefault = new Date(Date.now() + 7 * 24 * 3600 * 1000).toISOString().split('T')[0];
 
     const itensEncomenda = (p.itens && p.itens.length > 0)
-      ? p.itens
+      ? p.itens.map(it => ({
+          produto_nome: it.produto_nome || '',
+          cor: it.cor || '',
+          personalizacao: it.personalizacao || '',
+          observacao: it.observacao || '',
+          quantidade: Number(it.quantidade) || 1,
+          preco_unitario: Number(it.preco_unitario) || 0,
+          subtotal: Number(it.subtotal) || 0
+        }))
       : [{
           produto_nome: p.titulo || 'Pedido Personalizado',
+          cor: '',
           personalizacao: p.escopo || '',
+          observacao: '',
           quantidade: 1,
           preco_unitario: Number(p.investimento) || 0,
           subtotal: Number(p.investimento) || 0
