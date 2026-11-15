@@ -48,7 +48,7 @@
   <meta http-equiv="Expires" content="0">
 
   <!-- Estilos Customizados -->
-  <link rel="stylesheet" href="css/styles.css?v=18">
+  <link rel="stylesheet" href="css/styles.css?v=19">
 </head>
 
 <body>
@@ -1517,6 +1517,17 @@
       </div>
       <span>Encomendas</span>
     </button>
+    <!-- BOTÃO FLUTUANTE CENTRAL: NOVA ENCOMENDA (ACESSO IMEDIATO DE QUALQUER TELA) -->
+    <button type="button" class="bottom-nav-item bottom-nav-fab" onclick="EncomendasModule.openNewModal()" title="Adicionar Nova Encomenda">
+      <div class="bottom-nav-fab-circle">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6">
+          <line x1="12" y1="5" x2="12" y2="19"></line>
+          <line x1="5" y1="12" x2="19" y2="12"></line>
+        </svg>
+      </div>
+      <span style="font-weight: 700; color: #38bdf8; font-size: 0.68rem; margin-top: 1px;">+ Pedido</span>
+    </button>
+
     <button type="button" class="bottom-nav-item" data-view="propostas" onclick="App.navigate('propostas')">
       <div style="position: relative; display: inline-flex;">
         <svg class="bottom-nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -1529,13 +1540,6 @@
         <span class="bottom-nav-badge" id="bottom-badge-propostas" style="display: none;">0</span>
       </div>
       <span>Orçamentos</span>
-    </button>
-    <button type="button" class="bottom-nav-item" data-view="finalizados" onclick="App.navigate('finalizados')">
-      <svg class="bottom-nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
-        <polyline points="22 4 12 14.01 9 11.01" />
-      </svg>
-      <span>Finalizados</span>
     </button>
     <button type="button" class="bottom-nav-item" id="bottom-nav-btn-menu" onclick="App.toggleSidebar()">
       <svg class="bottom-nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -1553,17 +1557,17 @@
   <!-- CONTAINER DE TOASTS -->
   <div class="toast-container" id="toast-container"></div>
 
-  <!-- SCRIPTS DO SISTEMA (com cache-busting v18) -->
-  <script src="js/notifications.js?v=18"></script>
-  <script src="js/storage.js?v=18"></script>
-  <script src="js/crm.js?v=18"></script>
-  <script src="js/encomendas.js?v=18"></script>
-  <script src="js/estoque.js?v=18"></script>
-  <script src="js/financeiro.js?v=18"></script>
-  <script src="js/propostas.js?v=18"></script>
-  <script src="js/calculadora.js?v=18"></script>
-  <script src="js/configuracoes.js?v=18"></script>
-  <script src="js/app.js?v=18"></script>
+  <!-- SCRIPTS DO SISTEMA (com cache-busting v19) -->
+  <script src="js/notifications.js?v=19"></script>
+  <script src="js/storage.js?v=19"></script>
+  <script src="js/crm.js?v=19"></script>
+  <script src="js/encomendas.js?v=19"></script>
+  <script src="js/estoque.js?v=19"></script>
+  <script src="js/financeiro.js?v=19"></script>
+  <script src="js/propostas.js?v=19"></script>
+  <script src="js/calculadora.js?v=19"></script>
+  <script src="js/configuracoes.js?v=19"></script>
+  <script src="js/app.js?v=19"></script>
 </body>
 
 </html>

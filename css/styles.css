@@ -1109,12 +1109,13 @@ body {
 .modal-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.75);
-  backdrop-filter: blur(6px);
+  background: rgba(0, 0, 0, 0.78);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 1000;
+  z-index: 2500 !important;
   opacity: 0;
   pointer-events: none;
   transition: opacity 0.2s ease;
@@ -1411,6 +1412,32 @@ select option:checked {
   border-radius: 999px;
   border: 1.5px solid #07090e;
   line-height: 1.2;
+}
+
+/* Botão Flutuante Central + Encomenda */
+.bottom-nav-fab {
+  position: relative;
+  top: -12px;
+  flex: 1.15;
+}
+
+.bottom-nav-fab-circle {
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #00a8f3 0%, #0284c7 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ffffff;
+  box-shadow: 0 4px 16px rgba(0, 168, 243, 0.45);
+  border: 3px solid #07090e;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.bottom-nav-fab:active .bottom-nav-fab-circle {
+  transform: scale(0.92);
+  box-shadow: 0 2px 8px rgba(0, 168, 243, 0.3);
 }
 
 /* Backdrop escuro para quando a gaveta do menu abrir no celular */
@@ -1920,32 +1947,66 @@ select option:checked {
     gap: 10px;
   }
 
+  .crm-toolbar .btn-primary {
+    order: -1;
+    width: 100%;
+    padding: 12px;
+    font-size: 0.95rem;
+    font-weight: 700;
+  }
+
+  .topbar-actions .btn-primary {
+    order: -1;
+    font-weight: 700;
+    background: #00a8f3;
+    border-color: #00a8f3;
+    flex-shrink: 0;
+  }
+
   .search-input {
     min-width: 0 !important;
     width: 100%;
   }
 
-  /* Modais em celular estilo Bottom Sheet */
-  .modal-container {
-    width: 96% !important;
-    max-width: 96% !important;
-    max-height: 88vh !important;
-    margin: auto 2% 2% 2% !important;
-    border-radius: 16px !important;
+  /* Modais em celular estilo Bottom Sheet acima de qualquer menu */
+  .modal-overlay {
+    z-index: 2500 !important;
     padding: 0 !important;
+    align-items: flex-end !important;
+  }
+
+  .modal-container {
+    width: 100% !important;
+    max-width: 100% !important;
+    max-height: 92vh !important;
+    margin: 0 !important;
+    border-radius: 20px 20px 0 0 !important;
+    padding: 0 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.85) !important;
+    z-index: 2501 !important;
   }
 
   .modal-header {
-    padding: 16px !important;
+    padding: 16px 20px !important;
+    flex-shrink: 0 !important;
+    border-bottom: 1px solid var(--border) !important;
   }
 
   .modal-body {
-    padding: 16px !important;
-    max-height: calc(88vh - 130px) !important;
+    padding: 16px 20px !important;
+    flex: 1 1 auto !important;
+    max-height: calc(92vh - 140px) !important;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch !important;
   }
 
   .modal-footer {
-    padding: 14px 16px !important;
+    padding: 14px 20px calc(14px + env(safe-area-inset-bottom, 12px)) 20px !important;
+    flex-shrink: 0 !important;
+    background: var(--bg-surface) !important;
+    border-top: 1px solid var(--border) !important;
   }
 
   .form-row {
