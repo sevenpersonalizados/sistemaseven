@@ -60,10 +60,10 @@
           </button>
         </li>
         <li class="nav-item">
-          <button type="button" data-view="crm" id="nav-btn-crm">
-            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-            <span>CRM & Funil</span>
-            <span class="badge-counter highlight" id="nav-badge-crm">0</span>
+          <button type="button" data-view="propostas" id="nav-btn-propostas">
+            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+            <span>Orçamentos</span>
+            <span class="badge-counter" id="nav-badge-propostas">0</span>
           </button>
         </li>
 
@@ -93,12 +93,6 @@
           <button type="button" data-view="calculadora" id="nav-btn-calculadora">
             <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3.5"/><path d="M12 3v5.5M12 15.5V21M3 12h5.5M15.5 12H21"/></svg>
             <span>Calculadora de Filamentos</span>
-          </button>
-        </li>
-        <li class="nav-item">
-          <button type="button" data-view="propostas" id="nav-btn-propostas">
-            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
-            <span>Gerador Propostas</span>
           </button>
         </li>
 
@@ -153,7 +147,7 @@
             🟢 <span class="desktop-only">Tempo Real ⚡</span>
           </button>
           <button class="btn btn-secondary btn-sm desktop-only" onclick="PropostasModule.openNewModal()">
-            <span>📄</span> Nova Proposta
+            <span>📄</span> Novo Orçamento
           </button>
           <button class="btn btn-primary btn-sm" onclick="EncomendasModule.openNewModal()">
             <span>✨</span> <span>Nova Encomenda</span>
@@ -269,100 +263,7 @@
           </div>
         </section>
 
-        <!-- 2. VIEW CRM (KANBAN DE LEADS) -->
-        <section class="view-section" id="view-crm">
-          <div class="themed-panel theme-blue" style="margin-bottom: 22px;">
-            <div class="themed-header">
-              <div style="display: flex; align-items: center; gap: 14px; flex-wrap: wrap;">
-                <span class="themed-icon-box">💬</span>
-                <div>
-                  <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
-                    <h3 class="themed-title">CRM & Funil de Vendas WhatsApp</h3>
-                    <span style="font-size: 0.72rem; font-weight: 700; text-transform: uppercase; padding: 3px 10px; border-radius: 999px; background: rgba(0, 168, 243, 0.22); color: #38bdf8; border: 1px solid rgba(0, 168, 243, 0.55);">
-                      NEGOCIAÇÕES ATIVAS
-                    </span>
-                  </div>
-                  <div class="themed-subtitle">
-                    Acompanhe conversas, envie orçamentos e feche encomendas com 1 clique
-                  </div>
-                </div>
-              </div>
-              <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
-                <input type="text" class="search-input" id="crm-search-input" placeholder="🔍 Buscar lead, telefone ou mensagem..." style="min-width: 240px;">
-                <span class="themed-chip-highlight" style="border: 1px solid rgba(0, 168, 243, 0.45); color: #38bdf8;">
-                  💰 Total no Funil: <strong id="crm-total-funil" style="color: #ffffff; margin-left: 4px;">R$ 0,00</strong>
-                </span>
-                <button class="btn btn-primary" onclick="CrmModule.openNewModal()">
-                  <span>+</span> Novo Lead
-                </button>
-              </div>
-            </div>
-          </div>
-
-          <div class="kanban-board">
-            <!-- 1. Conversas -->
-            <div class="kanban-column col-conversas" ondragover="CrmModule.handleDragOver(event)" ondragleave="CrmModule.handleDragLeave(event)" ondrop="CrmModule.handleDrop(event, 'conversas')">
-              <div class="kanban-column-header">
-                <div class="kanban-column-title">
-                  <div class="column-pill"></div>
-                  <span>1. Conversas</span>
-                </div>
-                <span class="kanban-counter" id="kanban-counter-conversas">0</span>
-              </div>
-              <div class="kanban-cards-list" id="kanban-list-conversas"></div>
-            </div>
-
-            <!-- 2. Orçamento Enviado -->
-            <div class="kanban-column col-orcamento" ondragover="CrmModule.handleDragOver(event)" ondragleave="CrmModule.handleDragLeave(event)" ondrop="CrmModule.handleDrop(event, 'orcamento')">
-              <div class="kanban-column-header">
-                <div class="kanban-column-title">
-                  <div class="column-pill"></div>
-                  <span>2. Orçamento Enviado</span>
-                </div>
-                <span class="kanban-counter" id="kanban-counter-orcamento">0</span>
-              </div>
-              <div class="kanban-cards-list" id="kanban-list-orcamento"></div>
-            </div>
-
-            <!-- 3. Aguardando Aprovação -->
-            <div class="kanban-column col-aprovacao" ondragover="CrmModule.handleDragOver(event)" ondragleave="CrmModule.handleDragLeave(event)" ondrop="CrmModule.handleDrop(event, 'aprovacao')">
-              <div class="kanban-column-header">
-                <div class="kanban-column-title">
-                  <div class="column-pill"></div>
-                  <span>3. Aguardando Aprovação</span>
-                </div>
-                <span class="kanban-counter" id="kanban-counter-aprovacao">0</span>
-              </div>
-              <div class="kanban-cards-list" id="kanban-list-aprovacao"></div>
-            </div>
-
-            <!-- 4. Fechado / Ganho -->
-            <div class="kanban-column col-fechado" ondragover="CrmModule.handleDragOver(event)" ondragleave="CrmModule.handleDragLeave(event)" ondrop="CrmModule.handleDrop(event, 'fechado')">
-              <div class="kanban-column-header">
-                <div class="kanban-column-title">
-                  <div class="column-pill"></div>
-                  <span>4. Fechado / Ganho 🎉</span>
-                </div>
-                <span class="kanban-counter" id="kanban-counter-fechado">0</span>
-              </div>
-              <div class="kanban-cards-list" id="kanban-list-fechado"></div>
-            </div>
-
-            <!-- 5. Perdido -->
-            <div class="kanban-column col-perdido" ondragover="CrmModule.handleDragOver(event)" ondragleave="CrmModule.handleDragLeave(event)" ondrop="CrmModule.handleDrop(event, 'perdido')">
-              <div class="kanban-column-header">
-                <div class="kanban-column-title">
-                  <div class="column-pill"></div>
-                  <span>5. Perdido / Arquivado</span>
-                </div>
-                <span class="kanban-counter" id="kanban-counter-perdido">0</span>
-              </div>
-              <div class="kanban-cards-list" id="kanban-list-perdido"></div>
-            </div>
-          </div>
-        </section>
-
-        <!-- 3. VIEW ENCOMENDAS -->
+        <!-- 2. VIEW ENCOMENDAS -->
         <section class="view-section" id="view-encomendas">
           <div class="crm-toolbar">
             <div style="display: flex; gap: 12px; flex-wrap: wrap; align-items: center;">
@@ -558,7 +459,7 @@
           </div>
         </section>
 
-        <!-- 6. VIEW PROPOSTAS -->
+        <!-- 6. VIEW PROPOSTAS / ORÇAMENTOS -->
         <section class="view-section" id="view-propostas">
           <div class="themed-panel theme-purple" style="margin-bottom: 24px;">
             <div class="themed-header">
@@ -566,22 +467,22 @@
                 <span class="themed-icon-box">📄</span>
                 <div>
                   <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
-                    <h3 class="themed-title">Gerador de Propostas Comerciais</h3>
+                    <h3 class="themed-title">Orçamentos & Propostas Comerciais</h3>
                     <span style="font-size: 0.72rem; font-weight: 700; text-transform: uppercase; padding: 3px 10px; border-radius: 999px; background: rgba(168, 85, 247, 0.22); color: #c084fc; border: 1px solid rgba(168, 85, 247, 0.55);">
-                      ORÇAMENTOS DE ALTA CONVERSÃO
+                      ORÇAMENTOS SEVEN
                     </span>
                   </div>
                   <div class="themed-subtitle">
-                    Crie orçamentos com itens detalhados e aprove direto para Encomendas
+                    Crie orçamentos detalhados com itens e aprove diretamente para Encomendas
                   </div>
                 </div>
               </div>
               <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
                 <span class="themed-chip">
-                  📑 <strong id="propostas-total-qtd" style="color: #ffffff;">0</strong> propostas
+                  📑 <strong id="propostas-total-qtd" style="color: #ffffff;">0</strong> orçamentos
                 </span>
                 <button class="btn btn-primary" onclick="PropostasModule.openNewModal()">
-                  <span>+</span> Nova Proposta Comercial
+                  <span>+</span> Novo Orçamento
                 </button>
               </div>
             </div>
@@ -956,52 +857,6 @@
   <!-- ========================================================================
        MODAIS DO SISTEMA
        ======================================================================== -->
-
-  <!-- MODAL: CRM LEAD -->
-  <div class="modal-overlay" id="modal-crm">
-    <div class="modal-container">
-      <div class="modal-header">
-        <h3 id="crm-modal-title">Novo Lead no CRM</h3>
-        <button class="btn-icon" style="background: transparent; border: none; color: var(--text-muted); cursor: pointer;" onclick="App.closeModal('modal-crm')">✕</button>
-      </div>
-      <div class="modal-body">
-        <input type="hidden" id="crm-form-id">
-        <div class="form-group">
-          <label>Nome do Cliente ou Empresa *</label>
-          <input type="text" id="crm-form-name" class="form-control" placeholder="Ex: Lucas Ferreira">
-        </div>
-        <div class="form-row">
-          <div class="form-group">
-            <label>Telefone / WhatsApp</label>
-            <input type="text" id="crm-form-phone" class="form-control" placeholder="(11) 98765-4321">
-          </div>
-          <div class="form-group">
-            <label>Valor Estimado do Pedido (R$)</label>
-            <input type="number" step="0.01" id="crm-form-value" class="form-control" placeholder="0.00">
-          </div>
-        </div>
-        <div class="form-group">
-          <label>Etapa no Funil</label>
-          <select id="crm-form-stage" class="form-control">
-            <option value="conversas">1. Conversas Iniciais</option>
-            <option value="orcamento">2. Orçamento Enviado</option>
-            <option value="aprovacao">3. Aguardando Aprovação</option>
-            <option value="fechado">4. Fechado / Ganho 🎉</option>
-            <option value="perdido">5. Perdido / Arquivado</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label>Observações & Próximos Passos</label>
-          <textarea id="crm-form-msg" class="form-control" rows="3" placeholder="Detalhes do pedido, arte solicitada, urgência..."></textarea>
-        </div>
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-danger" id="crm-btn-delete" onclick="CrmModule.deleteCurrent()">Excluir Lead</button>
-        <button type="button" class="btn btn-secondary" onclick="App.closeModal('modal-crm')">Cancelar</button>
-        <button type="button" class="btn btn-primary" onclick="CrmModule.save()">Salvar Lead</button>
-      </div>
-    </div>
-  </div>
 
   <!-- MODAL: ENCOMENDA -->
   <div class="modal-overlay" id="modal-encomenda">
@@ -1510,12 +1365,12 @@
       </div>
       <span>Encomendas</span>
     </button>
-    <button type="button" class="bottom-nav-item" data-view="crm" onclick="App.navigate('crm')">
+    <button type="button" class="bottom-nav-item" data-view="propostas" onclick="App.navigate('propostas')">
       <div style="position: relative; display: inline-flex;">
-        <svg class="bottom-nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-        <span class="bottom-nav-badge" id="bottom-badge-crm" style="display: none;">0</span>
+        <svg class="bottom-nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+        <span class="bottom-nav-badge" id="bottom-badge-propostas" style="display: none;">0</span>
       </div>
-      <span>CRM</span>
+      <span>Orçamentos</span>
     </button>
     <button type="button" class="bottom-nav-item" data-view="finalizados" onclick="App.navigate('finalizados')">
       <svg class="bottom-nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>

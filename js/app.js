@@ -15,7 +15,6 @@ const App = {
     if (typeof NotificationModule !== 'undefined') {
       NotificationModule.init();
     }
-    CrmModule.init();
     EncomendasModule.init();
     EstoqueModule.init();
     FinanceiroModule.init();
@@ -46,6 +45,9 @@ const App = {
   },
 
   navigate(viewName) {
+    if (viewName === 'crm' || viewName === 'orcamentos') {
+      viewName = 'propostas';
+    }
     this.currentView = viewName;
 
     // Atualiza botões do sidebar desktop
@@ -85,12 +87,11 @@ const App = {
     // Título no Topbar
     const titles = {
       dashboard: { title: 'Painel Geral & Indicadores', sub: 'Visão executiva do estúdio de personalização' },
-      crm: { title: 'CRM & Funil de Vendas', sub: 'Acompanhe contatos, orçamentos e fechamentos' },
+      propostas: { title: 'Orçamentos & Propostas', sub: 'Crie orçamentos de alto valor prontos para aprovar e produzir' },
       encomendas: { title: 'Encomendas & Produção', sub: 'Controle de prazos, etapas e personalizações' },
       finalizados: { title: 'Histórico de Finalizados', sub: 'Encomendas entregues e quitadas' },
       estoque: { title: 'Estoque de Insumos', sub: 'Filamentos 3D, chapas laser, copos e embalagens' },
       financeiro: { title: 'Financeiro & Fluxo de Caixa', sub: 'Entradas, despesas operacionais e balanço' },
-      propostas: { title: 'Gerador de Propostas Comerciais', sub: 'Crie propostas de alto valor prontas para fechar' },
       calculadora: { title: 'Calculadora de Filamentos', sub: 'Custos de produção 3D: filamento, energia elétrica e desgaste operacional' },
       configuracoes: { title: 'Configurações do Estúdio', sub: 'Dados da empresa, dados bancários e integrações' }
     };
@@ -155,12 +156,13 @@ const App = {
     }
 
     // 3. Atualiza Badges de alerta no menu lateral e na barra inferior mobile
-    const bCrm = document.getElementById('nav-badge-crm');
-    if (bCrm) bCrm.textContent = crm.length;
-    const bbCrm = document.getElementById('bottom-badge-crm');
-    if (bbCrm) {
-      bbCrm.textContent = crm.length;
-      bbCrm.style.display = crm.length > 0 ? 'inline-block' : 'none';
+    const propostas = StorageService.get('propostas') || [];
+    const bProp = document.getElementById('nav-badge-propostas');
+    if (bProp) bProp.textContent = propostas.length;
+    const bbProp = document.getElementById('bottom-badge-propostas');
+    if (bbProp) {
+      bbProp.textContent = propostas.length;
+      bbProp.style.display = propostas.length > 0 ? 'inline-block' : 'none';
     }
 
     const bEnc = document.getElementById('nav-badge-encomendas');
