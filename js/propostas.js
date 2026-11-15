@@ -1,66 +1,68 @@
 /**
  * SEVEN PERSONALIZADOS — MÓDULO DE ORÇAMENTOS & PROPOSTAS COMERCIAIS
- * Criação, edição e gestão de orçamentos com itens, geração de propostas timbradas e
- * aprovação direta movendo a encomenda para a subaba "Fila de Espera".
+ * Criação, edição e gestão de orçamentos com itens.
+ * - Os orçamentos permanecem nesta aba aguardando aprovação.
+ * - Ao serem aprovados, eles SAEM da aba de Orçamentos e são movidos para Encomendas na subaba "Fila de Espera".
  */
 
 let propostaItensTemp = [];
 
 const PropostasModule = {
-  filtroAtivo: 'pendentes', // 'pendentes' | 'aprovadas' | 'todos'
-
   init() {
+    this.limparAprovadosLegados();
     this.renderList();
     window.addEventListener('seven_data_updated', (e) => {
-      if (!e.detail || e.detail?.table === 'propostas') this.renderList();
+      if (!e.detail || e.detail?.table === 'propostas') {
+        this.renderList();
+      }
     });
   },
 
-  setFiltro(tipo) {
-    this.filtroAtivo = tipo;
-    const btnPendentes = document.getElementById('btn-prop-tab-pendentes');
-    const btnAprovadas = document.getElementById('btn-prop-tab-aprovadas');
-    const btnTodos = document.getElementById('btn-prop-tab-todos');
-
-    if (btnPendentes) btnPendentes.className = `btn btn-sm ${tipo === 'pendentes' ? 'btn-primary' : 'btn-secondary'}`;
-    if (btnAprovadas) btnAprovadas.className = `btn btn-sm ${tipo === 'aprovadas' ? 'btn-primary' : 'btn-secondary'}`;
-    if (btnTodos) btnTodos.className = `btn btn-sm ${tipo === 'todos' ? 'btn-primary' : 'btn-secondary'}`;
-
-    this.renderList();
+  /**
+   * Remove da tabela 'propostas' qualquer orçamento que já tenha sido aprovado anteriormente,
+   * garantindo que ele não continue visível na página de orçamentos.
+   */
+  limparAprovadosLegados() {
+    try {
+      const propostas = StorageService.get('propostas') || [];
+      const aprovados = propostas.filter(p => p.status === 'Aprovada');
+      if (aprovados.length > 0) {
+        aprovados.forEach(p => {
+          StorageService.delete('propostas', p.id);
+        });
+      }
+    } catch (e) {
+      console.warn('Erro ao limpar orçamentos aprovados:', e);
+    }
   },
 
   renderList() {
     const propostas = StorageService.get('propostas') || [];
 
-    const pendentesCount = propostas.filter(p => p.status !== 'Aprovada').length;
-    const aprovadasCount = propostas.filter(p => p.status === 'Aprovada').length;
+    // Considera apenas orçamentos em aberto (não aprovados)
+    const pendentes = propostas.filter(p => p.status !== 'Aprovada');
 
-    // Atualiza contadores do cabeçalho e abas
+    // Atualiza contadores
     const pendQtdEl = document.getElementById('propostas-pendentes-qtd');
-    if (pendQtdEl) pendQtdEl.textContent = pendentesCount;
+    if (pendQtdEl) pendQtdEl.textContent = pendentes.length;
 
-    const aprovQtdEl = document.getElementById('propostas-aprovadas-qtd');
-    if (aprovQtdEl) aprovQtdEl.textContent = aprovadasCount;
+    const totalBadge = document.getElementById('propostas-total-badge');
+    if (totalBadge) totalBadge.textContent = pendentes.length;
 
-    const contPend = document.getElementById('cont-filtro-pendentes');
-    if (contPend) contPend.textContent = pendentesCount;
-
-    const contAprov = document.getElementById('cont-filtro-aprovadas');
-    if (contAprov) contAprov.textContent = aprovadasCount;
-
-    const contTodos = document.getElementById('cont-filtro-todos');
-    if (contTodos) contTodos.textContent = propostas.length;
+    if (typeof App !== 'undefined' && App.updateBadges) {
+      App.updateBadges();
+    }
 
     const container = document.getElementById('propostas-cards-container');
     if (!container) return;
 
-    if (propostas.length === 0) {
+    if (pendentes.length === 0) {
       container.innerHTML = `
         <div style="grid-column: 1/-1; text-align: center; padding: 48px 20px; color: var(--text-muted);">
           <div style="font-size: 2.2rem; margin-bottom: 12px;">📑</div>
-          <h4 style="color: var(--text-primary); margin-bottom: 6px;">Nenhum orçamento cadastrado ainda</h4>
+          <h4 style="color: var(--text-primary); margin-bottom: 6px;">Nenhum orçamento em aberto</h4>
           <p style="font-size: 0.88rem; max-width: 480px; margin: 0 auto 16px auto;">
-            Crie um novo orçamento para o cliente. Ele ficará salvo aqui na aba Orçamentos até que seja aprovado e movido para a Fila de Espera!
+            Todos os orçamentos foram aprovados e movidos para a <strong>Fila de Espera</strong> em Encomendas, ou nenhum foi criado ainda.
           </p>
           <button class="btn btn-primary" onclick="PropostasModule.openNewModal()">
             <span>+</span> Novo Orçamento
@@ -73,8 +75,7 @@ const PropostasModule = {
     // Filtro por termo de busca
     const termoBusca = (document.getElementById('prop-filtro-busca')?.value || '').toLowerCase().trim();
 
-    let filtradas = [...propostas];
-
+    let filtradas = [...pendentes];
     if (termoBusca) {
       filtradas = filtradas.filter(p =>
         (p.cliente || '').toLowerCase().includes(termoBusca) ||
@@ -83,50 +84,35 @@ const PropostasModule = {
       );
     }
 
-    if (this.filtroAtivo === 'pendentes') {
-      filtradas = filtradas.filter(p => p.status !== 'Aprovada');
-    } else if (this.filtroAtivo === 'aprovadas') {
-      filtradas = filtradas.filter(p => p.status === 'Aprovada');
-    }
-
     if (filtradas.length === 0) {
-      const msgVazio = this.filtroAtivo === 'pendentes'
-        ? 'Nenhum orçamento aguardando aprovação no momento. Todos os orçamentos foram aprovados ou não há registros.'
-        : (this.filtroAtivo === 'aprovadas'
-          ? 'Nenhum orçamento aprovado ainda.'
-          : 'Nenhum orçamento localizado para esta busca.');
-
       container.innerHTML = `
         <div style="grid-column: 1/-1; text-align: center; padding: 40px 20px; color: var(--text-muted);">
           <div style="font-size: 1.8rem; margin-bottom: 8px;">🔍</div>
-          <div style="font-size: 0.95rem;">${msgVazio}</div>
+          <div style="font-size: 0.95rem;">Nenhum orçamento em aberto localizado para esta busca.</div>
         </div>
       `;
       return;
     }
 
-    // Ordena da mais recente para a mais antiga
+    // Ordena do mais recente para o mais antigo
     filtradas.sort((a, b) => ((b.criada_em || '') > (a.criada_em || '') ? 1 : -1));
 
     container.innerHTML = filtradas.map(p => {
-      const isAprovada = p.status === 'Aprovada';
       const itensResumo = (p.itens && p.itens.length > 0)
         ? p.itens.map(i => `${i.quantidade}x ${i.produto_nome}`).join(', ')
         : (p.escopo || 'Itens personalizados');
 
       return `
-        <div class="panel-box" style="margin-bottom: 0; display: flex; flex-direction: column; justify-content: space-between; border-color: ${isAprovada ? 'rgba(16, 185, 129, 0.45)' : 'rgba(245, 158, 11, 0.45)'}; box-shadow: ${isAprovada ? '0 4px 18px rgba(16, 185, 129, 0.08)' : '0 4px 18px rgba(245, 158, 11, 0.08)'};">
+        <div class="panel-box" style="margin-bottom: 0; display: flex; flex-direction: column; justify-content: space-between; border-color: rgba(245, 158, 11, 0.45); box-shadow: 0 4px 18px rgba(245, 158, 11, 0.08);">
           <div>
             <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; gap: 8px; flex-wrap: wrap;">
               <div>
-                <span class="status-badge" style="${isAprovada ? 'background: rgba(16, 185, 129, 0.2); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.5);' : 'background: rgba(245, 158, 11, 0.2); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.5);'}">
-                  ${isAprovada ? '✅ Aprovada (Na Fila de Espera)' : '⏳ Aguardando Aprovação'}
+                <span class="status-badge" style="background: rgba(245, 158, 11, 0.2); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.5);">
+                  ⏳ Aguardando Aprovação
                 </span>
-                ${!isAprovada ? `
-                  <div style="font-size: 0.70rem; color: #fbbf24; margin-top: 3px; font-weight: 600;">
-                    • Permanece em Orçamentos até aprovação
-                  </div>
-                ` : ''}
+                <div style="font-size: 0.70rem; color: #fbbf24; margin-top: 3px; font-weight: 600;">
+                  • Permanece em Orçamentos até aprovação
+                </div>
               </div>
               <span style="font-size: 0.75rem; color: var(--text-muted);">${App.formatDate(p.criada_em)}</span>
             </div>
@@ -153,19 +139,13 @@ const PropostasModule = {
             </div>
 
             <div style="display: flex; gap: 6px; align-items: center; flex-wrap: wrap;">
-              ${isAprovada ? `
-                <button class="btn btn-secondary" onclick="PropostasModule.irParaFilaDeEspera()" style="padding: 6px 10px; font-size: 0.78rem; color: #34d399; border-color: rgba(16, 185, 129, 0.4);" title="Ver esta encomenda na Fila de Espera">
-                  📦 Ver na Fila
-                </button>
-              ` : `
-                <button class="btn btn-primary" onclick="PropostasModule.aprovarProposta('${p.id}')" title="Aprovar proposta e mover direto para Fila de Espera" style="padding: 6px 12px; font-size: 0.78rem; background: #10b981; border-color: #10b981; font-weight: 600;">
-                  ✅ Aprovar (Mover p/ Fila)
-                </button>
-                <button class="btn btn-secondary btn-icon" onclick="PropostasModule.openEditModal('${p.id}')" style="padding: 6px 8px; font-size: 0.78rem;" title="Editar orçamento">
-                  ✏️
-                </button>
-              `}
-              <button class="btn btn-secondary" onclick="PropostasModule.visualizarProposta('${p.id}')" style="padding: 6px 10px; font-size: 0.78rem;" title="Visualizar proposta formatada timbrada">
+              <button class="btn btn-primary" onclick="PropostasModule.aprovarProposta('${p.id}')" title="Aprovar orçamento e mover para a Fila de Espera" style="padding: 6px 12px; font-size: 0.78rem; background: #10b981; border-color: #10b981; font-weight: 600;">
+                ✅ Aprovar (Mover p/ Fila)
+              </button>
+              <button class="btn btn-secondary btn-icon" onclick="PropostasModule.openEditModal('${p.id}')" style="padding: 6px 8px; font-size: 0.78rem;" title="Editar orçamento">
+                ✏️
+              </button>
+              <button class="btn btn-secondary" onclick="PropostasModule.visualizarProposta('${p.id}')" style="padding: 6px 10px; font-size: 0.78rem;" title="Visualizar orçamento formatado / PDF">
                 📄 Ver
               </button>
               <button class="btn btn-secondary btn-icon" onclick="PropostasModule.deleteProposta('${p.id}')" title="Excluir orçamento">
@@ -191,7 +171,6 @@ const PropostasModule = {
     document.getElementById('prop-metodo').value = '1. Envio e aprovação de maquete digital 3D\n2. Fabricação com controle milimétrico de corte e gravação\n3. Limpeza, acabamento artesanal e controle de qualidade\n4. Embalagem reforçada e pronta para entrega';
     document.getElementById('prop-prazo').value = '5 a 7 dias úteis após aprovação da arte final';
     document.getElementById('prop-condicoes').value = '50% de sinal no pedido e 50% na conclusão da produção via Pix.';
-    document.getElementById('prop-status').value = 'Aguardando Aprovação';
 
     propostaItensTemp = [
       {
@@ -223,7 +202,6 @@ const PropostasModule = {
     document.getElementById('prop-metodo').value = p.metodo || '';
     document.getElementById('prop-prazo').value = p.prazo || '';
     document.getElementById('prop-condicoes').value = p.condicoes || '';
-    document.getElementById('prop-status').value = p.status || 'Aguardando Aprovação';
 
     propostaItensTemp = (p.itens && p.itens.length > 0)
       ? JSON.parse(JSON.stringify(p.itens))
@@ -325,14 +303,7 @@ const PropostasModule = {
     const escopo = document.getElementById('prop-escopo').value.trim();
     const metodo = document.getElementById('prop-metodo').value.trim();
     const prazo = document.getElementById('prop-prazo').value.trim();
-    let statusEscolhido = document.getElementById('prop-status')?.value || 'Aguardando Aprovação';
     const condicoes = document.getElementById('prop-condicoes').value.trim();
-
-    if (aprovarDireto === true) {
-      statusEscolhido = 'Aprovada';
-    } else if (statusEscolhido !== 'Aprovada') {
-      statusEscolhido = 'Aguardando Aprovação';
-    }
 
     const investimentoTotal = propostaItensTemp.reduce((acc, it) => acc + (Number(it.subtotal) || 0), 0);
 
@@ -356,7 +327,7 @@ const PropostasModule = {
       prazo: prazo || '5 a 7 dias úteis',
       investimento: investimentoTotal,
       condicoes,
-      status: statusEscolhido,
+      status: 'Aguardando Aprovação',
       itens: JSON.parse(JSON.stringify(propostaItensTemp))
     };
 
@@ -371,10 +342,10 @@ const PropostasModule = {
 
     App.closeModal('modal-proposta');
 
-    if (statusEscolhido === 'Aprovada' || aprovarDireto === true) {
+    if (aprovarDireto === true) {
       this.aprovarProposta(idOrcamento);
     } else {
-      App.toast('Orçamento salvo com sucesso! Permanece na aba Orçamentos aguardando aprovação.', 'success');
+      App.toast('Orçamento salvo com sucesso! Permanece na aba Orçamentos até ser aprovado.', 'success');
       this.renderList();
     }
   },
@@ -382,12 +353,6 @@ const PropostasModule = {
   aprovarProposta(id) {
     const p = StorageService.get('propostas').find(item => item.id === id);
     if (!p) return;
-
-    if (p.status === 'Aprovada' && p.encomenda_id) {
-      App.toast('Este orçamento já foi aprovado e está na Fila de Espera.', 'info');
-      this.irParaFilaDeEspera();
-      return;
-    }
 
     // Calcula prazo padrão de entrega (7 dias à frente)
     const dataEntregaDefault = new Date(Date.now() + 7 * 24 * 3600 * 1000).toISOString().split('T')[0];
@@ -416,17 +381,17 @@ const PropostasModule = {
       itens: itensEncomenda
     };
 
-    const encCriada = StorageService.insert('encomendas', novaEncomenda);
+    // 1. Cria a encomenda diretamente na "Fila de Espera"
+    StorageService.insert('encomendas', novaEncomenda);
 
-    StorageService.update('propostas', id, {
-      status: 'Aprovada',
-      encomenda_id: encCriada.id,
-      aprovada_em: new Date().toISOString()
-    });
+    // 2. Remove o orçamento de "propostas" para que ele SAIA DA PÁGINA DE ORÇAMENTOS
+    StorageService.delete('propostas', id);
 
-    App.toast('Orçamento aprovado com sucesso! Encomenda movida para a Fila de Espera. 🎉', 'success');
+    App.toast('Orçamento aprovado com sucesso! Movido para a Fila de Espera em Encomendas. 🎉', 'success');
     App.closeModal('modal-preview-proposta');
     App.closeModal('modal-proposta');
+
+    // Atualiza imediatamente a lista da tela de Orçamentos (o orçamento aprovado sumiu daqui!)
     this.renderList();
 
     // Redireciona imediatamente para a tela de Encomendas & Produção na subaba "Fila de Espera"
@@ -478,18 +443,9 @@ const PropostasModule = {
     // Atualiza botões do cabeçalho do preview
     if (actionsContainer) {
       actionsContainer.innerHTML = `
-        ${p.status !== 'Aprovada' ? `
-          <button class="btn btn-primary" onclick="PropostasModule.aprovarProposta('${p.id}')" style="background: #10b981; border-color: #10b981; font-weight: 600;">
-            ✅ Aprovar & Mover p/ Fila de Espera
-          </button>
-        ` : `
-          <span style="font-size: 0.85rem; color: #10b981; font-weight: 600; margin-right: 8px;">
-            ✅ Orçamento Aprovado (Na Fila de Espera)
-          </span>
-          <button class="btn btn-secondary" onclick="PropostasModule.irParaFilaDeEspera()" style="font-size: 0.82rem; color: #34d399; border-color: rgba(16, 185, 129, 0.4);">
-            📦 Ver na Fila
-          </button>
-        `}
+        <button class="btn btn-primary" onclick="PropostasModule.aprovarProposta('${p.id}')" style="background: #10b981; border-color: #10b981; font-weight: 600;">
+          ✅ Aprovar & Mover p/ Fila de Espera
+        </button>
         <button class="btn btn-secondary" onclick="PropostasModule.imprimirPropostaAtual()">🖨️ Imprimir / PDF</button>
         <button class="btn btn-secondary" onclick="App.closeModal('modal-preview-proposta')">Fechar</button>
       `;
@@ -507,7 +463,7 @@ const PropostasModule = {
           <div><strong style="color: #00a8f3;">WhatsApp:</strong> ${App.escapeHtml(config.telefone || '')}</div>
           <div><strong style="color: #00a8f3;">E-mail:</strong> ${App.escapeHtml(config.email || '')}</div>
           <div><strong style="color: #00a8f3;">Emissão:</strong> ${App.formatDate(p.criada_em)}</div>
-          <div><strong style="color: #00a8f3;">Status:</strong> ${p.status === 'Aprovada' ? 'Aprovado (Na Fila de Produção)' : 'Aguardando Aprovação'}</div>
+          <div><strong style="color: #fbbf24;">Status:</strong> Aguardando Aprovação</div>
         </div>
       </div>
 

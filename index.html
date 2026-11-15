@@ -473,16 +473,13 @@
                     </span>
                   </div>
                   <div class="themed-subtitle">
-                    Cadastre e gerencie orçamentos. Eles permanecem aqui até serem aprovados e movidos para a Fila de Espera!
+                    Orçamentos salvos aguardando aprovação. Ao aprovar, o pedido é movido imediatamente para a Fila de Espera em Encomendas.
                   </div>
                 </div>
               </div>
               <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
                 <span class="themed-chip">
-                  ⏳ Pendentes: <strong id="propostas-pendentes-qtd" style="color: #fbbf24;">0</strong>
-                </span>
-                <span class="themed-chip">
-                  ✅ Aprovados: <strong id="propostas-aprovadas-qtd" style="color: #34d399;">0</strong>
+                  ⏳ <strong id="propostas-pendentes-qtd" style="color: #ffffff;">0</strong> em aberto
                 </span>
                 <button class="btn btn-primary" onclick="PropostasModule.openNewModal()">
                   <span>+</span> Novo Orçamento
@@ -491,18 +488,11 @@
             </div>
           </div>
 
-          <!-- BARRA DE FILTROS POR ABA E BUSCA -->
+          <!-- BARRA DE BUSCA RÁPIDA -->
           <div class="filter-bar" style="margin-bottom: 20px; display: flex; gap: 10px; flex-wrap: wrap; align-items: center; justify-content: space-between;">
-            <div style="display: flex; gap: 8px; flex-wrap: wrap;" id="prop-filtro-botoes">
-              <button type="button" class="btn btn-sm btn-primary" id="btn-prop-tab-pendentes" onclick="PropostasModule.setFiltro('pendentes')">
-                ⏳ Aguardando Aprovação (<span id="cont-filtro-pendentes">0</span>)
-              </button>
-              <button type="button" class="btn btn-sm btn-secondary" id="btn-prop-tab-aprovadas" onclick="PropostasModule.setFiltro('aprovadas')">
-                ✅ Aprovados / Enviados (<span id="cont-filtro-aprovadas">0</span>)
-              </button>
-              <button type="button" class="btn btn-sm btn-secondary" id="btn-prop-tab-todos" onclick="PropostasModule.setFiltro('todos')">
-                📑 Todos (<span id="cont-filtro-todos">0</span>)
-              </button>
+            <div style="font-size: 0.88rem; color: var(--text-secondary); display: flex; align-items: center; gap: 8px;">
+              <span>⏳ Orçamentos aguardando aprovação do cliente:</span>
+              <strong id="propostas-total-badge" style="color: #fbbf24; font-size: 0.95rem;">0</strong>
             </div>
             <div style="flex: 1; min-width: 220px; max-width: 380px;">
               <input type="text" id="prop-filtro-busca" class="form-control" style="padding: 7px 12px; font-size: 0.82rem;" placeholder="🔍 Buscar por cliente ou título..." oninput="PropostasModule.renderList()">
@@ -1190,37 +1180,31 @@
             <input type="text" id="prop-prazo" class="form-control" placeholder="Ex: 5 a 7 dias úteis após aprovação">
           </div>
           <div class="form-group">
-            <label>Status / Destino do Orçamento</label>
-            <select id="prop-status" class="form-control">
-              <option value="Aguardando Aprovação">⏳ Salvar como Orçamento (Aguardando Aprovação)</option>
-              <option value="Aprovada">✅ Aprovado pelo Cliente (Mover para Fila de Espera)</option>
-            </select>
+            <label>Condições de Pagamento</label>
+            <input type="text" id="prop-condicoes" class="form-control" placeholder="Ex: 50% de sinal e 50% na retirada via Pix">
           </div>
         </div>
-        <div class="form-group">
-          <label>Condições de Pagamento</label>
-          <input type="text" id="prop-condicoes" class="form-control">
-        </div>
+        <input type="hidden" id="prop-status" value="Aguardando Aprovação">
       </div>
       <div class="modal-footer" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
         <button type="button" class="btn btn-secondary" onclick="App.closeModal('modal-proposta')">Cancelar</button>
         <div style="display: flex; gap: 10px; flex-wrap: wrap;">
           <button type="button" class="btn btn-secondary" onclick="PropostasModule.save(false)" style="border-color: rgba(168, 85, 247, 0.4); color: #c084fc; font-weight: 600;">
-            💾 Salvar Orçamento (Aguardando)
+            💾 Salvar Orçamento (sem aprovar)
           </button>
           <button type="button" class="btn btn-primary" onclick="PropostasModule.save(true)" style="background: #10b981; border-color: #10b981; font-weight: 600;">
-            ✅ Salvar & Aprovar (Mover p/ Fila)
+            ✅ Salvar & Mover p/ Fila de Espera
           </button>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- MODAL: LIVE PREVIEW DA PROPOSTA TIMBRADA -->
+  <!-- MODAL: LIVE PREVIEW DO ORÇAMENTO TIMBRADO -->
   <div class="modal-overlay" id="modal-preview-proposta">
     <div class="modal-container" style="max-width: 860px; background: #ffffff; color: #111827;">
       <div class="modal-header no-print" style="border-bottom: 1px solid #e5e7eb; background: #f9fafb;">
-        <h3 style="color: #111827;">Proposta Comercial Formatada</h3>
+        <h3 style="color: #111827;">Orçamento Comercial Formatado</h3>
         <div style="display: flex; gap: 8px; align-items: center;" id="preview-modal-actions">
           <button class="btn btn-primary" onclick="PropostasModule.imprimirPropostaAtual()">🖨️ Imprimir / Salvar PDF</button>
           <button class="btn btn-secondary" onclick="App.closeModal('modal-preview-proposta')">Fechar</button>
