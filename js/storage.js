@@ -386,17 +386,32 @@ const StorageService = {
 
     try {
       this.supabaseClient = window.supabase.createClient(SUPABASE_CONFIG.url, SUPABASE_CONFIG.anonKey);
-      const channel = this.supabaseClient.channel('seven-realtime-master');
+      this.realtimeChannel = this.supabaseClient.channel('seven-realtime-master');
 
+      // Escuta canal broadcast para testes e alertas instantâneos entre celulares/PCs
+      this.realtimeChannel.on('broadcast', { event: 'alerta-teste' }, (event) => {
+        console.log('⚡ [Realtime Broadcast Recebido]:', event);
+        const p = event.payload || {};
+        const title = p.title || '🔔 Teste de Notificação — Seven';
+        const body = p.body || 'Notificação de teste recebida com sucesso no celular!';
+        if (typeof NotificationModule !== 'undefined') {
+          NotificationModule.show({ title, body });
+        }
+        if (typeof App !== 'undefined' && App.toast) {
+          App.toast(body, 'success');
+        }
+      });
+
+      // Escuta mudanças no PostgreSQL em todas as tabelas públicas publicadas no realtime
       const tables = ['encomendas', 'crm_cards', 'estoque', 'despesas', 'propostas', 'filamentos', 'calc_3d_historico', 'calc_3d_config', 'config'];
       tables.forEach(table => {
-        channel.on('postgres_changes', { event: '*', schema: 'public', table: table }, (payload) => {
+        this.realtimeChannel.on('postgres_changes', { event: '*', schema: 'public', table: table }, (payload) => {
           console.log(`⚡ [Realtime Supabase] Alteração detectada em ${table}:`, payload);
           this.handleRealtimeEvent(table, payload);
         });
       });
 
-      channel.subscribe((status) => {
+      this.realtimeChannel.subscribe((status) => {
         console.log('📡 Status Supabase Realtime:', status);
         if (status === 'SUBSCRIBED') {
           this.isCloudConnected = true;
@@ -407,6 +422,38 @@ const StorageService = {
       });
     } catch (err) {
       console.error('Erro ao inicializar Supabase Realtime:', err);
+    }
+  },
+
+  enviarAlertaTesteBroadcast(titulo, mensagem) {
+    if (!this.realtimeChannel) {
+      this.initRealtime();
+    }
+    const title = titulo || '🔔 Teste de Notificação — Seven';
+    const body = mensagem || 'Sistema Seven Personalizados: Conexão em tempo real e notificações ativas! 🚀';
+
+    // 1. Dispara localmente neste dispositivo
+    if (typeof NotificationModule !== 'undefined') {
+      NotificationModule.show({ title, body });
+    }
+
+    // 2. Dispara broadcast para todos os celulares/computadores conectados
+    if (this.realtimeChannel) {
+      this.realtimeChannel.send({
+        type: 'broadcast',
+        event: 'alerta-teste',
+        payload: { title, body, timestamp: Date.now() }
+      }).then(() => {
+        if (typeof App !== 'undefined' && App.toast) {
+          App.toast('Sinal de notificação transmitido para todos os dispositivos conectados!', 'success');
+        }
+      }).catch(err => {
+        console.warn('Erro ao transmitir broadcast:', err);
+      });
+    } else {
+      if (typeof App !== 'undefined' && App.toast) {
+        App.toast('Notificação disparada localmente (conectando à nuvem...)', 'info');
+      }
     }
   },
 
@@ -430,13 +477,19 @@ const StorageService = {
           let body = `Novo registro adicionado em ${table}!`;
           if (table === 'encomendas') {
             title = '✨ Nova Encomenda!';
-            body = `Pedido de ${newRecord.cliente_nome || 'Cliente'} adicionado ao sistema!`;
+            body = `Pedido de ${newRecord.cliente_nome || 'Cliente'} (${newRecord.categoria || 'Produção'}) adicionado!`;
           } else if (table === 'crm_cards') {
             title = '💬 Novo Lead no Funil!';
             body = `${newRecord.lead_name || 'Lead'} entrou no CRM.`;
           } else if (table === 'propostas') {
-            title = '📄 Nova Proposta Comercial!';
-            body = `Orçamento para ${newRecord.cliente_nome || 'Cliente'} gerado.`;
+            title = '📄 Novo Orçamento!';
+            body = `Orçamento para ${newRecord.cliente || newRecord.cliente_nome || 'Cliente'} gerado!`;
+          } else if (table === 'estoque') {
+            title = '🧱 Novo Insumo em Estoque!';
+            body = `"${newRecord.nome || 'Material'}" cadastrado no estoque.`;
+          } else if (table === 'despesas') {
+            title = '💸 Nova Despesa Lançada!';
+            body = `"${newRecord.descricao || 'Despesa'}" no valor de ${App.formatMoney(newRecord.valor || 0)}.`;
           }
 
           if (typeof NotificationModule !== 'undefined') {
@@ -462,10 +515,19 @@ const StorageService = {
         let body = `Alteração em ${table}`;
         if (table === 'encomendas') {
           title = '⚙️ Encomenda Atualizada!';
-          body = `Pedido #${newRecord.id.substring(newRecord.id.length - 5)} (${newRecord.cliente_nome}) agora está: "${newRecord.status}" (${newRecord.pagamento_status})!`;
+          body = `Pedido #${newRecord.id.substring(newRecord.id.length - 5)} (${newRecord.cliente_nome}): ${newRecord.status} • ${newRecord.pagamento_status}`;
         } else if (table === 'crm_cards') {
           title = '💬 Lead Atualizado no CRM!';
           body = `${newRecord.lead_name} avançou para etapa: ${newRecord.stage}!`;
+        } else if (table === 'propostas') {
+          title = '📄 Orçamento Atualizado!';
+          body = `Orçamento "${newRecord.titulo || 'Comercial'}" (${newRecord.cliente || ''}) foi atualizado.`;
+        } else if (table === 'estoque') {
+          title = '🧱 Estoque Atualizado!';
+          body = `"${newRecord.nome || 'Material'}" agora com ${newRecord.quantidade_atual} ${newRecord.unidade || 'un'}.`;
+        } else if (table === 'despesas') {
+          title = '💸 Despesa Atualizada!';
+          body = `Despesa "${newRecord.descricao || ''}" atualizada.`;
         }
 
         if (typeof NotificationModule !== 'undefined') {
@@ -553,6 +615,31 @@ const StorageService = {
               const prevStr = localStorage.getItem(key) || '[]';
               const newStr = JSON.stringify(merged);
               if (prevStr !== newStr) {
+                // Notifica se novos registros foram baixados da nuvem durante polling
+                if (isSilent && currentItems.length > 0) {
+                  const currentIds = new Set(currentItems.map(i => i.id));
+                  const novos = rows.filter(r => !currentIds.has(r.id) && !this.isLocalAction(r.id));
+                  if (novos.length > 0) {
+                    novos.forEach(r => {
+                      let title = 'Seven Personalizados ⚡';
+                      let body = `Nova atualização em ${table}!`;
+                      if (table === 'encomendas') {
+                        title = '✨ Nova Encomenda!';
+                        body = `Pedido de ${r.cliente_nome || 'Cliente'} adicionado!`;
+                      } else if (table === 'propostas') {
+                        title = '📄 Novo Orçamento!';
+                        body = `Orçamento para ${r.cliente || 'Cliente'} gerado!`;
+                      } else if (table === 'estoque') {
+                        title = '🧱 Atualização de Estoque!';
+                        body = `Item "${r.nome || 'Material'}" atualizado.`;
+                      }
+                      if (typeof NotificationModule !== 'undefined') {
+                        NotificationModule.show({ title, body, tag: `sync-${r.id}` });
+                      }
+                    });
+                  }
+                }
+
                 localStorage.setItem(key, newStr);
                 window.dispatchEvent(new CustomEvent('seven_data_updated', { detail: { table } }));
               }

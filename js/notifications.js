@@ -8,15 +8,16 @@ const NotificationModule = {
   audioCtx: null,
 
   async init() {
-    this.registerServiceWorker();
+    await this.registerServiceWorker();
     this.updateNotificationBadge();
   },
 
   async registerServiceWorker() {
     if ('serviceWorker' in navigator) {
       try {
-        this.swRegistration = await navigator.serviceWorker.register('./service-worker.js', { scope: './' });
-        console.log('✅ Service Worker PWA registrado com sucesso');
+        await navigator.serviceWorker.register('./service-worker.js', { scope: './' });
+        this.swRegistration = await navigator.serviceWorker.ready;
+        console.log('✅ Service Worker PWA pronto e registrado com sucesso');
       } catch (err) {
         console.warn('Falha ao registrar Service Worker:', err);
       }
@@ -33,7 +34,7 @@ const NotificationModule = {
 
   async requestPermission() {
     if (!this.isSupported()) {
-      App.toast('Notificações não são suportadas neste navegador.', 'warning');
+      App.toast('Notificações não suportadas diretamente. No iPhone, toque em Compartilhar e "Adicionar à Tela de Início"!', 'warning');
       return false;
     }
 
@@ -41,24 +42,48 @@ const NotificationModule = {
       // Cria áudio context no gesto do clique para liberar no iOS/Safari
       this.playChime();
 
+      // Se já estava autorizada, dispara o teste imediatamente
+      if (Notification.permission === 'granted') {
+        App.toast('Notificações já estão autorizadas! Disparando teste...', 'info');
+        this.show({
+          title: 'Seven Personalizados 🔔',
+          body: 'Notificações estão ativas e funcionando perfeitamente no seu dispositivo!'
+        });
+        return true;
+      }
+
       const permission = await Notification.requestPermission();
       this.updateNotificationBadge();
 
       if (permission === 'granted') {
         App.toast('Notificações ativadas com sucesso! 🎉', 'success');
         this.show({
-          title: 'Seven Personalizados',
-          body: 'Notificações ativas! Você receberá alertas quando houver alterações.'
+          title: 'Seven Personalizados 🎉',
+          body: 'Notificações ativas! Você receberá alertas sonoros e avisos de novas encomendas.'
         });
         return true;
       } else if (permission === 'denied') {
-        App.toast('Permissão de notificação negada no navegador.', 'warning');
+        App.toast('Permissão de notificação bloqueada. Habilite nas configurações do seu navegador ou aparelho.', 'warning');
         return false;
       }
     } catch (e) {
       console.error('Erro ao pedir permissão de notificação:', e);
     }
     return false;
+  },
+
+  testar() {
+    this.playChime();
+    if (this.getPermission() !== 'granted') {
+      return this.requestPermission();
+    }
+    this.show({
+      title: '🔔 Teste de Notificação — Seven',
+      body: 'Seu dispositivo está configurado e pronto para receber notificações de encomendas e orçamentos!'
+    });
+    if (typeof App !== 'undefined' && App.toast) {
+      App.toast('Notificação e som de teste disparados!', 'success');
+    }
   },
 
   updateNotificationBadge() {
@@ -69,13 +94,13 @@ const NotificationModule = {
     if (perm === 'granted') {
       btn.style.color = '#38bdf8';
       btn.style.borderColor = 'rgba(56, 189, 248, 0.4)';
-      btn.innerHTML = '<span>🔔</span> Notificações Ativas';
-      btn.title = 'Notificações estão ativadas para este dispositivo';
+      btn.innerHTML = '<span>🔔</span> <span class="desktop-only">Notificações Ativas</span>';
+      btn.title = 'Notificações ativadas! Clique para testar o som e notificação.';
     } else {
       btn.style.color = '#fbbf24';
       btn.style.borderColor = 'rgba(251, 191, 36, 0.4)';
-      btn.innerHTML = '<span>🔕</span> Ativar Notificações';
-      btn.title = 'Clique para receber alertas quando houver novas encomendas ou alterações';
+      btn.innerHTML = '<span>🔕</span> <span class="desktop-only">Ativar Notificações</span>';
+      btn.title = 'Clique para ativar notificações e receber alertas no celular';
     }
   },
 
@@ -122,31 +147,47 @@ const NotificationModule = {
     }
   },
 
-  show({ title, body, icon = './favicon-192.png', tag = 'seven-alert' }) {
+  async show({ title, body, icon = './favicon-192.png', tag = 'seven-alert' }) {
     // 1. Toca som suave
     this.playChime();
 
     // 2. Se a permissão nativa foi concedida, dispara notificação do sistema
     if (this.getPermission() === 'granted') {
-      if (this.swRegistration && this.swRegistration.showNotification) {
-        this.swRegistration.showNotification(title, {
-          body: body,
-          icon: icon,
-          badge: './favicon-192.png',
-          vibrate: [200, 100, 200],
-          tag: tag,
-          renotify: true,
-          data: { url: './index.html' }
-        }).catch(() => {
-          try {
-            new Notification(title, { body, icon });
-          } catch (e) {}
-        });
-      } else {
-        try {
-          new Notification(title, { body, icon });
-        } catch (e) {}
+      try {
+        if ('serviceWorker' in navigator) {
+          const reg = this.swRegistration || await navigator.serviceWorker.ready;
+          if (reg && reg.showNotification) {
+            await reg.showNotification(title, {
+              body: body,
+              icon: icon,
+              badge: './favicon-192.png',
+              vibrate: [200, 100, 200],
+              tag: tag,
+              renotify: true,
+              data: { url: './index.html' }
+            });
+            return;
+          }
+        }
+      } catch (err) {
+        console.warn('Tentando fallback de notificação:', err);
       }
+
+      // Fallback via postMessage para o Service Worker
+      if (navigator.serviceWorker && navigator.serviceWorker.controller) {
+        navigator.serviceWorker.controller.postMessage({
+          action: 'SHOW_NOTIFICATION',
+          payload: { title, body, icon, tag }
+        });
+        return;
+      }
+
+      // Fallback via API clássica de Notification
+      try {
+        if ('Notification' in window) {
+          new Notification(title, { body, icon });
+        }
+      } catch (e) {}
     }
   }
 };

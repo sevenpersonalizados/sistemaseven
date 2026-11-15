@@ -41,6 +41,7 @@ const ConfiguracoesModule = {
     const showGrupos = (tab === 'todos' || tab === 'grupos');
     const showEmpresa = (tab === 'todos' || tab === 'empresa');
     const showCalc3D = (tab === 'todos' || tab === 'calc3d');
+    const showNotificacoes = (tab === 'todos' || tab === 'notificacoes');
 
     container.innerHTML = `
       <!-- HERO BANNER EXECUTIVO DE CONFIGURAÇÕES -->
@@ -82,6 +83,9 @@ const ConfiguracoesModule = {
         </button>
         <button type="button" class="cfg-subtab-btn ${tab === 'calc3d' ? 'active' : ''}" onclick="ConfiguracoesModule.setSubtab('calc3d')">
           <span>⚡</span> Impressora 3D & Energia
+        </button>
+        <button type="button" class="cfg-subtab-btn ${tab === 'notificacoes' ? 'active' : ''}" onclick="ConfiguracoesModule.setSubtab('notificacoes')">
+          <span>🔔</span> Notificações & Celular
         </button>
       </div>
 
@@ -408,6 +412,81 @@ const ConfiguracoesModule = {
               </button>
             </div>
           </form>
+        </div>
+      </div>
+      ` : ''}
+
+      <!-- ====================================================================
+           4. SEÇÃO: NOTIFICAÇÕES & DISPOSITIVOS MÓVEIS (PWA)
+           ==================================================================== -->
+      ${showNotificacoes ? `
+      <div class="card" style="margin-bottom: 1.5rem; border-color: rgba(56, 189, 248, 0.35);">
+        <div class="card-header">
+          <div style="display: flex; align-items: center; gap: 12px;">
+            <div style="width: 38px; height: 38px; border-radius: 10px; background: rgba(56, 189, 248, 0.15); color: #38bdf8; display: flex; align-items: center; justify-content: center; font-size: 1.25rem;">
+              🔔
+            </div>
+            <div>
+              <h3 style="margin: 0; font-size: 1.1rem; color: #ffffff;">Notificações & Alertas em Tempo Real no Celular</h3>
+              <div style="font-size: 0.78rem; color: var(--text-muted);">
+                Avisos instantâneos quando houver novas encomendas, orçamentos e alterações no sistema
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div style="padding: 24px;">
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; margin-bottom: 20px;">
+            <!-- Status Atual -->
+            <div style="background: rgba(255, 255, 255, 0.025); border: 1px solid var(--border); border-radius: 10px; padding: 18px;">
+              <div style="font-size: 0.78rem; color: var(--text-muted); text-transform: uppercase; font-weight: 700;">Status Neste Aparelho</div>
+              <div style="margin-top: 6px; display: flex; align-items: center; gap: 8px;">
+                <span class="status-badge ${NotificationModule.getPermission() === 'granted' ? 'badge-pago' : 'badge-fila'}" style="font-size: 0.88rem; padding: 4px 10px;">
+                  ${NotificationModule.getPermission() === 'granted' ? '✅ Notificações Autorizadas' : '⚠️ Permissão Pendente / Não Ativa'}
+                </span>
+              </div>
+              <p style="font-size: 0.8rem; color: var(--text-secondary); margin: 8px 0 0 0;">
+                ${NotificationModule.getPermission() === 'granted'
+                  ? 'Este dispositivo está pronto para receber alertas sonoros e avisos na tela.'
+                  : 'Clique no botão abaixo para permitir que o navegador envie alertas sonoros e notificações.'}
+              </p>
+            </div>
+
+            <!-- Conexão Nuvem Supabase Realtime -->
+            <div style="background: rgba(255, 255, 255, 0.025); border: 1px solid var(--border); border-radius: 10px; padding: 18px;">
+              <div style="font-size: 0.78rem; color: var(--text-muted); text-transform: uppercase; font-weight: 700;">Supabase Realtime (WebSocket)</div>
+              <div style="margin-top: 6px; display: flex; align-items: center; gap: 8px;">
+                <span class="status-badge ${isOnline ? 'badge-pago' : 'badge-producao'}" style="font-size: 0.88rem; padding: 4px 10px;">
+                  ${isOnline ? '⚡ Conexão WebSocket Ativa' : '⏳ Conectando à nuvem...'}
+                </span>
+              </div>
+              <p style="font-size: 0.8rem; color: var(--text-secondary); margin: 8px 0 0 0;">
+                Tabelas sincronizadas: Encomendas, Orçamentos, Estoque, Despesas e Configurações.
+              </p>
+            </div>
+          </div>
+
+          <!-- Botões de Ação e Teste -->
+          <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 20px;">
+            <button type="button" class="btn btn-primary" onclick="NotificationModule.testar()" style="background: #00a8f3; border-color: #00a8f3; font-weight: 600;">
+              🔔 Testar Som & Notificação Local
+            </button>
+            <button type="button" class="btn btn-secondary" onclick="StorageService.enviarAlertaTesteBroadcast('🔔 Teste Seven Personalizados', 'Alerta em tempo real transmitido via nuvem para todos os aparelhos!');" style="border-color: #34d399; color: #34d399; font-weight: 600;">
+              ⚡ Disparar Teste para Todos os Celulares Conectados
+            </button>
+          </div>
+
+          <!-- Dicas Específicas para iPhone e Android -->
+          <div style="background: rgba(56, 189, 248, 0.06); border: 1px solid rgba(56, 189, 248, 0.25); border-radius: 10px; padding: 16px; font-size: 0.84rem; color: var(--text-secondary); line-height: 1.6;">
+            <div style="font-weight: 700; color: #38bdf8; margin-bottom: 6px; display: flex; align-items: center; gap: 6px;">
+              <span>📱</span> Como garantir o recebimento no Celular (iPhone e Android):
+            </div>
+            <ul style="margin: 0; padding-left: 20px;">
+              <li><strong>No iPhone (iOS 16.4 ou superior):</strong> Abra o sistema no <em>Safari</em>, toque no ícone de <strong>Compartilhar</strong> (quadrado com seta para cima) e selecione <strong>"Adicionar à Tela de Início"</strong>. Abra pelo ícone instalado e toque em "Ativar Notificações".</li>
+              <li><strong>No Android:</strong> Toque no menu de 3 pontinhos do Chrome e escolha <strong>"Instalar aplicativo"</strong> ou <strong>"Adicionar à tela inicial"</strong>. Ao abrir, clique no sino 🔔 no topo para liberar as permissões.</li>
+              <li><strong>Verifique o modo Não Perturbe / Silencioso:</strong> Se o aparelho estiver em modo silencioso ou foco, os sons do sistema podem ser silenciados pelo próprio sistema operacional.</li>
+            </ul>
+          </div>
         </div>
       </div>
       ` : ''}
