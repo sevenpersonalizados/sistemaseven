@@ -45,6 +45,49 @@ const App = {
         this.navigate(view);
       });
     });
+
+    // Garante que toques no celular acionem a gaveta sem atraso
+    const toggleBtn = document.querySelector('.mobile-menu-toggle');
+    if (toggleBtn) {
+      ['click', 'touchend'].forEach(evt => {
+        toggleBtn.addEventListener(evt, (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          this.toggleSidebar();
+        }, { passive: false });
+      });
+    }
+
+    const bottomMenuBtn = document.getElementById('bottom-nav-btn-menu');
+    if (bottomMenuBtn) {
+      ['click', 'touchend'].forEach(evt => {
+        bottomMenuBtn.addEventListener(evt, (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          this.toggleSidebar();
+        }, { passive: false });
+      });
+    }
+
+    const closeBtn = document.getElementById('close-sidebar-btn');
+    if (closeBtn) {
+      ['click', 'touchend'].forEach(evt => {
+        closeBtn.addEventListener(evt, (e) => {
+          e.preventDefault();
+          this.closeSidebar();
+        }, { passive: false });
+      });
+    }
+
+    const backdrop = document.getElementById('sidebar-backdrop');
+    if (backdrop) {
+      ['click', 'touchend'].forEach(evt => {
+        backdrop.addEventListener(evt, (e) => {
+          e.preventDefault();
+          this.closeSidebar();
+        }, { passive: false });
+      });
+    }
   },
 
   navigate(viewName) {
@@ -465,16 +508,32 @@ const App = {
   openSidebar() {
     const sb = document.getElementById('app-sidebar');
     const bd = document.getElementById('sidebar-backdrop');
-    if (sb) sb.classList.add('open');
-    if (bd) bd.classList.add('active');
+    if (sb) {
+      sb.classList.add('open');
+      sb.style.transform = 'translateX(0)';
+      sb.style.webkitTransform = 'translateX(0)';
+      sb.style.visibility = 'visible';
+    }
+    if (bd) {
+      bd.classList.add('active');
+      bd.style.display = 'block';
+    }
     document.body.style.overflow = 'hidden';
   },
 
   closeSidebar() {
     const sb = document.getElementById('app-sidebar');
     const bd = document.getElementById('sidebar-backdrop');
-    if (sb) sb.classList.remove('open');
-    if (bd) bd.classList.remove('active');
+    if (sb) {
+      sb.classList.remove('open');
+      sb.style.transform = '';
+      sb.style.webkitTransform = '';
+      sb.style.visibility = '';
+    }
+    if (bd) {
+      bd.classList.remove('active');
+      bd.style.display = 'none';
+    }
     document.body.style.overflow = '';
   }
 };

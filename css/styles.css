@@ -1415,7 +1415,7 @@ select option:checked {
 
 /* Backdrop escuro para quando a gaveta do menu abrir no celular */
 .sidebar-backdrop {
-  display: none;
+  display: none !important;
   position: fixed;
   inset: 0;
   background: rgba(0, 0, 0, 0.7);
@@ -1428,8 +1428,9 @@ select option:checked {
 }
 
 .sidebar-backdrop.active {
-  opacity: 1;
-  pointer-events: auto;
+  display: block !important;
+  opacity: 1 !important;
+  pointer-events: auto !important;
 }
 
 /* ==========================================================================
@@ -1719,26 +1720,24 @@ select option:checked {
     display: flex;
   }
 
-  .sidebar-backdrop {
-    display: block;
-  }
-
   /* Gaveta Lateral no Celular (Menu deslizante) */
   .sidebar {
-    position: fixed;
-    top: 0;
-    bottom: 0;
-    left: 0;
-    width: 290px;
-    max-width: 85vw;
-    z-index: 1200;
-    transform: translateX(-100%);
+    position: fixed !important;
+    top: 0 !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    width: 290px !important;
+    max-width: 85vw !important;
+    z-index: 1200 !important;
+    -webkit-transform: translateX(-100%) !important;
+    transform: translateX(-100%) !important;
     box-shadow: 4px 0 30px rgba(0, 0, 0, 0.85);
-    transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    transition: -webkit-transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), transform 0.3s cubic-bezier(0.16, 1, 0.3, 1) !important;
   }
 
   .sidebar.open {
-    transform: translateX(0);
+    -webkit-transform: translateX(0) !important;
+    transform: translateX(0) !important;
   }
 
   /* Topbar descolado do teto (Notch / Dynamic Island / Status Bar do iPhone) */
@@ -1751,6 +1750,7 @@ select option:checked {
     gap: 12px;
     position: sticky;
     top: 0;
+    z-index: 1000 !important;
     background: rgba(7, 9, 14, 0.95);
     border-bottom: 1px solid rgba(255, 255, 255, 0.08);
   }
