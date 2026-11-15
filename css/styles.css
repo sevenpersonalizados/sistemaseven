@@ -1645,6 +1645,20 @@ select option:checked {
   border: 1px solid rgba(99, 102, 241, 0.45);
 }
 
+.badge-cor-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: rgba(236, 72, 153, 0.14);
+  color: #f472b6;
+  border: 1px solid rgba(236, 72, 153, 0.35);
+  padding: 2px 7px;
+  border-radius: 999px;
+  font-size: 0.68rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
 /* ==========================================================================
    MEDIA QUERIES PARA CELULAR & TABLETS (<= 992px)
    ========================================================================== */

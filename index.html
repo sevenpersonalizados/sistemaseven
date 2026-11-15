@@ -857,16 +857,19 @@
             <table class="modern-table">
               <thead>
                 <tr>
-                  <th>Produto</th>
-                  <th>Personalização / Arte</th>
-                  <th>Qtd</th>
-                  <th>Valor Un.</th>
-                  <th>Subtotal</th>
-                  <th></th>
+                  <th style="min-width: 170px;">Produto</th>
+                  <th style="min-width: 125px;">Cor</th>
+                  <th style="min-width: 160px;">Personalização / Arte</th>
+                  <th style="width: 70px;">Qtd</th>
+                  <th style="width: 105px;">Valor Un.</th>
+                  <th style="width: 105px;">Subtotal</th>
+                  <th style="width: 40px;"></th>
                 </tr>
               </thead>
               <tbody id="enc-itens-tbody"></tbody>
             </table>
+            <!-- Datalist com sugestões dinâmicas de produtos estabelecidos -->
+            <datalist id="enc-datalist-produtos"></datalist>
           </div>
           <div style="text-align: right; margin-top: 10px; font-size: 0.95rem;">
             Valor Total dos Produtos: <strong id="enc-itens-total-badge" style="color: var(--accent);">R$ 0,00</strong>

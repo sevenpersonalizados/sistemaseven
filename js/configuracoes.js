@@ -6,7 +6,7 @@
  */
 
 const ConfiguracoesModule = {
-  activeSubtab: 'todos', // 'todos' | 'categorias' | 'empresa' | 'calc3d' | 'nuvem'
+  activeSubtab: 'todos', // 'todos' | 'produtos' | 'cores' | 'categorias' | 'empresa' | 'calc3d' | 'nuvem'
 
   init() {
     this.render();
@@ -34,8 +34,12 @@ const ConfiguracoesModule = {
     const categoriasProd = StorageService.getCategoriasProducao();
     const categoriasDesp = StorageService.getCategoriasDespesa();
     const formasPagto = StorageService.getFormasPagamento();
+    const coresDisponiveis = StorageService.getCoresDisponiveis();
+    const produtosEstabelecidos = StorageService.getProdutosEstabelecidos();
 
     const tab = this.activeSubtab;
+    const showProdutos = (tab === 'todos' || tab === 'produtos');
+    const showCores = (tab === 'todos' || tab === 'cores' || tab === 'categorias');
     const showCategorias = (tab === 'todos' || tab === 'categorias');
     const showEmpresa = (tab === 'todos' || tab === 'empresa');
     const showCalc3D = (tab === 'todos' || tab === 'calc3d');
@@ -54,7 +58,7 @@ const ConfiguracoesModule = {
             </span>
           </div>
           <p style="margin: 0.4rem 0 0 0; font-size: 0.88rem; color: var(--text-secondary); max-width: 760px;">
-            Gerencie e personalize todas as informações da <strong>Seven Personalizados</strong>: Categorias de Encomendas & Produtos (3D, Gravação e Corte a Laser), dados cadastrais, chave Pix, parâmetros de impressão e sincronização em tempo real.
+            Gerencie e personalize todas as informações da <strong>Seven Personalizados</strong>: Catálogo de Produtos Estabelecidos, Cores de Personalização, Categorias de Produção, dados cadastrais, chave Pix e sincronização em nuvem.
           </p>
         </div>
 
@@ -71,21 +75,120 @@ const ConfiguracoesModule = {
       <!-- NAVEGAÇÃO DE SUB-ABAS -->
       <div class="cfg-subtabs-bar" style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 1.5rem; padding: 0.45rem; background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-md);">
         <button type="button" class="cfg-subtab-btn ${tab === 'todos' ? 'active' : ''}" onclick="ConfiguracoesModule.setSubtab('todos')">
-          <span>🎛️</span> Todas as Configurações
+          <span>🎛️</span> Todas
+        </button>
+        <button type="button" class="cfg-subtab-btn ${tab === 'produtos' ? 'active' : ''}" onclick="ConfiguracoesModule.setSubtab('produtos')">
+          <span>📦</span> Produtos Estabelecidos <span class="cfg-count-pill">${produtosEstabelecidos.length}</span>
+        </button>
+        <button type="button" class="cfg-subtab-btn ${tab === 'cores' ? 'active' : ''}" onclick="ConfiguracoesModule.setSubtab('cores')">
+          <span>🎨</span> Cores <span class="cfg-count-pill">${coresDisponiveis.length}</span>
         </button>
         <button type="button" class="cfg-subtab-btn ${tab === 'categorias' ? 'active' : ''}" onclick="ConfiguracoesModule.setSubtab('categorias')">
           <span>🏷️</span> Categorias & Opções <span class="cfg-count-pill">${categoriasProd.length}</span>
         </button>
         <button type="button" class="cfg-subtab-btn ${tab === 'empresa' ? 'active' : ''}" onclick="ConfiguracoesModule.setSubtab('empresa')">
-          <span>🏢</span> Dados da Empresa & Pix
+          <span>🏢</span> Empresa & Pix
         </button>
         <button type="button" class="cfg-subtab-btn ${tab === 'calc3d' ? 'active' : ''}" onclick="ConfiguracoesModule.setSubtab('calc3d')">
-          <span>⚡</span> Parâmetros Impressão 3D
+          <span>⚡</span> Impressão 3D
         </button>
         <button type="button" class="cfg-subtab-btn ${tab === 'nuvem' ? 'active' : ''}" onclick="ConfiguracoesModule.setSubtab('nuvem')">
-          <span>☁️</span> Nuvem & Supabase
+          <span>☁️</span> Nuvem & Backup
         </button>
       </div>
+
+      <!-- ====================================================================
+           0. SEÇÃO: CATÁLOGO DE PRODUTOS ESTABELECIDOS
+           ==================================================================== -->
+      ${showProdutos ? `
+      <div class="card" style="margin-bottom: 1.5rem; border-color: rgba(0, 168, 243, 0.4);">
+        <div class="card-header" style="flex-wrap: wrap; gap: 0.75rem;">
+          <div style="display: flex; align-items: center; gap: 12px;">
+            <div style="width: 38px; height: 38px; border-radius: 10px; background: rgba(0, 168, 243, 0.15); color: #38bdf8; display: flex; align-items: center; justify-content: center; font-size: 1.25rem;">
+              📦
+            </div>
+            <div>
+              <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+                <h3 style="margin: 0; font-size: 1.1rem; color: #ffffff;">Catálogo de Produtos Estabelecidos</h3>
+                <span class="cfg-count-pill" style="font-size: 0.76rem;">${produtosEstabelecidos.length} cadastrados</span>
+              </div>
+              <div style="font-size: 0.78rem; color: var(--text-muted);">
+                Lista de produtos pré-configurados sugeridos automaticamente ao preencher uma nova Encomenda
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div style="padding: 20px;">
+          <!-- Formulário rápido para cadastrar produto estabelecido -->
+          <form onsubmit="event.preventDefault(); ConfiguracoesModule.adicionarProdutoEstabelecido();" style="background: rgba(0, 0, 0, 0.25); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 16px; margin-bottom: 20px;">
+            <div style="font-weight: 700; color: #38bdf8; font-size: 0.88rem; margin-bottom: 10px; display: flex; align-items: center; gap: 6px;">
+              <span>+</span> Cadastrar Novo Produto Estabelecido
+            </div>
+            <div class="form-row" style="margin-bottom: 0;">
+              <div class="form-group" style="flex: 2; margin-bottom: 8px;">
+                <label style="font-size: 0.78rem;">Nome do Produto *</label>
+                <input type="text" id="cfg_prod_est_nome" class="form-control" placeholder="Ex: Copo Térmico Inox 473ml" required>
+              </div>
+              <div class="form-group" style="flex: 1.2; margin-bottom: 8px;">
+                <label style="font-size: 0.78rem;">Categoria *</label>
+                <select id="cfg_prod_est_categoria" class="form-control" required>
+                  ${categoriasProd.map(c => `<option value="${App.escapeHtml(c)}">${App.escapeHtml(c)}</option>`).join('')}
+                </select>
+              </div>
+              <div class="form-group" style="flex: 1; margin-bottom: 8px;">
+                <label style="font-size: 0.78rem;">Preço Sugerido (R$) *</label>
+                <input type="number" step="0.5" id="cfg_prod_est_preco" class="form-control" placeholder="0.00" required>
+              </div>
+              <div class="form-group" style="flex: 0 0 auto; align-self: flex-end; margin-bottom: 8px;">
+                <button type="submit" class="btn btn-primary" style="height: 40px; padding: 0 18px; white-space: nowrap;">
+                  <span>+</span> Salvar Produto
+                </button>
+              </div>
+            </div>
+          </form>
+
+          <!-- Tabela de Produtos Estabelecidos -->
+          <div class="table-responsive">
+            <table class="modern-table">
+              <thead>
+                <tr>
+                  <th>Produto Estabelecido</th>
+                  <th>Categoria</th>
+                  <th>Preço Sugerido</th>
+                  <th style="text-align: right;">Ações</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${produtosEstabelecidos.length === 0 ? `
+                  <tr>
+                    <td colspan="4" style="text-align: center; padding: 24px; color: var(--text-muted);">
+                      Nenhum produto estabelecido cadastrado ainda. Use o formulário acima para adicionar.
+                    </td>
+                  </tr>
+                ` : produtosEstabelecidos.map(prod => `
+                  <tr>
+                    <td>
+                      <div style="font-weight: 600; color: #ffffff;">${App.escapeHtml(prod.nome)}</div>
+                    </td>
+                    <td>
+                      ${(typeof EncomendasModule !== 'undefined' && EncomendasModule.getCategoriaBadge) ? EncomendasModule.getCategoriaBadge(prod.categoria) : `<span class="badge-cat-pill badge-cat-custom">${App.escapeHtml(prod.categoria)}</span>`}
+                    </td>
+                    <td>
+                      <strong style="color: var(--accent);">${App.formatMoney(prod.preco_padrao)}</strong>
+                    </td>
+                    <td style="text-align: right;">
+                      <button type="button" class="btn-icon" style="background: transparent; border: none; color: var(--text-muted); cursor: pointer; padding: 4px;" title="Editar" onclick="ConfiguracoesModule.editarProdutoEstabelecido('${prod.id}')">✏️</button>
+                      <button type="button" class="btn-icon" style="background: transparent; border: none; color: var(--danger); cursor: pointer; padding: 4px;" title="Remover" onclick="ConfiguracoesModule.removerProdutoEstabelecido('${prod.id}')">✕</button>
+                    </td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+      ` : ''}
 
       <!-- ====================================================================
            1. SEÇÃO: CATEGORIAS & OPÇÕES EDITÁVEIS
@@ -139,6 +242,42 @@ const ConfiguracoesModule = {
                     <div style="display: inline-flex; align-items: center; gap: 4px; margin-left: 4px;">
                       <button type="button" class="btn-icon" style="background: transparent; border: none; color: var(--text-muted); cursor: pointer; font-size: 0.75rem; padding: 2px;" title="Renomear" onclick="ConfiguracoesModule.editarCategoriaProducao(${idx})">✏️</button>
                       <button type="button" class="btn-icon" style="background: transparent; border: none; color: var(--danger); cursor: pointer; font-size: 0.78rem; padding: 2px;" title="Remover" onclick="ConfiguracoesModule.removerCategoriaProducao(${idx})">✕</button>
+                    </div>
+                  </div>
+                `).join('')}
+              </div>
+            </div>
+
+            <!-- GRUPO: CORES DE PERSONALIZAÇÃO -->
+            <div class="cfg-group-box" style="background: rgba(255, 255, 255, 0.02); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 1.25rem;">
+              <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.5rem;">
+                <div>
+                  <h4 style="margin: 0; font-size: 1rem; font-weight: 700; color: #ec4899; display: flex; align-items: center; gap: 6px;">
+                    <span>🎨</span> Cores de Personalização & Materiais
+                  </h4>
+                  <p style="margin: 3px 0 0 0; font-size: 0.76rem; color: var(--text-muted);">
+                    Cores disponíveis para seleção nos itens de Encomendas
+                  </p>
+                </div>
+                <span class="cfg-count-pill">${coresDisponiveis.length}</span>
+              </div>
+
+              <!-- Input para adicionar nova cor -->
+              <div style="display: flex; gap: 0.45rem; margin: 0.85rem 0;">
+                <input type="text" id="cfg_new_cor" class="form-control" style="height: 38px; font-size: 0.84rem;" placeholder="Ex: Dourado Metálico, Rose Gold..." onkeydown="if(event.key==='Enter'){event.preventDefault(); ConfiguracoesModule.adicionarCor();}">
+                <button type="button" class="btn btn-primary" style="height: 38px; padding: 0 0.95rem; font-size: 0.82rem; flex-shrink: 0;" onclick="ConfiguracoesModule.adicionarCor()">
+                  + Adicionar
+                </button>
+              </div>
+
+              <!-- Lista de cores -->
+              <div class="cfg-tags-list" style="display: flex; flex-wrap: wrap; gap: 0.5rem;">
+                ${coresDisponiveis.map((cor, idx) => `
+                  <div class="cfg-tag-item" style="display: inline-flex; align-items: center; gap: 0.45rem; background: rgba(236, 72, 153, 0.08); border: 1px solid rgba(236, 72, 153, 0.35); border-radius: 8px; padding: 0.4rem 0.75rem; font-size: 0.84rem; color: #ffffff;">
+                    <span style="font-weight: 600;">${App.escapeHtml(cor)}</span>
+                    <div style="display: inline-flex; align-items: center; gap: 4px; margin-left: 4px;">
+                      <button type="button" class="btn-icon" style="background: transparent; border: none; color: var(--text-muted); cursor: pointer; font-size: 0.75rem; padding: 2px;" title="Renomear" onclick="ConfiguracoesModule.editarCor(${idx})">✏️</button>
+                      <button type="button" class="btn-icon" style="background: transparent; border: none; color: var(--danger); cursor: pointer; font-size: 0.78rem; padding: 2px;" title="Remover" onclick="ConfiguracoesModule.removerCor(${idx})">✕</button>
                     </div>
                   </div>
                 `).join('')}
@@ -528,6 +667,94 @@ const ConfiguracoesModule = {
     StorageService.saveCalc3DConfig(payload);
     App.toast('Parâmetros da impressora 3D e energia atualizados!', 'success');
     this.render();
+  },
+
+  /* --- GESTÃO DE CORES --- */
+  adicionarCor() {
+    const input = document.getElementById('cfg_new_cor');
+    const val = input?.value.trim();
+    if (!val) return;
+    StorageService.addCor(val);
+    input.value = '';
+    App.toast(`Cor "${val}" adicionada!`, 'success');
+    this.render();
+  },
+
+  editarCor(index) {
+    const cores = StorageService.getCoresDisponiveis();
+    const atual = cores[index];
+    if (!atual) return;
+    const novo = prompt('Renomear cor:', atual);
+    if (novo && novo.trim() && novo.trim() !== atual) {
+      StorageService.editCor(index, novo.trim());
+      App.toast(`Cor renomeada para "${novo.trim()}"!`, 'success');
+      this.render();
+    }
+  },
+
+  removerCor(index) {
+    const cores = StorageService.getCoresDisponiveis();
+    const nome = cores[index];
+    if (confirm(`Remover a cor "${nome}" das configurações?`)) {
+      StorageService.removeCor(index);
+      App.toast('Cor removida.', 'info');
+      this.render();
+    }
+  },
+
+  /* --- GESTÃO DE PRODUTOS ESTABELECIDOS --- */
+  adicionarProdutoEstabelecido() {
+    const nome = document.getElementById('cfg_prod_est_nome')?.value.trim();
+    const categoria = document.getElementById('cfg_prod_est_categoria')?.value;
+    const preco = parseFloat(document.getElementById('cfg_prod_est_preco')?.value) || 0;
+
+    if (!nome) {
+      App.toast('Informe o nome do produto estabelecido.', 'error');
+      return;
+    }
+
+    StorageService.addProdutoEstabelecido({
+      nome: nome,
+      categoria: categoria,
+      preco_padrao: preco
+    });
+
+    document.getElementById('cfg_prod_est_nome').value = '';
+    document.getElementById('cfg_prod_est_preco').value = '';
+    App.toast(`Produto "${nome}" cadastrado com sucesso!`, 'success');
+    this.render();
+  },
+
+  editarProdutoEstabelecido(id) {
+    const prods = StorageService.getProdutosEstabelecidos();
+    const p = prods.find(item => item.id === id);
+    if (!p) return;
+
+    const novoNome = prompt('Nome do Produto:', p.nome);
+    if (!novoNome || !novoNome.trim()) return;
+
+    const novoPreco = prompt('Preço de Venda Sugerido (R$):', p.preco_padrao);
+    const precoNum = parseFloat(novoPreco);
+
+    StorageService.editProdutoEstabelecido(id, {
+      nome: novoNome.trim(),
+      preco_padrao: isNaN(precoNum) ? p.preco_padrao : precoNum
+    });
+
+    App.toast(`Produto "${novoNome}" atualizado!`, 'success');
+    this.render();
+  },
+
+  removerProdutoEstabelecido(id) {
+    const prods = StorageService.getProdutosEstabelecidos();
+    const p = prods.find(item => item.id === id);
+    if (!p) return;
+
+    if (confirm(`Deseja remover o produto "${p.nome}" do catálogo estabelecido?`)) {
+      StorageService.removeProdutoEstabelecido(id);
+      App.toast('Produto removido do catálogo.', 'info');
+      this.render();
+    }
   },
 
   baixarBackupJSON() {

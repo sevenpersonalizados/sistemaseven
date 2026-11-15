@@ -257,7 +257,12 @@ const EncomendasModule = {
     const statusClass = this.getStatusClass(enc.status);
     const pagtoClass = this.getPagtoClass(enc.pagamento_status);
     const totalItens = (enc.itens || []).reduce((acc, it) => acc + (Number(it.quantidade) || 0), 0);
-    const nomesProdutos = (enc.itens || []).map(i => `${i.quantidade}x ${i.produto_nome}`).join(', ');
+    const nomesProdutos = (enc.itens || []).map(i => {
+      const corStr = i.cor ? ` [${i.cor}]` : '';
+      return `${i.quantidade}x ${i.produto_nome || 'Item'}${corStr}`;
+    }).join(', ');
+
+    const coresList = [...new Set((enc.itens || []).filter(i => i.cor).map(i => i.cor))];
 
     return `
       <tr class="dash-row-clickable" onclick="EncomendasModule.openEditModal('${enc.id}')" title="Clique para abrir detalhes da encomenda #${enc.id.substring(enc.id.length - 5)}">
@@ -273,10 +278,17 @@ const EncomendasModule = {
           <div style="font-size: 0.8rem; color: var(--text-muted);">${App.escapeHtml(enc.telefone || 'Sem fone')}</div>
         </td>
         <td>
-          <div style="font-size: 0.85rem; max-width: 280px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${App.escapeHtml(nomesProdutos)}">
+          <div style="font-size: 0.85rem; max-width: 290px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${App.escapeHtml(nomesProdutos)}">
             ${App.escapeHtml(nomesProdutos || 'Item personalizado')}
           </div>
-          <div style="font-size: 0.74rem; color: var(--accent);">Total: ${totalItens} peças</div>
+          <div style="font-size: 0.74rem; display: flex; align-items: center; gap: 6px; margin-top: 2px; flex-wrap: wrap;">
+            <span style="color: var(--accent);">Total: ${totalItens} peças</span>
+            ${coresList.length > 0 ? `
+              <span class="badge-cor-tag" title="Cores personalizadas: ${coresList.join(', ')}">
+                🎨 ${App.escapeHtml(coresList.join(', '))}
+              </span>
+            ` : ''}
+          </div>
         </td>
         <td onclick="event.stopPropagation()">
           ${this.renderStatusSelect(enc.id, enc.status)}
@@ -429,6 +441,7 @@ const EncomendasModule = {
     encomendaItensTemp = [
       {
         produto_nome: lead?.last_message ? 'Pedido Personalizado' : '',
+        cor: '',
         personalizacao: lead?.last_message || '',
         quantidade: 1,
         preco_unitario: valorEstimado,
@@ -467,8 +480,15 @@ const EncomendasModule = {
     document.getElementById('enc-btn-delete').style.display = 'inline-block';
 
     encomendaItensTemp = (enc.itens && enc.itens.length > 0)
-      ? JSON.parse(JSON.stringify(enc.itens))
-      : [{ produto_nome: '', personalizacao: '', quantidade: 1, preco_unitario: 0, subtotal: 0 }];
+      ? enc.itens.map(it => ({
+          produto_nome: it.produto_nome || '',
+          cor: it.cor || '',
+          personalizacao: it.personalizacao || '',
+          quantidade: Number(it.quantidade) || 1,
+          preco_unitario: Number(it.preco_unitario) || 0,
+          subtotal: Number(it.subtotal) || 0
+        }))
+      : [{ produto_nome: '', cor: '', personalizacao: '', quantidade: 1, preco_unitario: 0, subtotal: 0 }];
 
     this.renderItensTable();
     App.openModal('modal-encomenda');
@@ -477,6 +497,7 @@ const EncomendasModule = {
   addItemRow() {
     encomendaItensTemp.push({
       produto_nome: '',
+      cor: '',
       personalizacao: '',
       quantidade: 1,
       preco_unitario: 0,
@@ -505,33 +526,101 @@ const EncomendasModule = {
     this.renderItensTable();
   },
 
+  onProdutoChange(index, nomeProduto) {
+    const item = encomendaItensTemp[index];
+    if (!item) return;
+    item.produto_nome = nomeProduto;
+
+    // Se selecionou um produto do catálogo estabelecido, preenche preço sugerido automaticamente
+    const prodsEstabelecidos = StorageService.getProdutosEstabelecidos();
+    const prodEst = prodsEstabelecidos.find(p => p.nome.toLowerCase() === nomeProduto.trim().toLowerCase());
+    if (prodEst) {
+      if (!item.preco_unitario || item.preco_unitario === 0) {
+        item.preco_unitario = Number(prodEst.preco_padrao) || 0;
+        item.subtotal = (Number(item.quantidade) || 1) * item.preco_unitario;
+      }
+      const catEncSelect = document.getElementById('enc-form-categoria');
+      if (catEncSelect && prodEst.categoria && (!catEncSelect.value || catEncSelect.value === '3D')) {
+        catEncSelect.value = prodEst.categoria;
+      }
+    } else {
+      const estoqueItens = StorageService.get('estoque');
+      const itemEst = estoqueItens.find(e => e.nome.toLowerCase() === nomeProduto.trim().toLowerCase());
+      if (itemEst && (!item.preco_unitario || item.preco_unitario === 0)) {
+        item.preco_unitario = Number(itemEst.preco_venda) || 0;
+        item.subtotal = (Number(item.quantidade) || 1) * item.preco_unitario;
+      }
+    }
+
+    this.renderItensTable();
+  },
+
   renderItensTable() {
     const container = document.getElementById('enc-itens-tbody');
     if (!container) return;
+
+    // Atualiza opções do datalist com catálogo estabelecido e estoque
+    const datalist = document.getElementById('enc-datalist-produtos');
+    if (datalist) {
+      const prodsEstabelecidos = StorageService.getProdutosEstabelecidos();
+      const estoqueItens = StorageService.get('estoque');
+      const opcoesUnicas = new Set();
+      let optionsHtml = '';
+      prodsEstabelecidos.forEach(p => {
+        if (!opcoesUnicas.has(p.nome)) {
+          opcoesUnicas.add(p.nome);
+          optionsHtml += `<option value="${App.escapeHtml(p.nome)}">${App.escapeHtml(p.categoria)} • ${App.formatMoney(p.preco_padrao)}</option>`;
+        }
+      });
+      estoqueItens.forEach(e => {
+        if (!opcoesUnicas.has(e.nome)) {
+          opcoesUnicas.add(e.nome);
+          optionsHtml += `<option value="${App.escapeHtml(e.nome)}">${App.escapeHtml(e.categoria)} • ${App.formatMoney(e.preco_venda)}</option>`;
+        }
+      });
+      datalist.innerHTML = optionsHtml;
+    }
+
+    const coresDisponiveis = StorageService.getCoresDisponiveis();
 
     let total = 0;
 
     container.innerHTML = encomendaItensTemp.map((item, idx) => {
       total += (Number(item.subtotal) || 0);
+      const corAtual = item.cor || '';
+
       return `
         <tr>
           <td>
-            <input type="text" class="form-control" style="padding: 6px 10px;" value="${App.escapeHtml(item.produto_nome)}" 
-                   placeholder="Ex: Taça de Gin Acrílica" onchange="EncomendasModule.updateItemRow(${idx}, 'produto_nome', this.value)">
+            <input type="text" list="enc-datalist-produtos" class="form-control" style="padding: 6px 10px;" 
+                   value="${App.escapeHtml(item.produto_nome || '')}" 
+                   placeholder="Selecione ou digite..." 
+                   onchange="EncomendasModule.onProdutoChange(${idx}, this.value)">
+          </td>
+          <td>
+            <select class="form-control" style="padding: 6px 8px; font-size: 0.82rem;" 
+                    onchange="EncomendasModule.updateItemRow(${idx}, 'cor', this.value)">
+              <option value="">(Sem cor / Padrão)</option>
+              ${coresDisponiveis.map(c => `
+                <option value="${App.escapeHtml(c)}" ${c === corAtual ? 'selected' : ''}>
+                  ${App.escapeHtml(c)}
+                </option>
+              `).join('')}
+            </select>
           </td>
           <td>
             <input type="text" class="form-control" style="padding: 6px 10px;" value="${App.escapeHtml(item.personalizacao || '')}" 
                    placeholder="Ex: Nome da Aniversariante" onchange="EncomendasModule.updateItemRow(${idx}, 'personalizacao', this.value)">
           </td>
-          <td style="width: 80px;">
-            <input type="number" min="1" class="form-control" style="padding: 6px 10px;" value="${item.quantidade}" 
+          <td style="width: 70px;">
+            <input type="number" min="1" class="form-control" style="padding: 6px 8px;" value="${item.quantidade}" 
                    onchange="EncomendasModule.updateItemRow(${idx}, 'quantidade', this.value)">
           </td>
-          <td style="width: 110px;">
-            <input type="number" step="0.5" class="form-control" style="padding: 6px 10px;" value="${item.preco_unitario}" 
+          <td style="width: 105px;">
+            <input type="number" step="0.5" class="form-control" style="padding: 6px 8px;" value="${item.preco_unitario}" 
                    onchange="EncomendasModule.updateItemRow(${idx}, 'preco_unitario', this.value)">
           </td>
-          <td style="width: 110px; font-weight: 600; vertical-align: middle;">
+          <td style="width: 105px; font-weight: 600; vertical-align: middle;">
             ${App.formatMoney(item.subtotal || 0)}
           </td>
           <td style="width: 40px; text-align: center; vertical-align: middle;">
@@ -651,12 +740,20 @@ const EncomendasModule = {
 
     tbody.innerHTML = finalizadas.map(enc => {
       const totalItens = (enc.itens || []).reduce((acc, it) => acc + (Number(it.quantidade) || 0), 0);
-      const nomesProdutos = (enc.itens || []).map(i => `${i.quantidade}x ${i.produto_nome}`).join(', ');
+      const nomesProdutos = (enc.itens || []).map(i => {
+        const corStr = i.cor ? ` [${i.cor}]` : '';
+        return `${i.quantidade}x ${i.produto_nome || 'Item'}${corStr}`;
+      }).join(', ');
+
+      const coresList = [...new Set((enc.itens || []).filter(i => i.cor).map(i => i.cor))];
 
       return `
         <tr class="dash-row-clickable" onclick="EncomendasModule.openEditModal('${enc.id}')" title="Clique para abrir detalhes da encomenda #${enc.id.substring(enc.id.length - 5)}">
           <td>
-            <strong>#${enc.id.substring(enc.id.length - 5)}</strong>
+            <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 4px; flex-wrap: wrap;">
+              <strong>#${enc.id.substring(enc.id.length - 5)}</strong>
+              ${this.getCategoriaBadge(enc.categoria)}
+            </div>
             <div style="font-size: 0.76rem; color: var(--text-muted);">${App.formatDate(enc.data_pedido)}</div>
           </td>
           <td>
@@ -664,10 +761,17 @@ const EncomendasModule = {
             <div style="font-size: 0.8rem; color: var(--text-muted);">${App.escapeHtml(enc.telefone || 'Sem fone')}</div>
           </td>
           <td>
-            <div style="font-size: 0.85rem; max-width: 280px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${App.escapeHtml(nomesProdutos)}">
+            <div style="font-size: 0.85rem; max-width: 290px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${App.escapeHtml(nomesProdutos)}">
               ${App.escapeHtml(nomesProdutos || 'Item personalizado')}
             </div>
-            <div style="font-size: 0.74rem; color: var(--accent);">Total: ${totalItens} peças</div>
+            <div style="font-size: 0.74rem; display: flex; align-items: center; gap: 6px; margin-top: 2px; flex-wrap: wrap;">
+              <span style="color: var(--accent);">Total: ${totalItens} peças</span>
+              ${coresList.length > 0 ? `
+                <span class="badge-cor-tag" title="Cores: ${coresList.join(', ')}">
+                  🎨 ${App.escapeHtml(coresList.join(', '))}
+                </span>
+              ` : ''}
+            </div>
           </td>
           <td onclick="event.stopPropagation()">
             ${this.renderStatusSelect(enc.id, enc.status)}
