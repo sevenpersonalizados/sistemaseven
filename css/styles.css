@@ -1971,45 +1971,75 @@ select option:checked {
     width: 100%;
   }
 
+  /* Oculta completamente a barra inferior quando qualquer modal estiver aberto */
+  body.modal-open .mobile-bottom-nav,
+  body.modal-open .bottom-nav-fab,
+  body:has(.modal-overlay.active) .mobile-bottom-nav,
+  body:has(.modal-overlay.active) .bottom-nav-fab {
+    display: none !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
+  }
+
   /* Modais em celular estilo Bottom Sheet acima de qualquer menu */
   .modal-overlay {
-    z-index: 2500 !important;
+    position: fixed !important;
+    inset: 0 !important;
+    z-index: 9999 !important;
     padding: 0 !important;
+    display: flex !important;
     align-items: flex-end !important;
+    background: rgba(0, 0, 0, 0.85) !important;
   }
 
   .modal-container {
     width: 100% !important;
     max-width: 100% !important;
-    max-height: 92vh !important;
+    max-height: 94vh !important;
+    max-height: 94dvh !important;
     margin: 0 !important;
     border-radius: 20px 20px 0 0 !important;
     padding: 0 !important;
     display: flex !important;
     flex-direction: column !important;
-    box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.85) !important;
-    z-index: 2501 !important;
+    box-shadow: 0 -10px 50px rgba(0, 0, 0, 0.95) !important;
+    z-index: 10000 !important;
+    background: #0f172a !important;
   }
 
   .modal-header {
     padding: 16px 20px !important;
     flex-shrink: 0 !important;
     border-bottom: 1px solid var(--border) !important;
+    background: #0f172a !important;
   }
 
   .modal-body {
     padding: 16px 20px !important;
     flex: 1 1 auto !important;
-    max-height: calc(92vh - 140px) !important;
+    max-height: calc(94dvh - 145px) !important;
     overflow-y: auto !important;
     -webkit-overflow-scrolling: touch !important;
   }
 
   .modal-footer {
-    padding: 14px 20px calc(14px + env(safe-area-inset-bottom, 12px)) 20px !important;
+    padding: 14px 20px calc(24px + env(safe-area-inset-bottom, 16px)) 20px !important;
     flex-shrink: 0 !important;
-    background: var(--bg-surface) !important;
-    border-top: 1px solid var(--border) !important;
+    background: #0b1120 !important;
+    border-top: 1px solid rgba(255, 255, 255, 0.12) !important;
+    display: flex !important;
+    gap: 10px !important;
+    position: sticky !important;
+    bottom: 0 !important;
+    z-index: 10001 !important;
+  }
+
+  .modal-footer .btn {
+    flex: 1 !important;
+    padding: 13px 14px !important;
+    font-size: 0.95rem !important;
+    font-weight: 700 !important;
+    border-radius: 10px !important;
   }
 
   .form-row {

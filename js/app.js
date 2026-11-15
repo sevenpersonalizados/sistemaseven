@@ -344,12 +344,23 @@ const App = {
 
   openModal(modalId) {
     const el = document.getElementById(modalId);
-    if (el) el.classList.add('active');
+    if (el) {
+      el.classList.add('active');
+      document.body.classList.add('modal-open');
+      const bottomNav = document.querySelector('.mobile-bottom-nav');
+      if (bottomNav) bottomNav.style.setProperty('display', 'none', 'important');
+    }
   },
 
   closeModal(modalId) {
     const el = document.getElementById(modalId);
     if (el) el.classList.remove('active');
+    // Se não há outros modais ativos, restaura o menu inferior
+    if (!document.querySelector('.modal-overlay.active')) {
+      document.body.classList.remove('modal-open');
+      const bottomNav = document.querySelector('.mobile-bottom-nav');
+      if (bottomNav) bottomNav.style.removeProperty('display');
+    }
   },
 
   // Toast
