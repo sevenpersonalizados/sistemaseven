@@ -350,8 +350,8 @@
               <select class="form-control" id="filtro-enc-status" style="width: auto;">
                 <option value="">Produção Ativa (Separadas por Status)</option>
                 <option value="TODOS">Todas as Etapas (Separadas)</option>
+                <option value="Fila">⏳ Apenas Fila de Espera</option>
                 <option value="Em produção">⚙️ Apenas Em Produção</option>
-                <option value="Fila">⏳ Apenas Fila</option>
                 <option value="Pronto">📦 Apenas Prontos</option>
                 <option value="Entregue">🚚 Apenas Entregue</option>
                 <option value="Finalizadas">✅ Finalizadas (Quitadas)</option>
@@ -1018,11 +1018,11 @@
           <div class="form-group">
             <label>Status de Produção</label>
             <select id="enc-form-status" class="form-control">
-              <option value="Fila">Fila</option>
-              <option value="Em produção">Em produção</option>
-              <option value="Pronto">Pronto</option>
-              <option value="Entregue">Entregue</option>
-              <option value="Cancelada">Cancelada</option>
+              <option value="Fila" selected>⏳ Fila de Espera</option>
+              <option value="Em produção">⚙️ Em produção</option>
+              <option value="Pronto">📦 Pronto</option>
+              <option value="Entregue">🚚 Entregue</option>
+              <option value="Cancelada">❌ Cancelada</option>
             </select>
           </div>
           <div class="form-group">
@@ -1557,17 +1557,17 @@
   <!-- CONTAINER DE TOASTS -->
   <div class="toast-container" id="toast-container"></div>
 
-  <!-- SCRIPTS DO SISTEMA (com cache-busting v22) -->
-  <script src="js/notifications.js?v=22"></script>
-  <script src="js/storage.js?v=22"></script>
-  <script src="js/crm.js?v=22"></script>
-  <script src="js/encomendas.js?v=22"></script>
-  <script src="js/estoque.js?v=22"></script>
-  <script src="js/financeiro.js?v=22"></script>
-  <script src="js/propostas.js?v=22"></script>
-  <script src="js/calculadora.js?v=22"></script>
-  <script src="js/configuracoes.js?v=22"></script>
-  <script src="js/app.js?v=22"></script>
+  <!-- SCRIPTS DO SISTEMA (com cache-busting v23) -->
+  <script src="js/notifications.js?v=23"></script>
+  <script src="js/storage.js?v=23"></script>
+  <script src="js/crm.js?v=23"></script>
+  <script src="js/encomendas.js?v=23"></script>
+  <script src="js/estoque.js?v=23"></script>
+  <script src="js/financeiro.js?v=23"></script>
+  <script src="js/propostas.js?v=23"></script>
+  <script src="js/calculadora.js?v=23"></script>
+  <script src="js/configuracoes.js?v=23"></script>
+  <script src="js/app.js?v=23"></script>
 </body>
 
 </html>

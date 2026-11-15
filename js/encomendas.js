@@ -114,14 +114,14 @@ const EncomendasModule = {
     let statusGrupos = [];
     if (!filtroStatus) {
       statusGrupos = [
-        definicoesGrupos['Em produção'],
         definicoesGrupos['Fila'],
+        definicoesGrupos['Em produção'],
         definicoesGrupos['Pronto']
       ];
     } else if (filtroStatus === 'TODOS') {
       statusGrupos = [
-        definicoesGrupos['Em produção'],
         definicoesGrupos['Fila'],
+        definicoesGrupos['Em produção'],
         definicoesGrupos['Pronto'],
         definicoesGrupos['Entregue'],
         definicoesGrupos['Cancelada']
@@ -442,7 +442,7 @@ const EncomendasModule = {
     const dataEntregaDefault = new Date(Date.now() + 5 * 24 * 3600 * 1000).toISOString().split('T')[0];
     document.getElementById('enc-form-data-entrega').value = dataEntregaDefault;
     
-    document.getElementById('enc-form-status').value = 'Em produção';
+    document.getElementById('enc-form-status').value = 'Fila';
     document.getElementById('enc-form-pagto-status').value = 'Pendente';
     document.getElementById('enc-form-forma-pagto').value = 'Pix';
     document.getElementById('enc-form-valor-pago').value = '0';
@@ -706,7 +706,7 @@ const EncomendasModule = {
     const telefone = document.getElementById('enc-form-telefone').value.trim();
     const dataPedido = document.getElementById('enc-form-data-pedido').value;
     const dataEntrega = document.getElementById('enc-form-data-entrega').value;
-    const status = document.getElementById('enc-form-status').value;
+    const status = document.getElementById('enc-form-status').value || 'Fila';
     const pagtoStatus = document.getElementById('enc-form-pagto-status').value;
     const formaPagto = document.getElementById('enc-form-forma-pagto').value;
     const valorPago = parseFloat(document.getElementById('enc-form-valor-pago').value) || 0;
@@ -739,7 +739,7 @@ const EncomendasModule = {
       App.toast('Encomenda atualizada!', 'success');
     } else {
       StorageService.insert('encomendas', payload);
-      App.toast('Encomenda registrada na produção!', 'success');
+      App.toast('Encomenda registrada na Fila de Espera! ⏳', 'success');
     }
 
     App.closeModal('modal-encomenda');
