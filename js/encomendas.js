@@ -291,7 +291,7 @@ const EncomendasModule = {
               </span>
             ` : ''}
             ${hasItemObs ? `
-              <span class="badge-cor-tag" style="background: rgba(14, 165, 233, 0.12); color: #38bdf8; border-color: rgba(14, 165, 233, 0.35);" title="Há observações nos produtos">
+              <span class="badge-cor-tag" style="background: rgba(168, 85, 247, 0.14); color: #c084fc; border-color: rgba(168, 85, 247, 0.4);" title="Há observações nos produtos">
                 📌 Obs no Item
               </span>
             ` : ''}
@@ -838,7 +838,7 @@ const EncomendasModule = {
                 </span>
               ` : ''}
               ${hasItemObs ? `
-                <span class="badge-cor-tag" style="background: rgba(14, 165, 233, 0.12); color: #38bdf8; border-color: rgba(14, 165, 233, 0.35);" title="Há observações nos produtos">
+                <span class="badge-cor-tag" style="background: rgba(168, 85, 247, 0.14); color: #c084fc; border-color: rgba(168, 85, 247, 0.4);" title="Há observações nos produtos">
                   📌 Obs no Item
                 </span>
               ` : ''}
