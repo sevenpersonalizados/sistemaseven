@@ -90,6 +90,12 @@
           </button>
         </li>
         <li class="nav-item">
+          <button type="button" data-view="calculadora" id="nav-btn-calculadora">
+            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3.5"/><path d="M12 3v5.5M12 15.5V21M3 12h5.5M15.5 12H21"/></svg>
+            <span>Calculadora de Filamentos</span>
+          </button>
+        </li>
+        <li class="nav-item">
           <button type="button" data-view="propostas" id="nav-btn-propostas">
             <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
             <span>Gerador Propostas</span>
@@ -650,6 +656,237 @@
           </div>
         </section>
 
+        <!-- VIEW: CALCULADORA DE FILAMENTOS & CUSTOS 3D -->
+        <section class="view-section" id="view-calculadora">
+          <!-- PAINEL SUPERIOR TEMÁTICO LARANJA / AMBER (3D PRINT) -->
+          <div class="themed-panel theme-orange" style="margin-bottom: 24px;">
+            <div class="themed-header">
+              <div style="display: flex; align-items: center; gap: 14px; flex-wrap: wrap;">
+                <span class="themed-icon-box">🧵</span>
+                <div>
+                  <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+                    <h3 class="themed-title">Calculadora de Filamentos & Custos 3D</h3>
+                    <span style="font-size: 0.72rem; font-weight: 700; text-transform: uppercase; padding: 3px 10px; border-radius: 999px; background: rgba(249, 115, 22, 0.22); color: #fb923c; border: 1px solid rgba(249, 115, 22, 0.55);">
+                      IMPRESSÃO 3D
+                    </span>
+                  </div>
+                  <div class="themed-subtitle">
+                    Cálculo automático de filamento, energia elétrica (kWh) e depreciação operacional da impressora
+                  </div>
+                </div>
+              </div>
+              <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+                <span class="themed-chip">
+                  ⚡ <strong id="calc-kpi-param-tarifa" style="color: #ffffff;">R$ 0,85/kWh</strong>
+                </span>
+                <span class="themed-chip">
+                  🔌 <strong id="calc-kpi-param-potencia" style="color: #ffffff;">200W</strong>
+                </span>
+                <span class="themed-chip">
+                  🛠️ <strong id="calc-kpi-param-op" style="color: #ffffff;">R$ 3,50/h</strong>
+                </span>
+                <button type="button" class="btn btn-secondary btn-sm" onclick="CalculadoraModule.abrirModalConfig()">
+                  ⚙️ Parâmetros & Energia
+                </button>
+                <button type="button" class="btn btn-primary btn-sm" onclick="CalculadoraModule.abrirModalFilamentos()">
+                  🧵 Gerenciar Filamentos
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- GRID PRINCIPAL: FORMULÁRIO (ESQUERDA) + PAINEL DE RESULTADOS EM TEMPO REAL (DIREITA) -->
+          <div class="calc-grid">
+            <!-- COLUNA ESQUERDA: REGISTRO DA IMPRESSÃO -->
+            <div class="card" style="margin-bottom: 0;">
+              <div class="card-header" style="border-bottom: 1px solid var(--border); padding-bottom: 14px; margin-bottom: 18px;">
+                <h3 style="font-size: 1.1rem; color: #ffffff; display: flex; align-items: center; gap: 8px;">
+                  <span>⚙️</span> Registro de Nova Impressão
+                </h3>
+                <span style="font-size: 0.78rem; color: var(--text-muted);">Dados do fatiador 3D</span>
+              </div>
+
+              <div class="form-group">
+                <label>Nome da Peça ou Produto *</label>
+                <input type="text" id="calc-form-produto" class="form-control" placeholder="Ex: Luminária Seven 3D, Chaveiro, Troféu..." value="Troféu Seven 3D">
+              </div>
+
+              <div class="form-group">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                  <label style="margin-bottom: 0;">Material Utilizado *</label>
+                  <button type="button" style="background: none; border: none; color: #fb923c; font-size: 0.75rem; cursor: pointer; text-decoration: underline;" onclick="CalculadoraModule.abrirModalFilamentos()">
+                    + Novo Filamento
+                  </button>
+                </div>
+                <select id="calc-form-filamento" class="form-control"></select>
+              </div>
+
+              <div class="form-row">
+                <div class="form-group">
+                  <label>Peso Utilizado (gramas) *</label>
+                  <input type="number" step="0.1" id="calc-form-gramas" class="form-control" placeholder="Ex: 85" value="120">
+                  <small style="color: var(--text-muted); font-size: 0.72rem;">Peso total informado no fatiador</small>
+                </div>
+
+                <div class="form-group">
+                  <label>Tempo de Impressão *</label>
+                  <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                    <div>
+                      <input type="number" min="0" step="1" id="calc-form-horas" class="form-control" placeholder="Horas" value="4">
+                      <small style="color: var(--text-muted); font-size: 0.7rem;">Horas</small>
+                    </div>
+                    <div>
+                      <input type="number" min="0" max="59" step="1" id="calc-form-minutos" class="form-control" placeholder="Min" value="30">
+                      <small style="color: var(--text-muted); font-size: 0.7rem;">Minutos</small>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="form-row">
+                <div class="form-group">
+                  <label>Quantidade de Peças Produzidas</label>
+                  <input type="number" min="1" step="1" id="calc-form-qtd-pecas" class="form-control" value="1">
+                  <small style="color: var(--text-muted); font-size: 0.72rem;">Divide o custo total pelo número de peças</small>
+                </div>
+
+                <div class="form-group">
+                  <label>Observações do Fatiamento (Opcional)</label>
+                  <input type="text" id="calc-form-obs" class="form-control" placeholder="Ex: Bico 0.4mm, Layer 0.20, Infill 15%">
+                  <small style="color: var(--text-muted); font-size: 0.72rem;">Configurações e notas da peça</small>
+                </div>
+              </div>
+
+              <div style="display: flex; gap: 10px; margin-top: 14px; flex-wrap: wrap;">
+                <button type="button" class="btn btn-primary" style="flex: 1; min-width: 160px;" onclick="CalculadoraModule.salvarNoHistorico()">
+                  💾 Salvar no Histórico
+                </button>
+                <button type="button" class="btn btn-secondary" onclick="CalculadoraModule.limparFormulario()">
+                  🔄 Limpar
+                </button>
+              </div>
+            </div>
+
+            <!-- COLUNA DIREITA: RESULTADO VISUAL EM TEMPO REAL -->
+            <div class="card" id="calc-live-card" style="margin-bottom: 0; background: linear-gradient(180deg, #182234 0%, #0f172a 100%); border-color: rgba(249, 115, 22, 0.35);">
+              <div class="card-header" style="border-bottom: 1px solid rgba(255, 255, 255, 0.08); padding-bottom: 14px; margin-bottom: 16px;">
+                <div>
+                  <h3 style="font-size: 1.1rem; color: #ffffff; display: flex; align-items: center; gap: 8px;">
+                    <span>📊</span> Resultado do Cálculo
+                  </h3>
+                  <div style="font-size: 0.78rem; color: #38bdf8;">Atualização automática em tempo real</div>
+                </div>
+                <span class="status-badge" id="calc-res-qtd-pecas-badge" style="background: rgba(16, 185, 129, 0.15); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.3);">
+                  1 peça produzida
+                </span>
+              </div>
+
+              <!-- RESUMO DA PEÇA SELECIONADA -->
+              <div style="background: rgba(0, 0, 0, 0.3); border: 1px solid rgba(255, 255, 255, 0.06); border-radius: var(--radius-md); padding: 12px 16px; margin-bottom: 16px;">
+                <div style="font-weight: 700; font-size: 1.05rem; color: #ffffff;" id="calc-res-produto-resumo">Troféu Seven 3D</div>
+                <div style="display: flex; gap: 16px; flex-wrap: wrap; margin-top: 6px; font-size: 0.78rem; color: var(--text-muted);">
+                  <span>🧵 <strong style="color: #fb923c;" id="calc-res-material-resumo">PLA Branco (Seven 3D)</strong></span>
+                  <span>⚖️ <strong style="color: var(--text-primary);" id="calc-res-gramas-resumo">120,0g</strong></span>
+                  <span>⏱️ <strong style="color: var(--text-primary);" id="calc-res-tempo-resumo">4h 30m (4,50h)</strong></span>
+                </div>
+              </div>
+
+              <!-- MINI-CARDS DE COMPONENTES DE CUSTO -->
+              <div class="calc-breakdown-grid" style="margin-bottom: 20px;">
+                <!-- MATERIAL -->
+                <div class="calc-breakdown-card">
+                  <div class="calc-breakdown-label">🧵 Custo do Filamento</div>
+                  <div class="calc-breakdown-value" style="color: #fb923c;" id="calc-res-custo-material">R$ 0,00</div>
+                  <div class="calc-breakdown-formula" id="calc-res-detalhe-material">0g × R$ 0,00/g</div>
+                </div>
+
+                <!-- ENERGIA -->
+                <div class="calc-breakdown-card">
+                  <div class="calc-breakdown-label">⚡ Energia Elétrica</div>
+                  <div class="calc-breakdown-value" style="color: #fbbf24;" id="calc-res-custo-energia">R$ 0,00</div>
+                  <div class="calc-breakdown-formula" id="calc-res-detalhe-energia">0,000 kWh × R$ 0,00/kWh</div>
+                </div>
+
+                <!-- OPERACIONAL -->
+                <div class="calc-breakdown-card">
+                  <div class="calc-breakdown-label">🛠️ Custo Operacional</div>
+                  <div class="calc-breakdown-value" style="color: #38bdf8;" id="calc-res-custo-operacional">R$ 0,00</div>
+                  <div class="calc-breakdown-formula" id="calc-res-detalhe-operacional">0,00h × R$ 0,00/h</div>
+                </div>
+              </div>
+
+              <!-- GRANDES CARDS DE DESTAQUE: CUSTO TOTAL & UNITÁRIO -->
+              <div class="calc-highlight-box">
+                <div>
+                  <div class="calc-highlight-label">Custo Total de Produção</div>
+                  <div class="calc-highlight-main" id="calc-res-custo-total">R$ 0,00</div>
+                  <div style="font-size: 0.72rem; color: rgba(255, 255, 255, 0.6); margin-top: 2px;">
+                    Filamento + Energia + Operacional
+                  </div>
+                </div>
+                <div style="border-left: 1px solid rgba(16, 185, 129, 0.3); padding-left: 16px;">
+                  <div class="calc-highlight-label">Custo Unitário (por peça)</div>
+                  <div class="calc-highlight-sub" id="calc-res-custo-unitario">R$ 0,00</div>
+                  <div style="font-size: 0.72rem; color: #a7f3d0; margin-top: 2px;">
+                    Custo Real Estimado
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- HISTÓRICO DE IMPRESSÕES E CUSTOS 3D -->
+          <div class="card" style="margin-top: 24px;">
+            <div class="card-header" style="border-bottom: 1px solid var(--border); padding-bottom: 14px; margin-bottom: 16px; flex-wrap: wrap; gap: 12px;">
+              <div>
+                <h3 style="font-size: 1.15rem; color: #ffffff; display: flex; align-items: center; gap: 8px;">
+                  <span>📜</span> Histórico de Impressões & Produção 3D
+                </h3>
+                <p style="font-size: 0.8rem; color: var(--text-muted); margin: 0;">
+                  Registro consolidado das produções calculadas para auditoria, controle de gastos e orçamentos
+                </p>
+              </div>
+
+              <!-- KPIS RÁPIDOS DO HISTÓRICO -->
+              <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+                <div style="background: rgba(255, 255, 255, 0.05); padding: 6px 12px; border-radius: 8px; border: 1px solid var(--border); font-size: 0.8rem;">
+                  Registros: <strong style="color: #ffffff;" id="calc-hist-kpi-qtd">0</strong>
+                </div>
+                <div style="background: rgba(249, 115, 22, 0.1); padding: 6px 12px; border-radius: 8px; border: 1px solid rgba(249, 115, 22, 0.3); font-size: 0.8rem;">
+                  Filamento Total: <strong style="color: #fb923c;" id="calc-hist-kpi-gramas">0 g</strong>
+                </div>
+                <div style="background: rgba(16, 185, 129, 0.1); padding: 6px 12px; border-radius: 8px; border: 1px solid rgba(16, 185, 129, 0.3); font-size: 0.8rem;">
+                  Custo Acumulado: <strong style="color: #10b981;" id="calc-hist-kpi-custo">R$ 0,00</strong>
+                </div>
+              </div>
+            </div>
+
+            <!-- FILTRO DE BUSCA -->
+            <div style="margin-bottom: 16px;">
+              <input type="text" id="calc-historico-busca" class="form-control" placeholder="🔍 Buscar no histórico por nome da peça, material ou observação...">
+            </div>
+
+            <div class="table-responsive">
+              <table class="modern-table">
+                <thead>
+                  <tr>
+                    <th>Peça / Produto</th>
+                    <th>Material</th>
+                    <th>Consumo & Tempo</th>
+                    <th style="text-align: center;">Lote</th>
+                    <th>Composição dos Custos</th>
+                    <th>Custo Total / Unit.</th>
+                    <th style="text-align: right;">Ações</th>
+                  </tr>
+                </thead>
+                <tbody id="calc-historico-tbody">
+                  <!-- Renderizado dinamicamente via CalculadoraModule.renderHistorico() -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
       </div>
     </main>
   </div>
@@ -1047,6 +1284,151 @@
     </div>
   </div>
 
+  <!-- MODAL: PARÂMETROS DA IMPRESSORA & ENERGIA ELÉTRICA (CALCULADORA 3D) -->
+  <div class="modal-overlay" id="modal-calc-config">
+    <div class="modal-container" style="max-width: 540px;">
+      <div class="modal-header">
+        <h3 style="color: #ffffff; display: flex; align-items: center; gap: 8px;">
+          <span>⚙️</span> Parâmetros da Impressora & Energia
+        </h3>
+        <button class="btn-icon" style="background: transparent; border: none; color: var(--text-muted); cursor: pointer;" onclick="App.closeModal('modal-calc-config')">✕</button>
+      </div>
+      <div class="modal-body">
+        <p style="font-size: 0.82rem; color: var(--text-muted); margin-bottom: 16px;">
+          Esses parâmetros são utilizados automaticamente nas fórmulas para apurar o consumo em kWh e o custo operacional por hora de impressão.
+        </p>
+
+        <div class="form-group">
+          <label>Tarifa de Energia Elétrica (R$ / kWh) *</label>
+          <input type="number" step="0.01" min="0" id="cfg-tarifa-kwh" class="form-control" placeholder="Ex: 0.85">
+          <small style="color: var(--text-muted); font-size: 0.74rem;">Consulte o valor do kWh na conta de luz da concessionária local</small>
+        </div>
+
+        <div class="form-group">
+          <label>Consumo Médio da Impressora 3D (Watts) *</label>
+          <input type="number" step="1" min="0" id="cfg-potencia-watts" class="form-control" placeholder="Ex: 200">
+          <small style="color: var(--text-muted); font-size: 0.74rem;">Potência média da impressora (geralmente entre 150W e 350W aquecendo mesa e bico)</small>
+        </div>
+
+        <div class="form-group">
+          <label>Custo Operacional por Hora (R$ / hora) *</label>
+          <input type="number" step="0.01" min="0" id="cfg-custo-operacional-hora" class="form-control" placeholder="Ex: 3.50">
+          <small style="color: var(--text-muted); font-size: 0.74rem;">Provisão para manutenção preventiva, desgaste de bicos, correias e depreciação da máquina</small>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="App.closeModal('modal-calc-config')">Cancelar</button>
+        <button type="button" class="btn btn-primary" onclick="CalculadoraModule.salvarConfigForm()">Salvar Parâmetros</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: GERENCIAMENTO DE FILAMENTOS -->
+  <div class="modal-overlay" id="modal-gerenciar-filamentos">
+    <div class="modal-container" style="max-width: 820px;">
+      <div class="modal-header">
+        <h3 style="color: #ffffff; display: flex; align-items: center; gap: 8px;">
+          <span>🧵</span> Gerenciamento de Filamentos
+        </h3>
+        <button class="btn-icon" style="background: transparent; border: none; color: var(--text-muted); cursor: pointer;" onclick="App.closeModal('modal-gerenciar-filamentos')">✕</button>
+      </div>
+      <div class="modal-body">
+        <!-- FORMULÁRIO DE CADASTRO/EDIÇÃO DE FILAMENTO -->
+        <div style="background: rgba(255, 255, 255, 0.03); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 18px; margin-bottom: 24px;">
+          <h4 id="fil-modal-form-title" style="color: #fb923c; font-size: 0.95rem; margin-bottom: 12px; font-weight: 700;">
+            Cadastrar Novo Filamento
+          </h4>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>Tipo de Material *</label>
+              <select id="fil-modal-material" class="form-control">
+                <option value="PLA">PLA</option>
+                <option value="PLA Silk">PLA Silk</option>
+                <option value="PETG">PETG</option>
+                <option value="ABS">ABS</option>
+                <option value="TPU Flex">TPU Flexível</option>
+                <option value="Resina UV">Resina UV</option>
+                <option value="ASA">ASA</option>
+                <option value="Nylon">Nylon</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Marca / Fabricante</label>
+              <input type="text" id="fil-modal-marca" class="form-control" placeholder="Ex: Voolt3D, Creality, 3DFila...">
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>Cor *</label>
+              <input type="text" id="fil-modal-cor" class="form-control" placeholder="Ex: Preto, Branco, Dourado Silk...">
+            </div>
+            <div class="form-group">
+              <label>Peso do Rolo (gramas) *</label>
+              <input type="number" step="1" id="fil-modal-peso" class="form-control" value="1000">
+            </div>
+            <div class="form-group">
+              <label>Preço de Compra (R$) *</label>
+              <input type="number" step="0.01" id="fil-modal-preco" class="form-control" placeholder="Ex: 110.00">
+            </div>
+          </div>
+
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 10px; flex-wrap: wrap; gap: 10px;">
+            <div id="fil-modal-custo-preview" style="font-size: 0.85rem; font-weight: 700; color: #10b981;">
+              Custo calculado: R$ 0,00 por grama
+            </div>
+            <div style="display: flex; gap: 8px;">
+              <button type="button" class="btn btn-secondary btn-sm" onclick="CalculadoraModule.limparFormFilamento()">Limpar</button>
+              <button type="button" class="btn btn-primary btn-sm" id="fil-modal-btn-submit" onclick="CalculadoraModule.salvarFilamentoForm()">Cadastrar Filamento</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- TABELA DE FILAMENTOS CADASTRADOS -->
+        <h4 style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 12px; font-weight: 600;">
+          Filamentos Cadastrados no Sistema
+        </h4>
+        <div class="table-responsive" style="max-height: 280px; overflow-y: auto;">
+          <table class="modern-table">
+            <thead>
+              <tr>
+                <th>Material & Marca</th>
+                <th>Cor</th>
+                <th>Peso</th>
+                <th>Preço Rolo</th>
+                <th>Custo/g</th>
+                <th style="text-align: right;">Ações</th>
+              </tr>
+            </thead>
+            <tbody id="filamentos-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="App.closeModal('modal-gerenciar-filamentos')">Fechar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: FICHA TÉCNICA E DETALHES DA IMPRESSÃO 3D -->
+  <div class="modal-overlay" id="modal-calc-detalhes">
+    <div class="modal-container" style="max-width: 620px;">
+      <div class="modal-header">
+        <h3 style="color: #ffffff; display: flex; align-items: center; gap: 8px;">
+          <span>📄</span> Ficha Técnica de Custos 3D
+        </h3>
+        <button class="btn-icon" style="background: transparent; border: none; color: var(--text-muted); cursor: pointer;" onclick="App.closeModal('modal-calc-detalhes')">✕</button>
+      </div>
+      <div class="modal-body" id="calc-detalhes-modal-body">
+        <!-- Preenchido dinamicamente via CalculadoraModule.verDetalhes(id) -->
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="App.closeModal('modal-calc-detalhes')">Fechar</button>
+      </div>
+    </div>
+  </div>
+
   <!-- BARRA DE NAVEGAÇÃO INFERIOR PARA CELULAR (ESTILO APP IPHONE) -->
   <nav class="mobile-bottom-nav" id="mobile-bottom-nav">
     <button type="button" class="bottom-nav-item active" data-view="dashboard" onclick="App.navigate('dashboard')">
@@ -1091,6 +1473,7 @@
   <script src="js/estoque.js"></script>
   <script src="js/financeiro.js"></script>
   <script src="js/propostas.js"></script>
+  <script src="js/calculadora.js"></script>
   <script src="js/app.js"></script>
 </body>
 </html>

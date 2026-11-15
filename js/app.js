@@ -20,6 +20,9 @@ const App = {
     EstoqueModule.init();
     FinanceiroModule.init();
     PropostasModule.init();
+    if (typeof CalculadoraModule !== 'undefined') {
+      CalculadoraModule.init();
+    }
     this.loadConfigView();
 
     window.addEventListener('seven_data_updated', () => {
@@ -88,6 +91,7 @@ const App = {
       estoque: { title: 'Estoque de Insumos', sub: 'Filamentos 3D, chapas laser, copos e embalagens' },
       financeiro: { title: 'Financeiro & Fluxo de Caixa', sub: 'Entradas, despesas operacionais e balanço' },
       propostas: { title: 'Gerador de Propostas Comerciais', sub: 'Crie propostas de alto valor prontas para fechar' },
+      calculadora: { title: 'Calculadora de Filamentos', sub: 'Custos de produção 3D: filamento, energia elétrica e desgaste operacional' },
       configuracoes: { title: 'Configurações do Estúdio', sub: 'Dados da empresa, dados bancários e integrações' }
     };
 
@@ -103,6 +107,13 @@ const App = {
       EncomendasModule.renderFinalizados();
     } else if (viewName === 'encomendas') {
       EncomendasModule.render();
+    } else if (viewName === 'calculadora') {
+      if (typeof CalculadoraModule !== 'undefined') {
+        CalculadoraModule.renderFilamentoSelect();
+        CalculadoraModule.carregarParametrosConfig();
+        CalculadoraModule.calcular();
+        CalculadoraModule.renderHistorico();
+      }
     }
   },
 

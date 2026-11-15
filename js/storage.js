@@ -14,6 +14,9 @@ const STORAGE_KEYS = {
   ESTOQUE: 'seven_estoque_v1',
   DESPESAS: 'seven_despesas_v1',
   PROPOSTAS: 'seven_propostas_v1',
+  FILAMENTOS: 'seven_filamentos_v1',
+  CALC_3D_CONFIG: 'seven_calc_3d_config_v1',
+  CALC_3D_HISTORICO: 'seven_calc_3d_historico_v1',
   CONFIG: 'seven_config_v1',
   SUPABASE_SETTINGS: 'seven_supabase_config_v1'
 };
@@ -243,6 +246,75 @@ const INITIAL_DATA = {
       status: 'Enviada',
       criada_em: new Date().toISOString()
     }
+  ],
+  filamentos: [
+    {
+      id: 'fil-1',
+      material: 'PLA',
+      marca: 'Voolt3D',
+      cor: 'Preto Clássico',
+      peso_rolo_g: 1000,
+      preco_rolo: 110.00,
+      custo_por_g: 0.11,
+      ativo: true
+    },
+    {
+      id: 'fil-2',
+      material: 'PLA Silk',
+      marca: 'Esun',
+      cor: 'Ouro Nobre Metálico',
+      peso_rolo_g: 1000,
+      preco_rolo: 150.00,
+      custo_por_g: 0.15,
+      ativo: true
+    },
+    {
+      id: 'fil-3',
+      material: 'PETG',
+      marca: 'Creality',
+      cor: 'Cristal Translúcido',
+      peso_rolo_g: 1000,
+      preco_rolo: 120.00,
+      custo_por_g: 0.12,
+      ativo: true
+    },
+    {
+      id: 'fil-4',
+      material: 'ABS',
+      marca: '3D Fila',
+      cor: 'Cinza Espacial',
+      peso_rolo_g: 1000,
+      preco_rolo: 98.00,
+      custo_por_g: 0.098,
+      ativo: true
+    }
+  ],
+  calc_3d_config: {
+    id: 'main_3d_calc',
+    tarifa_kwh: 0.85,
+    potencia_impressora_w: 200,
+    custo_operacional_hora: 3.50
+  },
+  calc_3d_historico: [
+    {
+      id: 'calc-hist-1',
+      data: new Date(Date.now() - 3600000 * 24).toISOString(),
+      produto_nome: 'Troféu 3D Seven Personalizados',
+      filamento_id: 'fil-2',
+      filamento_nome: 'PLA Silk Ouro Nobre Metálico (Esun)',
+      gramas: 140,
+      tempo_horas: 5,
+      tempo_minutos: 30,
+      tempo_total_horas: 5.5,
+      quantidade_pecas: 2,
+      custo_filamento: 21.00,
+      consumo_kwh: 1.1,
+      custo_energia: 0.935,
+      custo_operacional: 19.25,
+      custo_total: 41.185,
+      custo_unitario: 20.5925,
+      observacoes: 'Bico 0.4mm, camada 0.2mm, infill 15%'
+    }
   ]
 };
 
@@ -295,7 +367,7 @@ const StorageService = {
       this.supabaseClient = window.supabase.createClient(SUPABASE_CONFIG.url, SUPABASE_CONFIG.anonKey);
       const channel = this.supabaseClient.channel('seven-realtime-master');
 
-      const tables = ['encomendas', 'crm_cards', 'estoque', 'despesas', 'propostas'];
+      const tables = ['encomendas', 'crm_cards', 'estoque', 'despesas', 'propostas', 'filamentos', 'calc_3d_historico'];
       tables.forEach(table => {
         channel.on('postgres_changes', { event: '*', schema: 'public', table: table }, (payload) => {
           console.log(`⚡ [Realtime Supabase] Alteração detectada em ${table}:`, payload);
@@ -438,7 +510,7 @@ const StorageService = {
     if (!isSilent) {
       this.updateSyncBadge('syncing', 'Sincronizando nuvem...');
     }
-    const tables = ['crm_cards', 'encomendas', 'estoque', 'despesas', 'propostas'];
+    const tables = ['crm_cards', 'encomendas', 'estoque', 'despesas', 'propostas', 'filamentos', 'calc_3d_historico'];
 
     try {
       await Promise.all(tables.map(async (table) => {
@@ -614,6 +686,26 @@ const StorageService = {
         else this.updateSyncBadge('offline', 'Erro ao salvar');
       })
       .catch(() => this.updateSyncBadge('offline', 'Modo Offline'));
+  },
+
+  getCalc3DConfig() {
+    try {
+      const data = localStorage.getItem(STORAGE_KEYS.CALC_3D_CONFIG);
+      return data ? JSON.parse(data) : INITIAL_DATA.calc_3d_config;
+    } catch {
+      return INITIAL_DATA.calc_3d_config;
+    }
+  },
+
+  saveCalc3DConfig(cfg) {
+    const payload = {
+      id: 'main_3d_calc',
+      ...cfg,
+      updated_at: new Date().toISOString()
+    };
+    localStorage.setItem(STORAGE_KEYS.CALC_3D_CONFIG, JSON.stringify(payload));
+    window.dispatchEvent(new CustomEvent('seven_data_updated', { detail: { table: 'calc_3d_config' } }));
+    return payload;
   }
 };
 
