@@ -45,49 +45,6 @@ const App = {
         this.navigate(view);
       });
     });
-
-    // Garante que toques no celular acionem a gaveta sem atraso
-    const toggleBtn = document.querySelector('.mobile-menu-toggle');
-    if (toggleBtn) {
-      ['click', 'touchend'].forEach(evt => {
-        toggleBtn.addEventListener(evt, (e) => {
-          e.preventDefault();
-          e.stopPropagation();
-          this.toggleSidebar();
-        }, { passive: false });
-      });
-    }
-
-    const bottomMenuBtn = document.getElementById('bottom-nav-btn-menu');
-    if (bottomMenuBtn) {
-      ['click', 'touchend'].forEach(evt => {
-        bottomMenuBtn.addEventListener(evt, (e) => {
-          e.preventDefault();
-          e.stopPropagation();
-          this.toggleSidebar();
-        }, { passive: false });
-      });
-    }
-
-    const closeBtn = document.getElementById('close-sidebar-btn');
-    if (closeBtn) {
-      ['click', 'touchend'].forEach(evt => {
-        closeBtn.addEventListener(evt, (e) => {
-          e.preventDefault();
-          this.closeSidebar();
-        }, { passive: false });
-      });
-    }
-
-    const backdrop = document.getElementById('sidebar-backdrop');
-    if (backdrop) {
-      ['click', 'touchend'].forEach(evt => {
-        backdrop.addEventListener(evt, (e) => {
-          e.preventDefault();
-          this.closeSidebar();
-        }, { passive: false });
-      });
-    }
   },
 
   navigate(viewName) {
@@ -494,45 +451,63 @@ const App = {
     this.toast('Configurações da Seven Personalizados salvas!', 'success');
   },
 
-  // Gerenciamento da Gaveta Lateral no Celular
-  toggleSidebar() {
+  // Gerenciamento da Gaveta Lateral no Celular (com proteção contra clique duplo)
+  _lastToggle: 0,
+
+  toggleSidebar(e) {
+    if (e && e.stopPropagation) {
+      e.stopPropagation();
+      e.preventDefault();
+    }
+    const now = Date.now();
+    if (now - this._lastToggle < 350) return;
+    this._lastToggle = now;
+
     const sb = document.getElementById('app-sidebar');
     if (!sb) return;
     if (sb.classList.contains('open')) {
-      this.closeSidebar();
+      this.closeSidebar(e);
     } else {
-      this.openSidebar();
+      this.openSidebar(e);
     }
   },
 
-  openSidebar() {
+  openSidebar(e) {
+    if (e && e.stopPropagation) {
+      e.stopPropagation();
+    }
+    this._lastToggle = Date.now();
     const sb = document.getElementById('app-sidebar');
     const bd = document.getElementById('sidebar-backdrop');
     if (sb) {
       sb.classList.add('open');
-      sb.style.transform = 'translateX(0)';
-      sb.style.webkitTransform = 'translateX(0)';
-      sb.style.visibility = 'visible';
+      sb.style.setProperty('-webkit-transform', 'translateX(0)', 'important');
+      sb.style.setProperty('transform', 'translateX(0)', 'important');
+      sb.style.setProperty('display', 'flex', 'important');
     }
     if (bd) {
       bd.classList.add('active');
-      bd.style.display = 'block';
+      bd.style.setProperty('display', 'block', 'important');
     }
     document.body.style.overflow = 'hidden';
   },
 
-  closeSidebar() {
+  closeSidebar(e) {
+    if (e && e.stopPropagation) {
+      e.stopPropagation();
+    }
+    this._lastToggle = Date.now();
     const sb = document.getElementById('app-sidebar');
     const bd = document.getElementById('sidebar-backdrop');
     if (sb) {
       sb.classList.remove('open');
-      sb.style.transform = '';
-      sb.style.webkitTransform = '';
-      sb.style.visibility = '';
+      sb.style.removeProperty('-webkit-transform');
+      sb.style.removeProperty('transform');
+      sb.style.removeProperty('display');
     }
     if (bd) {
       bd.classList.remove('active');
-      bd.style.display = 'none';
+      bd.style.setProperty('display', 'none', 'important');
     }
     document.body.style.overflow = '';
   }

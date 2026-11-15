@@ -48,7 +48,7 @@
   <meta http-equiv="Expires" content="0">
 
   <!-- Estilos Customizados -->
-  <link rel="stylesheet" href="css/styles.css?v=19">
+  <link rel="stylesheet" href="css/styles.css?v=20">
 </head>
 
 <body>
@@ -59,7 +59,7 @@
     <aside class="sidebar" id="app-sidebar">
       <div class="sidebar-header" style="display: flex; justify-content: space-between; align-items: center;">
         <img src="logo.png" alt="Seven Personalizados" class="brand-logo-img">
-        <button type="button" id="close-sidebar-btn" class="btn-icon mobile-only" onclick="App.closeSidebar()"
+        <button type="button" id="close-sidebar-btn" class="btn-icon mobile-only" onclick="App.closeSidebar(event)"
           style="background: rgba(255, 255, 255, 0.08); border: 1px solid rgba(255, 255, 255, 0.15); border-radius: 8px; color: #ffffff; font-size: 1.2rem; cursor: pointer; width: 34px; height: 34px; display: flex; align-items: center; justify-content: center;"
           title="Fechar Menu">✕</button>
       </div>
@@ -176,7 +176,7 @@
       <header class="topbar">
         <div class="topbar-left">
           <div style="display: flex; align-items: center; gap: 12px;">
-            <button type="button" class="mobile-menu-toggle mobile-only" onclick="App.toggleSidebar()"
+            <button type="button" class="mobile-menu-toggle mobile-only" onclick="App.toggleSidebar(event)"
               title="Abrir menu lateral">
               <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
                 <line x1="3" y1="12" x2="21" y2="12" />
@@ -1541,7 +1541,7 @@
       </div>
       <span>Orçamentos</span>
     </button>
-    <button type="button" class="bottom-nav-item" id="bottom-nav-btn-menu" onclick="App.toggleSidebar()">
+    <button type="button" class="bottom-nav-item" id="bottom-nav-btn-menu" onclick="App.toggleSidebar(event)">
       <svg class="bottom-nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
         <line x1="3" y1="12" x2="21" y2="12" />
         <line x1="3" y1="6" x2="21" y2="6" />
@@ -1552,22 +1552,22 @@
   </nav>
 
   <!-- OVERLAY ESCURO PARA QUANDO A GAVETA DO MENU ABRIR NO CELULAR -->
-  <div class="sidebar-backdrop" id="sidebar-backdrop" onclick="App.closeSidebar()"></div>
+  <div class="sidebar-backdrop" id="sidebar-backdrop" onclick="App.closeSidebar(event)"></div>
 
   <!-- CONTAINER DE TOASTS -->
   <div class="toast-container" id="toast-container"></div>
 
-  <!-- SCRIPTS DO SISTEMA (com cache-busting v19) -->
-  <script src="js/notifications.js?v=19"></script>
-  <script src="js/storage.js?v=19"></script>
-  <script src="js/crm.js?v=19"></script>
-  <script src="js/encomendas.js?v=19"></script>
-  <script src="js/estoque.js?v=19"></script>
-  <script src="js/financeiro.js?v=19"></script>
-  <script src="js/propostas.js?v=19"></script>
-  <script src="js/calculadora.js?v=19"></script>
-  <script src="js/configuracoes.js?v=19"></script>
-  <script src="js/app.js?v=19"></script>
+  <!-- SCRIPTS DO SISTEMA (com cache-busting v20) -->
+  <script src="js/notifications.js?v=20"></script>
+  <script src="js/storage.js?v=20"></script>
+  <script src="js/crm.js?v=20"></script>
+  <script src="js/encomendas.js?v=20"></script>
+  <script src="js/estoque.js?v=20"></script>
+  <script src="js/financeiro.js?v=20"></script>
+  <script src="js/propostas.js?v=20"></script>
+  <script src="js/calculadora.js?v=20"></script>
+  <script src="js/configuracoes.js?v=20"></script>
+  <script src="js/app.js?v=20"></script>
 </body>
 
 </html>

@@ -1448,7 +1448,7 @@ select option:checked {
   background: rgba(0, 0, 0, 0.7);
   backdrop-filter: blur(4px);
   -webkit-backdrop-filter: blur(4px);
-  z-index: 1100;
+  z-index: 2100 !important;
   opacity: 0;
   pointer-events: none;
   transition: opacity 0.3s ease;
@@ -1755,11 +1755,14 @@ select option:checked {
     left: 0 !important;
     width: 290px !important;
     max-width: 85vw !important;
-    z-index: 1200 !important;
+    height: 100vh !important;
+    height: 100dvh !important;
+    z-index: 2200 !important;
     -webkit-transform: translateX(-100%) !important;
     transform: translateX(-100%) !important;
-    box-shadow: 4px 0 30px rgba(0, 0, 0, 0.85);
-    transition: -webkit-transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), transform 0.3s cubic-bezier(0.16, 1, 0.3, 1) !important;
+    box-shadow: 4px 0 35px rgba(0, 0, 0, 0.9) !important;
+    transition: -webkit-transform 0.28s cubic-bezier(0.16, 1, 0.3, 1), transform 0.28s cubic-bezier(0.16, 1, 0.3, 1) !important;
+    display: flex !important;
   }
 
   .sidebar.open {
