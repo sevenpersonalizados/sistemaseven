@@ -526,40 +526,11 @@ const EncomendasModule = {
     this.renderItensTable();
   },
 
-  onProdutoChange(index, nomeProduto) {
-    const item = encomendaItensTemp[index];
-    if (!item) return;
-    item.produto_nome = nomeProduto;
-
-    // Se selecionou um produto do catálogo estabelecido, preenche preço sugerido automaticamente
-    const prodsEstabelecidos = StorageService.getProdutosEstabelecidos();
-    const prodEst = prodsEstabelecidos.find(p => p.nome.toLowerCase() === nomeProduto.trim().toLowerCase());
-    if (prodEst) {
-      if (!item.preco_unitario || item.preco_unitario === 0) {
-        item.preco_unitario = Number(prodEst.preco_padrao) || 0;
-        item.subtotal = (Number(item.quantidade) || 1) * item.preco_unitario;
-      }
-      const catEncSelect = document.getElementById('enc-form-categoria');
-      if (catEncSelect && prodEst.categoria && (!catEncSelect.value || catEncSelect.value === '3D')) {
-        catEncSelect.value = prodEst.categoria;
-      }
-    } else {
-      const estoqueItens = StorageService.get('estoque');
-      const itemEst = estoqueItens.find(e => e.nome.toLowerCase() === nomeProduto.trim().toLowerCase());
-      if (itemEst && (!item.preco_unitario || item.preco_unitario === 0)) {
-        item.preco_unitario = Number(itemEst.preco_venda) || 0;
-        item.subtotal = (Number(item.quantidade) || 1) * item.preco_unitario;
-      }
-    }
-
-    this.renderItensTable();
-  },
-
   renderItensTable() {
-    const container = document.getElementById('enc-itens-tbody');
+    const container = document.getElementById('enc-itens-container') || document.getElementById('enc-itens-tbody');
     if (!container) return;
 
-    // Atualiza opções do datalist com catálogo estabelecido e estoque
+    // Atualiza opções do datalist com produtos estabelecidos (apenas nomes!)
     const datalist = document.getElementById('enc-datalist-produtos');
     if (datalist) {
       const prodsEstabelecidos = StorageService.getProdutosEstabelecidos();
@@ -567,15 +538,16 @@ const EncomendasModule = {
       const opcoesUnicas = new Set();
       let optionsHtml = '';
       prodsEstabelecidos.forEach(p => {
-        if (!opcoesUnicas.has(p.nome)) {
-          opcoesUnicas.add(p.nome);
-          optionsHtml += `<option value="${App.escapeHtml(p.nome)}">${App.escapeHtml(p.categoria)} • ${App.formatMoney(p.preco_padrao)}</option>`;
+        const nome = typeof p === 'object' ? p.nome : p;
+        if (nome && !opcoesUnicas.has(nome)) {
+          opcoesUnicas.add(nome);
+          optionsHtml += `<option value="${App.escapeHtml(nome)}">`;
         }
       });
       estoqueItens.forEach(e => {
-        if (!opcoesUnicas.has(e.nome)) {
+        if (e.nome && !opcoesUnicas.has(e.nome)) {
           opcoesUnicas.add(e.nome);
-          optionsHtml += `<option value="${App.escapeHtml(e.nome)}">${App.escapeHtml(e.categoria)} • ${App.formatMoney(e.preco_venda)}</option>`;
+          optionsHtml += `<option value="${App.escapeHtml(e.nome)}">`;
         }
       });
       datalist.innerHTML = optionsHtml;
@@ -590,44 +562,80 @@ const EncomendasModule = {
       const corAtual = item.cor || '';
 
       return `
-        <tr>
-          <td>
-            <input type="text" list="enc-datalist-produtos" class="form-control" style="padding: 6px 10px;" 
-                   value="${App.escapeHtml(item.produto_nome || '')}" 
-                   placeholder="Selecione ou digite..." 
-                   onchange="EncomendasModule.onProdutoChange(${idx}, this.value)">
-          </td>
-          <td>
-            <select class="form-control" style="padding: 6px 8px; font-size: 0.82rem;" 
-                    onchange="EncomendasModule.updateItemRow(${idx}, 'cor', this.value)">
-              <option value="">(Sem cor / Padrão)</option>
-              ${coresDisponiveis.map(c => `
-                <option value="${App.escapeHtml(c)}" ${c === corAtual ? 'selected' : ''}>
-                  ${App.escapeHtml(c)}
-                </option>
-              `).join('')}
-            </select>
-          </td>
-          <td>
-            <input type="text" class="form-control" style="padding: 6px 10px;" value="${App.escapeHtml(item.personalizacao || '')}" 
-                   placeholder="Ex: Nome da Aniversariante" onchange="EncomendasModule.updateItemRow(${idx}, 'personalizacao', this.value)">
-          </td>
-          <td style="width: 70px;">
-            <input type="number" min="1" class="form-control" style="padding: 6px 8px;" value="${item.quantidade}" 
-                   onchange="EncomendasModule.updateItemRow(${idx}, 'quantidade', this.value)">
-          </td>
-          <td style="width: 105px;">
-            <input type="number" step="0.5" class="form-control" style="padding: 6px 8px;" value="${item.preco_unitario}" 
-                   onchange="EncomendasModule.updateItemRow(${idx}, 'preco_unitario', this.value)">
-          </td>
-          <td style="width: 105px; font-weight: 600; vertical-align: middle;">
-            ${App.formatMoney(item.subtotal || 0)}
-          </td>
-          <td style="width: 40px; text-align: center; vertical-align: middle;">
-            <button type="button" class="btn-icon" style="background: transparent; color: var(--danger); border: none; cursor: pointer;" 
-                    onclick="EncomendasModule.removeItemRow(${idx})">✕</button>
-          </td>
-        </tr>
+        <div class="enc-item-card" style="background: rgba(255, 255, 255, 0.025); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 10px; padding: 14px 16px; margin-bottom: 12px; box-shadow: 0 4px 14px rgba(0,0,0,0.25);">
+          <!-- Topo do Item -->
+          <div style="display: flex; justify-content: space-between; align-items: center; padding-bottom: 8px; margin-bottom: 10px; border-bottom: 1px solid rgba(255, 255, 255, 0.07);">
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <span style="font-size: 0.72rem; font-weight: 800; text-transform: uppercase; padding: 2px 8px; border-radius: 999px; background: rgba(0, 168, 243, 0.18); color: #38bdf8; border: 1px solid rgba(0, 168, 243, 0.45);">
+                Item #${idx + 1}
+              </span>
+              <span style="font-size: 0.82rem; font-weight: 600; color: #ffffff;">
+                ${App.escapeHtml(item.produto_nome || 'Selecione ou digite o produto')}
+              </span>
+            </div>
+            ${encomendaItensTemp.length > 1 ? `
+              <button type="button" class="btn-icon" style="background: rgba(239, 68, 68, 0.12); border: 1px solid rgba(239, 68, 68, 0.4); color: #f87171; cursor: pointer; padding: 3px 8px; border-radius: 6px; font-size: 0.75rem; font-weight: 600;" 
+                      onclick="EncomendasModule.removeItemRow(${idx})" title="Remover este item">
+                ✕ Excluir Item
+              </button>
+            ` : ''}
+          </div>
+
+          <!-- Linha 1: Produto e Cor -->
+          <div class="form-row" style="margin-bottom: 8px;">
+            <div class="form-group" style="flex: 2; margin-bottom: 6px;">
+              <label style="font-size: 0.78rem; font-weight: 600; color: var(--text-primary);">Produto *</label>
+              <input type="text" list="enc-datalist-produtos" class="form-control" style="height: 38px;" 
+                     value="${App.escapeHtml(item.produto_nome || '')}" 
+                     placeholder="Selecione da lista ou digite..." 
+                     onchange="EncomendasModule.updateItemRow(${idx}, 'produto_nome', this.value)">
+            </div>
+            <div class="form-group" style="flex: 1.2; margin-bottom: 6px;">
+              <label style="font-size: 0.78rem; font-weight: 600; color: var(--text-primary);">Cor</label>
+              <select class="form-control" style="height: 38px;" 
+                      onchange="EncomendasModule.updateItemRow(${idx}, 'cor', this.value)">
+                <option value="">(Sem cor / Padrão)</option>
+                ${coresDisponiveis.map(c => `
+                  <option value="${App.escapeHtml(c)}" ${c === corAtual ? 'selected' : ''}>
+                    ${App.escapeHtml(c)}
+                  </option>
+                `).join('')}
+              </select>
+            </div>
+          </div>
+
+          <!-- Linha 2: Personalização / Arte -->
+          <div class="form-group" style="margin-bottom: 8px;">
+            <label style="font-size: 0.78rem; font-weight: 600; color: var(--text-primary);">Personalização / Arte (Instruções ou Nome)</label>
+            <input type="text" class="form-control" style="height: 38px;" 
+                   value="${App.escapeHtml(item.personalizacao || '')}" 
+                   placeholder="Ex: Nome da Aniversariante, Frase, Logo..." 
+                   onchange="EncomendasModule.updateItemRow(${idx}, 'personalizacao', this.value)">
+          </div>
+
+          <!-- Linha 3: Quantidade, Valor Unitário e Subtotal -->
+          <div class="form-row" style="margin-bottom: 0; align-items: flex-end;">
+            <div class="form-group" style="flex: 1; margin-bottom: 4px;">
+              <label style="font-size: 0.78rem; font-weight: 600; color: var(--text-primary);">Quantidade</label>
+              <input type="number" min="1" class="form-control" style="height: 38px;" 
+                     value="${item.quantidade || 1}" 
+                     onchange="EncomendasModule.updateItemRow(${idx}, 'quantidade', this.value)">
+            </div>
+            <div class="form-group" style="flex: 1.3; margin-bottom: 4px;">
+              <label style="font-size: 0.78rem; font-weight: 600; color: var(--text-primary);">Valor Unitário (R$)</label>
+              <input type="number" step="0.5" class="form-control" style="height: 38px;" 
+                     value="${item.preco_unitario || 0}" 
+                     placeholder="0,00"
+                     onchange="EncomendasModule.updateItemRow(${idx}, 'preco_unitario', this.value)">
+            </div>
+            <div class="form-group" style="flex: 1.2; margin-bottom: 4px; text-align: right;">
+              <label style="font-size: 0.72rem; color: var(--text-muted); display: block;">Subtotal</label>
+              <div style="font-size: 1.15rem; font-weight: 800; color: #34d399; padding-top: 5px;">
+                ${App.formatMoney(item.subtotal || 0)}
+              </div>
+            </div>
+          </div>
+        </div>
       `;
     }).join('');
 

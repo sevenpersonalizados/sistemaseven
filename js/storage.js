@@ -40,14 +40,8 @@ const INITIAL_DATA = {
       'Amarelo', 'Rosa', 'Laranja', 'Roxo', 'Cobre / Bronze', 'Madeira Natural', 'Transparente'
     ],
     produtos_estabelecidos: [
-      { id: 'prod-1', nome: 'Copo Térmico Inox 473ml', categoria: 'Gravação laser', preco_padrao: 45.00 },
-      { id: 'prod-2', nome: 'Taça de Gin Acrílica 580ml', categoria: 'Gravação laser', preco_padrao: 18.00 },
-      { id: 'prod-3', nome: 'Chaveiro MDF Personalizado', categoria: 'Corte laser', preco_padrao: 8.00 },
-      { id: 'prod-4', nome: 'Troféu Acrílico Cortado a Laser', categoria: 'Corte e Gravação', preco_padrao: 65.00 },
-      { id: 'prod-5', nome: 'Quadro Decorativo MDF Vazado', categoria: 'Corte laser', preco_padrao: 85.00 },
-      { id: 'prod-6', nome: 'Peça Impressa 3D Personalizada', categoria: '3D', preco_padrao: 40.00 },
-      { id: 'prod-7', nome: 'Luminária LED Acrílico 3D', categoria: 'Corte e Gravação', preco_padrao: 75.00 },
-      { id: 'prod-8', nome: 'Caneca Cerâmica Personalizada', categoria: 'Gravação laser', preco_padrao: 35.00 }
+      'Copo Térmico Inox', 'Taça de Gin Acrílica', 'Chaveiro MDF', 'Troféu Acrílico',
+      'Quadro MDF Vazado', 'Peça Impressa 3D', 'Luminária LED Acrílico', 'Caneca Personalizada'
     ]
   },
   crm_cards: [
@@ -879,54 +873,45 @@ const StorageService = {
     this.saveConfig({ ...cfg, cores: lista });
   },
 
-  /* --- PRODUTOS ESTABELECIDOS (CATÁLOGO RÁPIDO) --- */
+  /* --- PRODUTOS ESTABELECIDOS (APENAS NOMES / SEM PREÇOS) --- */
   getProdutosEstabelecidos() {
-    return this.getConfig().produtos_estabelecidos || [
-      { id: 'prod-1', nome: 'Copo Térmico Inox 473ml', categoria: 'Gravação laser', preco_padrao: 45.00 },
-      { id: 'prod-2', nome: 'Taça de Gin Acrílica 580ml', categoria: 'Gravação laser', preco_padrao: 18.00 },
-      { id: 'prod-3', nome: 'Chaveiro MDF Personalizado', categoria: 'Corte laser', preco_padrao: 8.00 },
-      { id: 'prod-4', nome: 'Troféu Acrílico Cortado a Laser', categoria: 'Corte e Gravação', preco_padrao: 65.00 },
-      { id: 'prod-5', nome: 'Quadro Decorativo MDF Vazado', categoria: 'Corte laser', preco_padrao: 85.00 },
-      { id: 'prod-6', nome: 'Peça Impressa 3D Personalizada', categoria: '3D', preco_padrao: 40.00 },
-      { id: 'prod-7', nome: 'Luminária LED Acrílico 3D', categoria: 'Corte e Gravação', preco_padrao: 75.00 },
-      { id: 'prod-8', nome: 'Caneca Cerâmica Personalizada', categoria: 'Gravação laser', preco_padrao: 35.00 }
+    const raw = this.getConfig().produtos_estabelecidos || [
+      'Copo Térmico Inox', 'Taça de Gin Acrílica', 'Chaveiro MDF', 'Troféu Acrílico',
+      'Quadro MDF Vazado', 'Peça Impressa 3D', 'Luminária LED Acrílico', 'Caneca Personalizada'
     ];
+    return raw.map(it => (typeof it === 'object' && it?.nome ? it.nome : String(it)));
   },
 
-  addProdutoEstabelecido(prod) {
-    const nome = (prod.nome || '').trim();
-    if (!nome) return;
+  addProdutoEstabelecido(nome) {
+    const val = (nome || '').trim();
+    if (!val) return;
     const cfg = this.getConfig();
     const lista = [...(this.getProdutosEstabelecidos())];
-    const novoProduto = {
-      id: 'prod-' + Date.now(),
-      nome: nome,
-      categoria: prod.categoria || '3D',
-      preco_padrao: Number(prod.preco_padrao) || 0
-    };
-    lista.push(novoProduto);
-    this.saveConfig({ ...cfg, produtos_estabelecidos: lista });
-    return novoProduto;
-  },
-
-  editProdutoEstabelecido(id, dados) {
-    const cfg = this.getConfig();
-    const lista = [...(this.getProdutosEstabelecidos())];
-    const idx = lista.findIndex(p => p.id === id);
-    if (idx !== -1) {
-      lista[idx] = {
-        ...lista[idx],
-        nome: dados.nome !== undefined ? dados.nome.trim() : lista[idx].nome,
-        categoria: dados.categoria || lista[idx].categoria,
-        preco_padrao: dados.preco_padrao !== undefined ? Number(dados.preco_padrao) || 0 : lista[idx].preco_padrao
-      };
+    if (!lista.some(p => p.toLowerCase() === val.toLowerCase())) {
+      lista.push(val);
       this.saveConfig({ ...cfg, produtos_estabelecidos: lista });
     }
   },
 
-  removeProdutoEstabelecido(id) {
+  editProdutoEstabelecido(index, novoNome) {
+    const val = (novoNome || '').trim();
+    if (!val) return;
     const cfg = this.getConfig();
-    const lista = [...(this.getProdutosEstabelecidos())].filter(p => p.id !== id);
+    const lista = [...(this.getProdutosEstabelecidos())];
+    if (lista[index] !== undefined) {
+      lista[index] = val;
+      this.saveConfig({ ...cfg, produtos_estabelecidos: lista });
+    }
+  },
+
+  removeProdutoEstabelecido(index) {
+    const cfg = this.getConfig();
+    const lista = [...(this.getProdutosEstabelecidos())];
+    if (lista.length <= 1) {
+      alert('É necessário manter pelo menos um produto cadastrado.');
+      return;
+    }
+    lista.splice(index, 1);
     this.saveConfig({ ...cfg, produtos_estabelecidos: lista });
   },
 
