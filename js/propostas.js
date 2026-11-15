@@ -120,8 +120,12 @@ const PropostasModule = {
             </div>
 
             <div style="display: flex; gap: 6px; align-items: center; flex-wrap: wrap;">
+              <button class="btn" onclick="PropostasModule.enviarWhatsApp('${p.id}')" title="Encaminhar orçamento via WhatsApp para o cliente" style="padding: 6px 12px; font-size: 0.78rem; background: #25d366; border-color: #25d366; color: #ffffff; font-weight: 700; display: inline-flex; align-items: center; gap: 5px; box-shadow: 0 2px 8px rgba(37, 211, 102, 0.25);">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+                WhatsApp
+              </button>
               <button class="btn btn-primary" onclick="PropostasModule.aprovarProposta('${p.id}')" title="Aprovar orçamento e mover para a Fila de Espera" style="padding: 6px 12px; font-size: 0.78rem; background: #10b981; border-color: #10b981; font-weight: 600;">
-                ✅ Aprovar (Mover p/ Fila)
+                ✅ Aprovar
               </button>
               <button class="btn btn-secondary btn-icon" onclick="PropostasModule.openEditModal('${p.id}')" style="padding: 6px 8px; font-size: 0.78rem;" title="Editar orçamento">
                 ✏️
@@ -435,8 +439,12 @@ const PropostasModule = {
     // Atualiza botões do cabeçalho do preview
     if (actionsContainer) {
       actionsContainer.innerHTML = `
+        <button class="btn" onclick="PropostasModule.enviarWhatsApp('${p.id}')" style="background: #25d366; border-color: #25d366; color: #ffffff; font-weight: 700; display: inline-flex; align-items: center; gap: 6px; box-shadow: 0 2px 8px rgba(37, 211, 102, 0.25);">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+          Encaminhar via WhatsApp
+        </button>
         <button class="btn btn-primary" onclick="PropostasModule.aprovarProposta('${p.id}')" style="background: #10b981; border-color: #10b981; font-weight: 600;">
-          ✅ Aprovar & Mover p/ Fila de Espera
+          ✅ Aprovar & Mover p/ Fila
         </button>
         <button class="btn btn-secondary" onclick="PropostasModule.imprimirPropostaAtual()">🖨️ Imprimir / PDF</button>
         <button class="btn btn-secondary" onclick="App.closeModal('modal-preview-proposta')">Fechar</button>
@@ -547,5 +555,77 @@ const PropostasModule = {
 
   imprimirPropostaAtual() {
     window.print();
+  },
+
+  enviarWhatsApp(id) {
+    const p = StorageService.get('propostas').find(item => item.id === id);
+    if (!p) {
+      App.toast('Orçamento não localizado.', 'error');
+      return;
+    }
+
+    const config = StorageService.getConfig();
+    const nomeEmpresa = config.nomeEmpresa || 'Seven Personalizados';
+
+    // 1. Obtém telefone do cliente
+    let tel = (p.telefone || '').trim();
+    if (!tel) {
+      tel = prompt(`Informe o WhatsApp de ${p.cliente} com DDD (apenas números):`, '');
+      if (!tel || !tel.trim()) {
+        App.toast('Envio cancelado: número de WhatsApp não informado.', 'info');
+        return;
+      }
+      p.telefone = tel.trim();
+      StorageService.update('propostas', p.id, { telefone: p.telefone });
+      this.renderList();
+    }
+
+    let foneLimpo = tel.replace(/\D/g, '');
+    if (foneLimpo.length === 10 || foneLimpo.length === 11) {
+      foneLimpo = '55' + foneLimpo;
+    }
+
+    // 2. Detalha os itens orçados
+    let itensTexto = '';
+    if (p.itens && p.itens.length > 0) {
+      itensTexto = p.itens.map(it => {
+        const qtd = it.quantidade || 1;
+        const nome = it.produto_nome || 'Item Personalizado';
+        const precoUn = it.preco_unitario ? ` (${App.formatMoney(it.preco_unitario)} un)` : '';
+        const sub = it.subtotal ? ` = *${App.formatMoney(it.subtotal)}*` : '';
+        let lin = `• *${qtd}x ${nome}*${precoUn}${sub}`;
+        if (it.personalizacao && it.personalizacao.trim()) {
+          lin += `\n   _Arte / Personalização: ${it.personalizacao.trim()}_`;
+        }
+        if (it.observacao && it.observacao.trim()) {
+          lin += `\n   _Obs: ${it.observacao.trim()}_`;
+        }
+        return lin;
+      }).join('\n');
+    } else if (p.escopo) {
+      itensTexto = `• ${p.escopo}`;
+    }
+
+    // 3. Monta a mensagem completa e elegante para o WhatsApp
+    const saudacao = `Olá, *${p.cliente}*! Tudo bem? 😊\nAqui é da *${nomeEmpresa}*.`;
+    const titulo = `📄 *ORÇAMENTO: ${(p.titulo || 'Produtos Personalizados').toUpperCase()}*`;
+
+    let msg = `${saudacao}\n\nConforme conversamos, segue o detalhamento do seu orçamento comercial:\n\n${titulo}\n\n🛍️ *ITENS ORÇADOS:*\n${itensTexto}\n\n💰 *INVESTIMENTO TOTAL:* *${App.formatMoney(p.investimento || 0)}*`;
+
+    if (p.prazo) {
+      msg += `\n⏱️ *Prazo de Produção:* ${p.prazo}`;
+    }
+    if (p.condicoes) {
+      msg += `\n💳 *Condições de Pagamento:* ${p.condicoes}`;
+    }
+    if (config.chavePix) {
+      msg += `\n🔑 *Chave Pix:* ${config.chavePix}`;
+    }
+
+    msg += `\n\nFicamos à sua disposição para qualquer dúvida ou ajuste na arte. Deseja aprovar este orçamento para iniciarmos a sua produção? ✨`;
+
+    const url = `https://wa.me/${foneLimpo}?text=${encodeURIComponent(msg)}`;
+    window.open(url, '_blank');
+    App.toast(`Abrindo WhatsApp para enviar orçamento para ${p.cliente}...`, 'success');
   }
 };
