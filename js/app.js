@@ -500,6 +500,7 @@ const App = {
       bd.classList.add('active');
       bd.style.setProperty('display', 'block', 'important');
     }
+    document.body.classList.add('sidebar-open');
     document.body.style.overflow = 'hidden';
   },
 
@@ -520,6 +521,7 @@ const App = {
       bd.classList.remove('active');
       bd.style.setProperty('display', 'none', 'important');
     }
+    document.body.classList.remove('sidebar-open');
     document.body.style.overflow = '';
   }
 };

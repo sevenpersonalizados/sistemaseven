@@ -195,11 +195,73 @@ const NotificationModule = {
     }
   },
 
+  showInAppBanner({ title, body }) {
+    try {
+      const existing = document.getElementById('seven-floating-alert');
+      if (existing) existing.remove();
+
+      const esc = (s) => (typeof App !== 'undefined' && App.escapeHtml) ? App.escapeHtml(s || '') : String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
+      const banner = document.createElement('div');
+      banner.id = 'seven-floating-alert';
+      banner.style.cssText = `
+        position: fixed;
+        top: 14px;
+        left: 14px;
+        right: 14px;
+        max-width: 480px;
+        margin: 0 auto;
+        background: linear-gradient(135deg, #0b1329 0%, #172554 100%);
+        border: 1px solid rgba(56, 189, 248, 0.55);
+        border-left: 5px solid #00a8f3;
+        border-radius: 14px;
+        padding: 14px 16px;
+        box-shadow: 0 12px 40px rgba(0, 0, 0, 0.88);
+        z-index: 100000;
+        display: flex;
+        align-items: flex-start;
+        gap: 12px;
+        color: #ffffff;
+        font-family: inherit;
+        animation: sevenSlideDown 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+      `;
+
+      banner.innerHTML = `
+        <div style="font-size: 1.5rem; line-height: 1; flex-shrink: 0; margin-top: 2px;">🔔</div>
+        <div style="flex: 1; min-width: 0;">
+          <div style="font-weight: 700; font-size: 0.95rem; color: #38bdf8; margin-bottom: 2px;">${esc(title)}</div>
+          <div style="font-size: 0.84rem; color: #e2e8f0; line-height: 1.4;">${esc(body)}</div>
+        </div>
+        <button type="button" style="background: rgba(255,255,255,0.12); border: none; color: #cbd5e1; font-size: 0.95rem; cursor: pointer; width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0;" onclick="this.parentElement.remove()">✕</button>
+      `;
+
+      document.body.appendChild(banner);
+
+      if ('vibrate' in navigator) {
+        navigator.vibrate([200, 100, 200]);
+      }
+
+      setTimeout(() => {
+        if (banner && banner.parentElement) {
+          banner.style.opacity = '0';
+          banner.style.transform = 'translateY(-20px)';
+          banner.style.transition = 'all 0.3s ease';
+          setTimeout(() => banner.remove(), 300);
+        }
+      }, 7000);
+    } catch (e) {
+      console.warn('Erro ao exibir banner in-app:', e);
+    }
+  },
+
   async show({ title, body, icon = './favicon-192.png', tag = 'seven-alert' }) {
     // 1. Toca som suave
     this.playChime();
 
-    // 2. Se a permissão nativa foi concedida, dispara notificação do sistema / banner do celular
+    // 2. Exibe o banner flutuante em destaque no topo da tela do app
+    this.showInAppBanner({ title, body });
+
+    // 3. Se a permissão nativa foi concedida, dispara notificação do sistema / banner do celular
     if (this.getPermission() === 'granted') {
       try {
         if ('serviceWorker' in navigator) {

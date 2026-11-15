@@ -1295,6 +1295,17 @@ select option:checked {
   to { transform: translateX(0); opacity: 1; }
 }
 
+@keyframes sevenSlideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-25px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 /* ==========================================================================
    ESTILOS ESPECÍFICOS DE PROPOSTAS & IMPRESSÃO
    ========================================================================== */
@@ -1445,13 +1456,13 @@ select option:checked {
   display: none !important;
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.7);
-  backdrop-filter: blur(4px);
-  -webkit-backdrop-filter: blur(4px);
-  z-index: 2100 !important;
+  background: rgba(0, 0, 0, 0.65) !important;
+  backdrop-filter: blur(2px) !important;
+  -webkit-backdrop-filter: blur(2px) !important;
+  z-index: 2900 !important;
   opacity: 0;
   pointer-events: none;
-  transition: opacity 0.3s ease;
+  transition: opacity 0.25s ease;
 }
 
 .sidebar-backdrop.active {
@@ -1747,7 +1758,7 @@ select option:checked {
     display: flex;
   }
 
-  /* Gaveta Lateral no Celular (Menu deslizante) */
+  /* Gaveta Lateral no Celular (Menu deslizante com fundo 100% sólido e nítido) */
   .sidebar {
     position: fixed !important;
     top: 0 !important;
@@ -1757,17 +1768,87 @@ select option:checked {
     max-width: 85vw !important;
     height: 100vh !important;
     height: 100dvh !important;
-    z-index: 2200 !important;
+    z-index: 3000 !important;
+    background: #0f172a !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    border-right: 1px solid rgba(255, 255, 255, 0.12) !important;
+    box-shadow: 10px 0 50px rgba(0, 0, 0, 0.95) !important;
     -webkit-transform: translateX(-100%) !important;
     transform: translateX(-100%) !important;
-    box-shadow: 4px 0 35px rgba(0, 0, 0, 0.9) !important;
     transition: -webkit-transform 0.28s cubic-bezier(0.16, 1, 0.3, 1), transform 0.28s cubic-bezier(0.16, 1, 0.3, 1) !important;
     display: flex !important;
+    flex-direction: column !important;
   }
 
   .sidebar.open {
     -webkit-transform: translateX(0) !important;
     transform: translateX(0) !important;
+  }
+
+  /* Oculta a barra de rodapé do app enquanto o menu estiver aberto */
+  body.sidebar-open .mobile-bottom-nav,
+  body.sidebar-open .bottom-nav-fab {
+    display: none !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
+  }
+
+  /* Cabeçalho do menu lateral no celular */
+  .sidebar-header {
+    background: #0b1120 !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+    padding: calc(14px + env(safe-area-inset-top, 10px)) 18px 14px 18px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+  }
+
+  /* Itens do menu lateral no celular */
+  .nav-menu {
+    background: #0f172a !important;
+    padding: 16px 12px calc(24px + env(safe-area-inset-bottom, 16px)) 12px !important;
+    gap: 8px !important;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+  }
+
+  .nav-section-title {
+    color: #38bdf8 !important;
+    font-size: 0.74rem !important;
+    font-weight: 800 !important;
+    letter-spacing: 0.08em !important;
+    padding: 14px 12px 6px 12px !important;
+    text-transform: uppercase !important;
+  }
+
+  .nav-item button {
+    width: 100% !important;
+    padding: 12px 14px !important;
+    font-size: 0.92rem !important;
+    font-weight: 600 !important;
+    color: #f1f5f9 !important;
+    background: rgba(255, 255, 255, 0.03) !important;
+    border: 1px solid rgba(255, 255, 255, 0.06) !important;
+    border-radius: 10px !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 12px !important;
+  }
+
+  .nav-item button:active,
+  .nav-item button.active {
+    background: rgba(0, 168, 243, 0.18) !important;
+    color: #38bdf8 !important;
+    border-color: rgba(0, 168, 243, 0.45) !important;
+    font-weight: 700 !important;
+  }
+
+  .nav-item button .nav-icon {
+    width: 20px !important;
+    height: 20px !important;
+    color: #38bdf8 !important;
+    flex-shrink: 0 !important;
   }
 
   /* Topbar descolado do teto (Notch / Dynamic Island / Status Bar do iPhone) */

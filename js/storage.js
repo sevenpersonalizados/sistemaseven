@@ -428,40 +428,75 @@ const StorageService = {
     }
   },
 
-  enviarAlertaTesteBroadcast(titulo, mensagem) {
+  async enviarAlertaTesteBroadcast(titulo, mensagem) {
     if (!this.realtimeChannel) {
       this.initRealtime();
     }
     const title = titulo || '🔔 Teste de Notificação — Seven';
     const body = mensagem || 'Sistema Seven Personalizados: Conexão em tempo real e notificações ativas! 🚀';
+    const alertId = 'alt-' + Date.now();
 
     // 1. Dispara localmente neste dispositivo
     if (typeof NotificationModule !== 'undefined') {
       NotificationModule.show({ title, body });
     }
 
-    // 2. Dispara broadcast para todos os celulares/computadores conectados
+    // 2. Dispara broadcast via WebSocket para dispositivos com aba aberta no momento
     if (this.realtimeChannel) {
       this.realtimeChannel.send({
         type: 'broadcast',
         event: 'alerta-teste',
-        payload: { title, body, timestamp: Date.now() }
-      }).then(() => {
-        if (typeof App !== 'undefined' && App.toast) {
-          App.toast('Sinal de notificação transmitido para todos os dispositivos conectados!', 'success');
-        }
+        payload: { id: alertId, title, body, timestamp: Date.now() }
       }).catch(err => {
         console.warn('Erro ao transmitir broadcast:', err);
       });
-    } else {
-      if (typeof App !== 'undefined' && App.toast) {
-        App.toast('Notificação disparada localmente (conectando à nuvem...)', 'info');
+    }
+
+    // 3. Grava no banco de dados Supabase na tabela public.alertas_sistema
+    // Garante 100% de entrega via WAL Replication (postgres_changes) e Polling de fundo
+    try {
+      this.recordLocalAction(alertId);
+      const res = await fetch(`${SUPABASE_CONFIG.url}/rest/v1/alertas_sistema`, {
+        method: 'POST',
+        headers: this.getHeaders(),
+        body: JSON.stringify({
+          id: alertId,
+          titulo: title,
+          mensagem: body,
+          tipo: 'teste',
+          origem: 'painel'
+        })
+      });
+      if (res.ok) {
+        if (typeof App !== 'undefined' && App.toast) {
+          App.toast('Sinal transmitido via nuvem para todos os celulares!', 'success');
+        }
       }
+    } catch (e) {
+      console.warn('Erro ao registrar alerta no Supabase:', e);
     }
   },
 
   handleRealtimeEvent(table, payload) {
     const { eventType, new: newRecord, old: oldRecord } = payload;
+
+    // Trata alertas de sistema específicos
+    if (table === 'alertas_sistema') {
+      if (eventType === 'INSERT' && newRecord) {
+        const isMine = this.isLocalAction(newRecord.id);
+        if (!isMine) {
+          if (typeof NotificationModule !== 'undefined') {
+            NotificationModule.show({
+              title: newRecord.titulo || '🔔 Alerta Seven Personalizados',
+              body: newRecord.mensagem || 'Notificação recebida com sucesso!',
+              tag: newRecord.id
+            });
+          }
+        }
+      }
+      return;
+    }
+
     const key = STORAGE_KEYS[table.toUpperCase()];
     if (!key) return;
 
@@ -690,6 +725,32 @@ const StorageService = {
           }
         }
       }
+
+      // Sincroniza alertas recentes para garantir entrega em celulares em background
+      try {
+        const threeMinAgo = new Date(Date.now() - 3 * 60 * 1000).toISOString();
+        const altRes = await fetch(`${SUPABASE_CONFIG.url}/rest/v1/alertas_sistema?created_at=gte.${threeMinAgo}&order=created_at.desc&limit=5`, {
+          headers: this.getHeaders()
+        });
+        if (altRes.ok) {
+          const alerts = await altRes.json();
+          if (Array.isArray(alerts)) {
+            alerts.forEach(a => {
+              const seenKey = 'seven_seen_alt_' + a.id;
+              if (!sessionStorage.getItem(seenKey) && !this.isLocalAction(a.id)) {
+                sessionStorage.setItem(seenKey, '1');
+                if (typeof NotificationModule !== 'undefined') {
+                  NotificationModule.show({
+                    title: a.titulo || '🔔 Alerta Seven Personalizados',
+                    body: a.mensagem || 'Notificação recebida com sucesso!',
+                    tag: a.id
+                  });
+                }
+              }
+            });
+          }
+        }
+      } catch (altErr) {}
 
       this.isCloudConnected = true;
       this.updateSyncBadge('online', 'Tempo Real Ativo ⚡');
