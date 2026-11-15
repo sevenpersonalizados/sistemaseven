@@ -20,23 +20,30 @@ const EstoqueModule = {
     if (!tbody) return;
 
     if (itens.length === 0) {
-      tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; padding: 36px; color: var(--text-muted);"><div style="font-size: 1.5rem; margin-bottom: 8px;">🧱</div>Nenhum item em estoque cadastrado no momento.</td></tr>`;
+      tbody.innerHTML = `<tr><td colspan="8" style="text-align: center; padding: 36px; color: var(--text-muted);"><div style="font-size: 1.5rem; margin-bottom: 8px;">🧱</div>Nenhum item em estoque cadastrado no momento.</td></tr>`;
       return;
     }
 
     tbody.innerHTML = itens.map(item => {
       const isBaixo = Number(item.quantidade_atual) <= Number(item.estoque_minimo);
-      const margem = (Number(item.preco_venda) || 0) - (Number(item.custo_unitario) || 0);
       const cat = item.categoria || '3D';
       const catBadge = (typeof EncomendasModule !== 'undefined' && EncomendasModule.getCategoriaBadge)
         ? EncomendasModule.getCategoriaBadge(cat)
         : `<span class="badge-cat-pill badge-cat-custom">${App.escapeHtml(cat)}</span>`;
+
+      const dataCompraFormatada = item.data_ultima_compra ? App.formatDate(item.data_ultima_compra) : '—';
+      const corBadge = item.cor
+        ? `<span class="badge-cor-tag" style="display: inline-flex; align-items: center; gap: 4px;">🎨 ${App.escapeHtml(item.cor)}</span>`
+        : `<span style="color: var(--text-muted); font-size: 0.82rem;">—</span>`;
 
       return `
         <tr>
           <td>
             <div style="font-weight: 600; color: var(--text-primary); margin-bottom: 4px;">${App.escapeHtml(item.nome)}</div>
             <div>${catBadge}</div>
+          </td>
+          <td>
+            ${corBadge}
           </td>
           <td>
             <span style="font-size: 0.95rem; font-weight: 700; color: ${isBaixo ? 'var(--danger)' : 'var(--text-primary)'};">
@@ -48,11 +55,10 @@ const EstoqueModule = {
             <span style="color: var(--text-muted); font-size: 0.85rem;">Mín: ${item.estoque_minimo} ${item.unidade}</span>
           </td>
           <td>
-            ${App.formatMoney(item.custo_unitario)}
+            <strong>${App.formatMoney(item.custo_unitario)}</strong>
           </td>
           <td>
-            <strong>${App.formatMoney(item.preco_venda)}</strong>
-            <div style="font-size: 0.74rem; color: var(--success);">Margem: ${App.formatMoney(margem)}</div>
+            <span style="font-size: 0.85rem; color: var(--text-secondary);">📅 ${dataCompraFormatada}</span>
           </td>
           <td>
             <span class="status-badge ${item.ativo ? 'badge-pago' : 'badge-fila'}">${item.ativo ? 'Ativo' : 'Inativo'}</span>
@@ -80,11 +86,20 @@ const EstoqueModule = {
       catSelect.value = cats[0] || '3D';
     }
 
+    // Popula cores cadastradas dinamicamente
+    const corSelect = document.getElementById('est-form-cor');
+    if (corSelect) {
+      const cores = StorageService.getCoresDisponiveis();
+      corSelect.innerHTML = `<option value="">(Sem cor / Padrão)</option>` + 
+        cores.map(c => `<option value="${App.escapeHtml(c)}">${App.escapeHtml(c)}</option>`).join('');
+      corSelect.value = '';
+    }
+
     document.getElementById('est-form-unidade').value = 'un';
     document.getElementById('est-form-qtd').value = '0';
     document.getElementById('est-form-minimo').value = '5';
     document.getElementById('est-form-custo').value = '0';
-    document.getElementById('est-form-venda').value = '0';
+    document.getElementById('est-form-data-compra').value = new Date().toISOString().split('T')[0];
     document.getElementById('est-form-ativo').checked = true;
     document.getElementById('est-btn-delete').style.display = 'none';
 
@@ -107,11 +122,20 @@ const EstoqueModule = {
       catSelect.value = item.categoria || cats[0] || '3D';
     }
 
+    // Popula cores cadastradas dinamicamente
+    const corSelect = document.getElementById('est-form-cor');
+    if (corSelect) {
+      const cores = StorageService.getCoresDisponiveis();
+      corSelect.innerHTML = `<option value="">(Sem cor / Padrão)</option>` + 
+        cores.map(c => `<option value="${App.escapeHtml(c)}">${App.escapeHtml(c)}</option>`).join('');
+      corSelect.value = item.cor || '';
+    }
+
     document.getElementById('est-form-unidade').value = item.unidade || 'un';
     document.getElementById('est-form-qtd').value = item.quantidade_atual || 0;
     document.getElementById('est-form-minimo').value = item.estoque_minimo || 0;
     document.getElementById('est-form-custo').value = item.custo_unitario || 0;
-    document.getElementById('est-form-venda').value = item.preco_venda || 0;
+    document.getElementById('est-form-data-compra').value = item.data_ultima_compra || '';
     document.getElementById('est-form-ativo').checked = item.ativo !== false;
     document.getElementById('est-btn-delete').style.display = 'inline-block';
 
@@ -122,11 +146,12 @@ const EstoqueModule = {
     const id = document.getElementById('est-form-id').value;
     const nome = document.getElementById('est-form-nome').value.trim();
     const categoria = document.getElementById('est-form-categoria').value;
+    const cor = document.getElementById('est-form-cor')?.value || '';
     const unidade = document.getElementById('est-form-unidade').value;
     const qtd = parseFloat(document.getElementById('est-form-qtd').value) || 0;
     const minimo = parseFloat(document.getElementById('est-form-minimo').value) || 0;
     const custo = parseFloat(document.getElementById('est-form-custo').value) || 0;
-    const venda = parseFloat(document.getElementById('est-form-venda').value) || 0;
+    const dataCompra = document.getElementById('est-form-data-compra')?.value || '';
     const ativo = document.getElementById('est-form-ativo').checked;
 
     if (!nome) {
@@ -137,17 +162,18 @@ const EstoqueModule = {
     const payload = {
       nome,
       categoria,
+      cor,
       unidade,
       quantidade_atual: qtd,
       estoque_minimo: minimo,
       custo_unitario: custo,
-      preco_venda: venda,
+      data_ultima_compra: dataCompra,
       ativo
     };
 
     if (id) {
       StorageService.update('estoque', id, payload);
-      App.toast('Insumo atualizado!', 'success');
+      App.toast('Item de estoque atualizado!', 'success');
     } else {
       StorageService.insert('estoque', payload);
       App.toast('Material adicionado ao estoque!', 'success');

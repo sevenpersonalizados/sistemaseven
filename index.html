@@ -451,10 +451,11 @@
                 <thead>
                   <tr>
                     <th>Insumo / Material</th>
+                    <th>Cor</th>
                     <th>Estoque Atual</th>
                     <th>Estoque Mínimo</th>
                     <th>Custo Unitário</th>
-                    <th>Preço Sugerido</th>
+                    <th>Data Última Compra</th>
                     <th>Status</th>
                     <th style="text-align: right;">Ações</th>
                   </tr>
@@ -1078,6 +1079,15 @@
             <select id="est-form-categoria" class="form-control"></select>
           </div>
           <div class="form-group">
+            <label>Cor do Produto / Insumo</label>
+            <select id="est-form-cor" class="form-control">
+              <option value="">(Sem cor / Padrão)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
             <label>Unidade de Medida</label>
             <select id="est-form-unidade" class="form-control">
               <option value="un">Unidade (un)</option>
@@ -1087,28 +1097,26 @@
               <option value="fl">Folha (fl)</option>
             </select>
           </div>
-        </div>
-
-        <div class="form-row">
           <div class="form-group">
             <label>Quantidade Atual</label>
             <input type="number" step="0.1" id="est-form-qtd" class="form-control">
           </div>
-          <div class="form-group">
-            <label>Estoque Mínimo de Alerta</label>
-            <input type="number" step="0.1" id="est-form-minimo" class="form-control">
-          </div>
         </div>
 
         <div class="form-row">
           <div class="form-group">
-            <label>Custo Unitário (R$)</label>
-            <input type="number" step="0.01" id="est-form-custo" class="form-control">
+            <label>Estoque Mínimo de Alerta</label>
+            <input type="number" step="0.1" id="est-form-minimo" class="form-control">
           </div>
           <div class="form-group">
-            <label>Preço Sugerido de Venda (R$)</label>
-            <input type="number" step="0.01" id="est-form-venda" class="form-control">
+            <label>Custo Unitário de Compra (R$)</label>
+            <input type="number" step="0.01" id="est-form-custo" class="form-control" placeholder="0,00">
           </div>
+        </div>
+
+        <div class="form-group">
+          <label>Data da Última Compra</label>
+          <input type="date" id="est-form-data-compra" class="form-control">
         </div>
 
         <div class="form-group" style="display: flex; align-items: center; gap: 8px;">
