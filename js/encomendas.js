@@ -20,7 +20,17 @@ const EncomendasModule = {
   render() {
     const encomendas = StorageService.get('encomendas');
     const filtroStatus = document.getElementById('filtro-enc-status')?.value || '';
+    const filtroCat = document.getElementById('filtro-enc-categoria')?.value || '';
     const filtroPagto = document.getElementById('filtro-enc-pagto')?.value || '';
+
+    // Atualiza opções do filtro de categoria caso ainda não preenchido
+    const filtroCatEl = document.getElementById('filtro-enc-categoria');
+    if (filtroCatEl && filtroCatEl.options.length <= 1) {
+      const cats = StorageService.getCategoriasProducao();
+      const valAtual = filtroCatEl.value;
+      filtroCatEl.innerHTML = `<option value="">Todas as Categorias</option>` +
+        cats.map(c => `<option value="${App.escapeHtml(c)}" ${c === valAtual ? 'selected' : ''}>${App.escapeHtml(c)}</option>`).join('');
+    }
 
     const container = document.getElementById('encomendas-grupos-container');
     if (!container) return;
@@ -142,6 +152,10 @@ const EncomendasModule = {
         ordensGrupo = ordensGrupo.filter(e => e.pagamento_status === filtroPagto);
       }
 
+      if (filtroCat) {
+        ordensGrupo = ordensGrupo.filter(e => (e.categoria || '3D') === filtroCat);
+      }
+
       totalGeralEncontrado += ordensGrupo.length;
       const totalValor = ordensGrupo.reduce((acc, it) => acc + (Number(it.valor_total) || 0), 0);
 
@@ -218,6 +232,27 @@ const EncomendasModule = {
     container.innerHTML = htmlGrupos;
   },
 
+  getCategoriaBadge(categoria) {
+    const cat = (categoria || '3D').trim();
+    let icon = '🏷️';
+    let cls = 'badge-cat-custom';
+    const catLower = cat.toLowerCase();
+    if (cat === '3D' || catLower === '3d') {
+      icon = '🧵';
+      cls = 'badge-cat-3d';
+    } else if (catLower.includes('gravação') && !catLower.includes('corte')) {
+      icon = '⚡';
+      cls = 'badge-cat-gravacao';
+    } else if (catLower.includes('corte') && !catLower.includes('gravação')) {
+      icon = '✂️';
+      cls = 'badge-cat-corte';
+    } else if (catLower.includes('corte') && catLower.includes('gravação')) {
+      icon = '🔥';
+      cls = 'badge-cat-corte-gravacao';
+    }
+    return `<span class="badge-cat-pill ${cls}">${icon} ${App.escapeHtml(cat)}</span>`;
+  },
+
   renderOrderRow(enc) {
     const statusClass = this.getStatusClass(enc.status);
     const pagtoClass = this.getPagtoClass(enc.pagamento_status);
@@ -227,7 +262,10 @@ const EncomendasModule = {
     return `
       <tr class="dash-row-clickable" onclick="EncomendasModule.openEditModal('${enc.id}')" title="Clique para abrir detalhes da encomenda #${enc.id.substring(enc.id.length - 5)}">
         <td>
-          <strong>#${enc.id.substring(enc.id.length - 5)}</strong>
+          <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 4px; flex-wrap: wrap;">
+            <strong>#${enc.id.substring(enc.id.length - 5)}</strong>
+            ${this.getCategoriaBadge(enc.categoria)}
+          </div>
           <div style="font-size: 0.76rem; color: var(--text-muted);">${App.formatDate(enc.data_pedido)}</div>
         </td>
         <td>
@@ -365,6 +403,15 @@ const EncomendasModule = {
     document.getElementById('enc-form-id').value = '';
     document.getElementById('enc-form-cliente').value = lead?.lead_name || '';
     document.getElementById('enc-form-telefone').value = lead?.phone || '';
+
+    // Popula categorias cadastradas dinamicamente
+    const catSelect = document.getElementById('enc-form-categoria');
+    if (catSelect) {
+      const cats = StorageService.getCategoriasProducao();
+      catSelect.innerHTML = cats.map(c => `<option value="${App.escapeHtml(c)}">${App.escapeHtml(c)}</option>`).join('');
+      catSelect.value = cats[0] || '3D';
+    }
+
     document.getElementById('enc-form-data-pedido').value = new Date().toISOString().split('T')[0];
     
     // Sugere entrega para 5 dias úteis à frente
@@ -401,6 +448,15 @@ const EncomendasModule = {
     document.getElementById('enc-form-id').value = enc.id;
     document.getElementById('enc-form-cliente').value = enc.cliente_nome || '';
     document.getElementById('enc-form-telefone').value = enc.telefone || '';
+
+    // Popula categorias cadastradas dinamicamente
+    const catSelect = document.getElementById('enc-form-categoria');
+    if (catSelect) {
+      const cats = StorageService.getCategoriasProducao();
+      catSelect.innerHTML = cats.map(c => `<option value="${App.escapeHtml(c)}">${App.escapeHtml(c)}</option>`).join('');
+      catSelect.value = enc.categoria || cats[0] || '3D';
+    }
+
     document.getElementById('enc-form-data-pedido').value = enc.data_pedido || '';
     document.getElementById('enc-form-data-entrega').value = enc.data_entrega_prevista || '';
     document.getElementById('enc-form-status').value = enc.status || 'Fila';
@@ -493,6 +549,7 @@ const EncomendasModule = {
   save() {
     const id = document.getElementById('enc-form-id').value;
     const cliente = document.getElementById('enc-form-cliente').value.trim();
+    const categoria = document.getElementById('enc-form-categoria')?.value || '3D';
     const telefone = document.getElementById('enc-form-telefone').value.trim();
     const dataPedido = document.getElementById('enc-form-data-pedido').value;
     const dataEntrega = document.getElementById('enc-form-data-entrega').value;
@@ -511,6 +568,7 @@ const EncomendasModule = {
 
     const payload = {
       cliente_nome: cliente,
+      categoria: categoria,
       telefone: telefone,
       data_pedido: dataPedido,
       data_entrega_prevista: dataEntrega,

@@ -27,12 +27,16 @@ const EstoqueModule = {
     tbody.innerHTML = itens.map(item => {
       const isBaixo = Number(item.quantidade_atual) <= Number(item.estoque_minimo);
       const margem = (Number(item.preco_venda) || 0) - (Number(item.custo_unitario) || 0);
+      const cat = item.categoria || '3D';
+      const catBadge = (typeof EncomendasModule !== 'undefined' && EncomendasModule.getCategoriaBadge)
+        ? EncomendasModule.getCategoriaBadge(cat)
+        : `<span class="badge-cat-pill badge-cat-custom">${App.escapeHtml(cat)}</span>`;
 
       return `
         <tr>
           <td>
-            <div style="font-weight: 600; color: var(--text-primary);">${App.escapeHtml(item.nome)}</div>
-            <div style="font-size: 0.76rem; color: var(--text-muted);">${item.categoria}</div>
+            <div style="font-weight: 600; color: var(--text-primary); margin-bottom: 4px;">${App.escapeHtml(item.nome)}</div>
+            <div>${catBadge}</div>
           </td>
           <td>
             <span style="font-size: 0.95rem; font-weight: 700; color: ${isBaixo ? 'var(--danger)' : 'var(--text-primary)'};">
@@ -67,7 +71,15 @@ const EstoqueModule = {
     document.getElementById('est-modal-title').textContent = 'Novo Insumo ou Produto';
     document.getElementById('est-form-id').value = '';
     document.getElementById('est-form-nome').value = '';
-    document.getElementById('est-form-categoria').value = 'Impressão 3D';
+
+    // Popula categorias cadastradas dinamicamente
+    const catSelect = document.getElementById('est-form-categoria');
+    if (catSelect) {
+      const cats = StorageService.getCategoriasProducao();
+      catSelect.innerHTML = cats.map(c => `<option value="${App.escapeHtml(c)}">${App.escapeHtml(c)}</option>`).join('');
+      catSelect.value = cats[0] || '3D';
+    }
+
     document.getElementById('est-form-unidade').value = 'un';
     document.getElementById('est-form-qtd').value = '0';
     document.getElementById('est-form-minimo').value = '5';
@@ -86,7 +98,15 @@ const EstoqueModule = {
     document.getElementById('est-modal-title').textContent = 'Editar Item de Estoque';
     document.getElementById('est-form-id').value = item.id;
     document.getElementById('est-form-nome').value = item.nome || '';
-    document.getElementById('est-form-categoria').value = item.categoria || 'Outro';
+
+    // Popula categorias cadastradas dinamicamente
+    const catSelect = document.getElementById('est-form-categoria');
+    if (catSelect) {
+      const cats = StorageService.getCategoriasProducao();
+      catSelect.innerHTML = cats.map(c => `<option value="${App.escapeHtml(c)}">${App.escapeHtml(c)}</option>`).join('');
+      catSelect.value = item.categoria || cats[0] || '3D';
+    }
+
     document.getElementById('est-form-unidade').value = item.unidade || 'un';
     document.getElementById('est-form-qtd').value = item.quantidade_atual || 0;
     document.getElementById('est-form-minimo').value = item.estoque_minimo || 0;

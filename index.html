@@ -278,6 +278,10 @@
                 <option value="Cancelada">❌ Cancelada</option>
               </select>
 
+              <select class="form-control" id="filtro-enc-categoria" style="width: auto;" onchange="EncomendasModule.render()">
+                <option value="">Todas as Categorias</option>
+              </select>
+
               <select class="form-control" id="filtro-enc-pagto" style="width: auto;">
                 <option value="">Todos os Pagamentos</option>
                 <option value="Pendente">Pendente</option>
@@ -504,68 +508,7 @@
 
         <!-- 7. VIEW CONFIGURAÇÕES -->
         <section class="view-section" id="view-configuracoes">
-          <div class="themed-panel theme-indigo" style="max-width: 800px;">
-            <div class="themed-header">
-              <div style="display: flex; align-items: center; gap: 14px; flex-wrap: wrap;">
-                <span class="themed-icon-box">⚙️</span>
-                <div>
-                  <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
-                    <h3 class="themed-title">Identidade & Dados da Seven Personalizados</h3>
-                    <span style="font-size: 0.72rem; font-weight: 700; text-transform: uppercase; padding: 3px 10px; border-radius: 999px; background: rgba(99, 102, 241, 0.22); color: #a5b4fc; border: 1px solid rgba(99, 102, 241, 0.55);">
-                      SISTEMA & PIX
-                    </span>
-                  </div>
-                  <div class="themed-subtitle">
-                    Configure os dados da sua empresa, chave PIX para cobrança e mensagens automáticas
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div style="padding: 24px;">
-              <form onsubmit="event.preventDefault(); App.saveConfigForm();">
-              <div class="form-row">
-                <div class="form-group">
-                  <label>Nome da Empresa</label>
-                  <input type="text" id="cfg-empresa" class="form-control" required>
-                </div>
-                <div class="form-group">
-                  <label>Slogan ou Especialidade</label>
-                  <input type="text" id="cfg-slogan" class="form-control">
-                </div>
-              </div>
-
-              <div class="form-row">
-                <div class="form-group">
-                  <label>Telefone Principal</label>
-                  <input type="text" id="cfg-telefone" class="form-control">
-                </div>
-                <div class="form-group">
-                  <label>WhatsApp (apenas números com DDD)</label>
-                  <input type="text" id="cfg-whatsapp" class="form-control" placeholder="5511999999999">
-                </div>
-              </div>
-
-              <div class="form-row">
-                <div class="form-group">
-                  <label>E-mail Comercial</label>
-                  <input type="email" id="cfg-email" class="form-control">
-                </div>
-                <div class="form-group">
-                  <label>Chave Pix para Propostas & Pedidos</label>
-                  <input type="text" id="cfg-pix" class="form-control">
-                </div>
-              </div>
-
-              <div class="form-group">
-                <label>Endereço / Cidade do Estúdio</label>
-                <input type="text" id="cfg-endereco" class="form-control">
-              </div>
-
-              <div style="margin-top: 24px;">
-                <button type="submit" class="btn btn-primary">Salvar Configurações</button>
-              </div>
-            </form>
-          </div>
+          <div id="configuracoesContainer"></div>
         </section>
 
         <!-- VIEW: CALCULADORA DE FILAMENTOS & CUSTOS 3D -->
@@ -891,6 +834,10 @@
 
         <div class="form-row">
           <div class="form-group">
+            <label>Categoria de Produção *</label>
+            <select id="enc-form-categoria" class="form-control" required></select>
+          </div>
+          <div class="form-group">
             <label>Data do Pedido</label>
             <input type="date" id="enc-form-data-pedido" class="form-control">
           </div>
@@ -992,15 +939,8 @@
 
         <div class="form-row">
           <div class="form-group">
-            <label>Categoria</label>
-            <select id="est-form-categoria" class="form-control">
-              <option value="Impressão 3D">Impressão 3D</option>
-              <option value="Corte a Laser">Corte a Laser</option>
-              <option value="Brindes">Brindes & Copos</option>
-              <option value="Embalagem">Embalagem</option>
-              <option value="Papelaria / Transfer">Papelaria / Transfer</option>
-              <option value="Outro">Outro</option>
-            </select>
+            <label>Categoria *</label>
+            <select id="est-form-categoria" class="form-control"></select>
           </div>
           <div class="form-group">
             <label>Unidade de Medida</label>
@@ -1410,6 +1350,7 @@
   <script src="js/financeiro.js"></script>
   <script src="js/propostas.js"></script>
   <script src="js/calculadora.js"></script>
+  <script src="js/configuracoes.js"></script>
   <script src="js/app.js"></script>
 </body>
 </html>

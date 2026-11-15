@@ -22,6 +22,9 @@ const App = {
     if (typeof CalculadoraModule !== 'undefined') {
       CalculadoraModule.init();
     }
+    if (typeof ConfiguracoesModule !== 'undefined') {
+      ConfiguracoesModule.init();
+    }
     this.loadConfigView();
 
     window.addEventListener('seven_data_updated', () => {
@@ -114,6 +117,10 @@ const App = {
         CalculadoraModule.carregarParametrosConfig();
         CalculadoraModule.calcular();
         CalculadoraModule.renderHistorico();
+      }
+    } else if (viewName === 'configuracoes') {
+      if (typeof ConfiguracoesModule !== 'undefined') {
+        ConfiguracoesModule.render();
       }
     }
   },
@@ -410,6 +417,10 @@ const App = {
 
   // Configurações
   loadConfigView() {
+    if (typeof ConfiguracoesModule !== 'undefined') {
+      ConfiguracoesModule.render();
+      return;
+    }
     const config = StorageService.getConfig();
     const setVal = (id, val) => {
       const el = document.getElementById(id);

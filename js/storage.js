@@ -31,7 +31,10 @@ const INITIAL_DATA = {
     whatsapp: '5511987654321',
     email: 'contato@sevenpersonalizados.com.br',
     chavePix: 'contato@sevenpersonalizados.com.br',
-    endereco: 'Rua das Indústrias Criativas, 77 — SP'
+    endereco: 'Rua das Indústrias Criativas, 77 — SP',
+    categorias_producao: ['3D', 'Gravação laser', 'Corte laser', 'Corte e Gravação'],
+    categorias_despesa: ['Matéria-Prima', 'Manutenção', 'Custos Fixos', 'Marketing', 'Outros'],
+    formas_pagamento: ['Pix', 'Cartão de Crédito', 'Cartão de Débito', 'Boleto', 'Dinheiro']
   },
   crm_cards: [
     {
@@ -719,10 +722,106 @@ const StorageService = {
   getConfig() {
     try {
       const data = localStorage.getItem(STORAGE_KEYS.CONFIG);
-      return data ? JSON.parse(data) : INITIAL_DATA.config;
+      const parsed = data ? JSON.parse(data) : {};
+      return {
+        ...INITIAL_DATA.config,
+        ...parsed,
+        categorias_producao: Array.isArray(parsed.categorias_producao) && parsed.categorias_producao.length > 0
+          ? parsed.categorias_producao
+          : INITIAL_DATA.config.categorias_producao,
+        categorias_despesa: Array.isArray(parsed.categorias_despesa) && parsed.categorias_despesa.length > 0
+          ? parsed.categorias_despesa
+          : INITIAL_DATA.config.categorias_despesa,
+        formas_pagamento: Array.isArray(parsed.formas_pagamento) && parsed.formas_pagamento.length > 0
+          ? parsed.formas_pagamento
+          : INITIAL_DATA.config.formas_pagamento
+      };
     } catch {
       return INITIAL_DATA.config;
     }
+  },
+
+  getCategoriasProducao() {
+    return this.getConfig().categorias_producao || ['3D', 'Gravação laser', 'Corte laser', 'Corte e Gravação'];
+  },
+
+  addCategoriaProducao(nome) {
+    const val = (nome || '').trim();
+    if (!val) return;
+    const cfg = this.getConfig();
+    const lista = [...(cfg.categorias_producao || [])];
+    if (!lista.some(c => c.toLowerCase() === val.toLowerCase())) {
+      lista.push(val);
+      this.saveConfig({ ...cfg, categorias_producao: lista });
+    }
+  },
+
+  editCategoriaProducao(index, novoNome) {
+    const val = (novoNome || '').trim();
+    if (!val) return;
+    const cfg = this.getConfig();
+    const lista = [...(cfg.categorias_producao || [])];
+    if (lista[index] !== undefined) {
+      lista[index] = val;
+      this.saveConfig({ ...cfg, categorias_producao: lista });
+    }
+  },
+
+  removeCategoriaProducao(index) {
+    const cfg = this.getConfig();
+    const lista = [...(cfg.categorias_producao || [])];
+    if (lista.length <= 1) {
+      alert('É necessário manter pelo menos uma categoria no sistema.');
+      return;
+    }
+    lista.splice(index, 1);
+    this.saveConfig({ ...cfg, categorias_producao: lista });
+  },
+
+  getCategoriasDespesa() {
+    return this.getConfig().categorias_despesa || ['Matéria-Prima', 'Manutenção', 'Custos Fixos', 'Marketing', 'Outros'];
+  },
+
+  addCategoriaDespesa(nome) {
+    const val = (nome || '').trim();
+    if (!val) return;
+    const cfg = this.getConfig();
+    const lista = [...(cfg.categorias_despesa || [])];
+    if (!lista.some(c => c.toLowerCase() === val.toLowerCase())) {
+      lista.push(val);
+      this.saveConfig({ ...cfg, categorias_despesa: lista });
+    }
+  },
+
+  removeCategoriaDespesa(index) {
+    const cfg = this.getConfig();
+    const lista = [...(cfg.categorias_despesa || [])];
+    if (lista.length <= 1) return;
+    lista.splice(index, 1);
+    this.saveConfig({ ...cfg, categorias_despesa: lista });
+  },
+
+  getFormasPagamento() {
+    return this.getConfig().formas_pagamento || ['Pix', 'Cartão de Crédito', 'Cartão de Débito', 'Boleto', 'Dinheiro'];
+  },
+
+  addFormaPagamento(nome) {
+    const val = (nome || '').trim();
+    if (!val) return;
+    const cfg = this.getConfig();
+    const lista = [...(cfg.formas_pagamento || [])];
+    if (!lista.some(c => c.toLowerCase() === val.toLowerCase())) {
+      lista.push(val);
+      this.saveConfig({ ...cfg, formas_pagamento: lista });
+    }
+  },
+
+  removeFormaPagamento(index) {
+    const cfg = this.getConfig();
+    const lista = [...(cfg.formas_pagamento || [])];
+    if (lista.length <= 1) return;
+    lista.splice(index, 1);
+    this.saveConfig({ ...cfg, formas_pagamento: lista });
   },
 
   saveConfig(newConfig) {

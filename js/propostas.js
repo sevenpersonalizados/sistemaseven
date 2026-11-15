@@ -350,6 +350,7 @@ const PropostasModule = {
 
     const novaEncomenda = {
       cliente_nome: p.cliente,
+      categoria: p.categoria || 'Corte e Gravação',
       telefone: p.telefone || p.contato || '',
       data_pedido: new Date().toISOString().split('T')[0],
       data_entrega_prevista: dataEntregaDefault,
