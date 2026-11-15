@@ -148,7 +148,7 @@ const EncomendasModule = {
       ordensGrupo.sort((a, b) => ((a.data_entrega_prevista || '') > (b.data_entrega_prevista || '') ? 1 : -1));
 
       return `
-        <div class="panel-box" style="margin-bottom: 28px; padding: 0; overflow: hidden; border: 1px solid ${grupo.borderColor}; border-left: 6px solid ${grupo.themeColor}; box-shadow: ${grupo.glowShadow}; border-radius: var(--radius-md);">
+        <div class="panel-box" id="grupo-enc-${grupo.key}" style="margin-bottom: 28px; padding: 0; overflow: hidden; border: 1px solid ${grupo.borderColor}; border-left: 6px solid ${grupo.themeColor}; box-shadow: ${grupo.glowShadow}; border-radius: var(--radius-md);">
           <div class="panel-header" style="background: ${grupo.headerBg}; padding: 16px 22px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid ${grupo.borderColor}; flex-wrap: wrap; gap: 14px;">
             <div style="display: flex; align-items: center; gap: 14px; flex-wrap: wrap;">
               <span style="display: inline-flex; align-items: center; justify-content: center; width: 42px; height: 42px; border-radius: 12px; background: rgba(0, 0, 0, 0.4); border: 1px solid ${grupo.borderColor}; font-size: 1.3rem; box-shadow: 0 2px 8px rgba(0,0,0,0.3);">

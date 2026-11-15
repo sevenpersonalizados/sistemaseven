@@ -461,7 +461,7 @@
 
         <!-- 6. VIEW PROPOSTAS / ORÇAMENTOS -->
         <section class="view-section" id="view-propostas">
-          <div class="themed-panel theme-purple" style="margin-bottom: 24px;">
+          <div class="themed-panel theme-purple" style="margin-bottom: 20px;">
             <div class="themed-header">
               <div style="display: flex; align-items: center; gap: 14px; flex-wrap: wrap;">
                 <span class="themed-icon-box">📄</span>
@@ -473,18 +473,39 @@
                     </span>
                   </div>
                   <div class="themed-subtitle">
-                    Crie orçamentos detalhados com itens e aprove diretamente para Encomendas
+                    Cadastre e gerencie orçamentos. Eles permanecem aqui até serem aprovados e movidos para a Fila de Espera!
                   </div>
                 </div>
               </div>
               <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
                 <span class="themed-chip">
-                  📑 <strong id="propostas-total-qtd" style="color: #ffffff;">0</strong> orçamentos
+                  ⏳ Pendentes: <strong id="propostas-pendentes-qtd" style="color: #fbbf24;">0</strong>
+                </span>
+                <span class="themed-chip">
+                  ✅ Aprovados: <strong id="propostas-aprovadas-qtd" style="color: #34d399;">0</strong>
                 </span>
                 <button class="btn btn-primary" onclick="PropostasModule.openNewModal()">
                   <span>+</span> Novo Orçamento
                 </button>
               </div>
+            </div>
+          </div>
+
+          <!-- BARRA DE FILTROS POR ABA E BUSCA -->
+          <div class="filter-bar" style="margin-bottom: 20px; display: flex; gap: 10px; flex-wrap: wrap; align-items: center; justify-content: space-between;">
+            <div style="display: flex; gap: 8px; flex-wrap: wrap;" id="prop-filtro-botoes">
+              <button type="button" class="btn btn-sm btn-primary" id="btn-prop-tab-pendentes" onclick="PropostasModule.setFiltro('pendentes')">
+                ⏳ Aguardando Aprovação (<span id="cont-filtro-pendentes">0</span>)
+              </button>
+              <button type="button" class="btn btn-sm btn-secondary" id="btn-prop-tab-aprovadas" onclick="PropostasModule.setFiltro('aprovadas')">
+                ✅ Aprovados / Enviados (<span id="cont-filtro-aprovadas">0</span>)
+              </button>
+              <button type="button" class="btn btn-sm btn-secondary" id="btn-prop-tab-todos" onclick="PropostasModule.setFiltro('todos')">
+                📑 Todos (<span id="cont-filtro-todos">0</span>)
+              </button>
+            </div>
+            <div style="flex: 1; min-width: 220px; max-width: 380px;">
+              <input type="text" id="prop-filtro-busca" class="form-control" style="padding: 7px 12px; font-size: 0.82rem;" placeholder="🔍 Buscar por cliente ou título..." oninput="PropostasModule.renderList()">
             </div>
           </div>
 
@@ -1090,14 +1111,15 @@
     </div>
   </div>
 
-  <!-- MODAL: PROPOSTA COMERCIAL (WIZARD) -->
+  <!-- MODAL: ORÇAMENTO COMERCIAL (PROPOSTA) -->
   <div class="modal-overlay" id="modal-proposta">
     <div class="modal-container" style="max-width: 820px;">
       <div class="modal-header">
-        <h3>Criar Proposta Comercial de Alto Valor</h3>
+        <h3 id="prop-modal-title">Novo Orçamento Comercial</h3>
         <button class="btn-icon" style="background: transparent; border: none; color: var(--text-muted); cursor: pointer;" onclick="App.closeModal('modal-proposta')">✕</button>
       </div>
       <div class="modal-body">
+        <input type="hidden" id="prop-form-id">
         <div class="form-row">
           <div class="form-group">
             <label>Cliente / Razão Social *</label>
@@ -1114,8 +1136,8 @@
             <input type="text" id="prop-telefone" class="form-control" placeholder="(00) 00000-0000">
           </div>
           <div class="form-group">
-            <label>Título da Proposta *</label>
-            <input type="text" id="prop-titulo" class="form-control" placeholder="Ex: Proposta de Brindes e Peças Exclusivas">
+            <label>Título do Orçamento *</label>
+            <input type="text" id="prop-titulo" class="form-control" placeholder="Ex: Orçamento de Brindes e Peças Exclusivas">
           </div>
         </div>
 
@@ -1164,14 +1186,14 @@
         </div>
         <div class="form-row">
           <div class="form-group">
-            <label>Prazo de Produção</label>
+            <label>Prazo Estimado de Produção</label>
             <input type="text" id="prop-prazo" class="form-control" placeholder="Ex: 5 a 7 dias úteis após aprovação">
           </div>
           <div class="form-group">
-            <label>Status Inicial da Proposta</label>
+            <label>Status / Destino do Orçamento</label>
             <select id="prop-status" class="form-control">
-              <option value="Aguardando Aprovação">⏳ Aguardando Aprovação do Cliente</option>
-              <option value="Aprovada">✅ Aprovada (Gerar Encomenda Imediatamente)</option>
+              <option value="Aguardando Aprovação">⏳ Salvar como Orçamento (Aguardando Aprovação)</option>
+              <option value="Aprovada">✅ Aprovado pelo Cliente (Mover para Fila de Espera)</option>
             </select>
           </div>
         </div>
@@ -1180,9 +1202,16 @@
           <input type="text" id="prop-condicoes" class="form-control">
         </div>
       </div>
-      <div class="modal-footer">
+      <div class="modal-footer" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
         <button type="button" class="btn btn-secondary" onclick="App.closeModal('modal-proposta')">Cancelar</button>
-        <button type="button" class="btn btn-primary" onclick="PropostasModule.save()">Gerar Proposta Comercial</button>
+        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+          <button type="button" class="btn btn-secondary" onclick="PropostasModule.save(false)" style="border-color: rgba(168, 85, 247, 0.4); color: #c084fc; font-weight: 600;">
+            💾 Salvar Orçamento (Aguardando)
+          </button>
+          <button type="button" class="btn btn-primary" onclick="PropostasModule.save(true)" style="background: #10b981; border-color: #10b981; font-weight: 600;">
+            ✅ Salvar & Aprovar (Mover p/ Fila)
+          </button>
+        </div>
       </div>
     </div>
   </div>

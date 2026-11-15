@@ -1,11 +1,14 @@
 /**
- * SEVEN PERSONALIZADOS — MÓDULO GERADOR DE PROPOSTAS COMERCIAIS
- * Criação rápida de propostas visuais timbradas com alta conversão e exportação para PDF/Impressão
+ * SEVEN PERSONALIZADOS — MÓDULO DE ORÇAMENTOS & PROPOSTAS COMERCIAIS
+ * Criação, edição e gestão de orçamentos com itens, geração de propostas timbradas e
+ * aprovação direta movendo a encomenda para a subaba "Fila de Espera".
  */
 
 let propostaItensTemp = [];
 
 const PropostasModule = {
+  filtroAtivo: 'pendentes', // 'pendentes' | 'aprovadas' | 'todos'
+
   init() {
     this.renderList();
     window.addEventListener('seven_data_updated', (e) => {
@@ -13,45 +16,130 @@ const PropostasModule = {
     });
   },
 
+  setFiltro(tipo) {
+    this.filtroAtivo = tipo;
+    const btnPendentes = document.getElementById('btn-prop-tab-pendentes');
+    const btnAprovadas = document.getElementById('btn-prop-tab-aprovadas');
+    const btnTodos = document.getElementById('btn-prop-tab-todos');
+
+    if (btnPendentes) btnPendentes.className = `btn btn-sm ${tipo === 'pendentes' ? 'btn-primary' : 'btn-secondary'}`;
+    if (btnAprovadas) btnAprovadas.className = `btn btn-sm ${tipo === 'aprovadas' ? 'btn-primary' : 'btn-secondary'}`;
+    if (btnTodos) btnTodos.className = `btn btn-sm ${tipo === 'todos' ? 'btn-primary' : 'btn-secondary'}`;
+
+    this.renderList();
+  },
+
   renderList() {
-    const propostas = StorageService.get('propostas');
-    const totalQtdEl = document.getElementById('propostas-total-qtd');
-    if (totalQtdEl) totalQtdEl.textContent = propostas.length;
+    const propostas = StorageService.get('propostas') || [];
+
+    const pendentesCount = propostas.filter(p => p.status !== 'Aprovada').length;
+    const aprovadasCount = propostas.filter(p => p.status === 'Aprovada').length;
+
+    // Atualiza contadores do cabeçalho e abas
+    const pendQtdEl = document.getElementById('propostas-pendentes-qtd');
+    if (pendQtdEl) pendQtdEl.textContent = pendentesCount;
+
+    const aprovQtdEl = document.getElementById('propostas-aprovadas-qtd');
+    if (aprovQtdEl) aprovQtdEl.textContent = aprovadasCount;
+
+    const contPend = document.getElementById('cont-filtro-pendentes');
+    if (contPend) contPend.textContent = pendentesCount;
+
+    const contAprov = document.getElementById('cont-filtro-aprovadas');
+    if (contAprov) contAprov.textContent = aprovadasCount;
+
+    const contTodos = document.getElementById('cont-filtro-todos');
+    if (contTodos) contTodos.textContent = propostas.length;
 
     const container = document.getElementById('propostas-cards-container');
     if (!container) return;
 
     if (propostas.length === 0) {
-      container.innerHTML = `<div style="grid-column: 1/-1; text-align: center; padding: 40px; color: var(--text-muted);"><div style="font-size: 1.5rem; margin-bottom: 8px;">📄</div>Nenhuma proposta gerada ainda. Clique em "Nova Proposta Comercial" para criar a primeira!</div>`;
+      container.innerHTML = `
+        <div style="grid-column: 1/-1; text-align: center; padding: 48px 20px; color: var(--text-muted);">
+          <div style="font-size: 2.2rem; margin-bottom: 12px;">📑</div>
+          <h4 style="color: var(--text-primary); margin-bottom: 6px;">Nenhum orçamento cadastrado ainda</h4>
+          <p style="font-size: 0.88rem; max-width: 480px; margin: 0 auto 16px auto;">
+            Crie um novo orçamento para o cliente. Ele ficará salvo aqui na aba Orçamentos até que seja aprovado e movido para a Fila de Espera!
+          </p>
+          <button class="btn btn-primary" onclick="PropostasModule.openNewModal()">
+            <span>+</span> Novo Orçamento
+          </button>
+        </div>
+      `;
+      return;
+    }
+
+    // Filtro por termo de busca
+    const termoBusca = (document.getElementById('prop-filtro-busca')?.value || '').toLowerCase().trim();
+
+    let filtradas = [...propostas];
+
+    if (termoBusca) {
+      filtradas = filtradas.filter(p =>
+        (p.cliente || '').toLowerCase().includes(termoBusca) ||
+        (p.titulo || '').toLowerCase().includes(termoBusca) ||
+        (p.telefone || '').includes(termoBusca)
+      );
+    }
+
+    if (this.filtroAtivo === 'pendentes') {
+      filtradas = filtradas.filter(p => p.status !== 'Aprovada');
+    } else if (this.filtroAtivo === 'aprovadas') {
+      filtradas = filtradas.filter(p => p.status === 'Aprovada');
+    }
+
+    if (filtradas.length === 0) {
+      const msgVazio = this.filtroAtivo === 'pendentes'
+        ? 'Nenhum orçamento aguardando aprovação no momento. Todos os orçamentos foram aprovados ou não há registros.'
+        : (this.filtroAtivo === 'aprovadas'
+          ? 'Nenhum orçamento aprovado ainda.'
+          : 'Nenhum orçamento localizado para esta busca.');
+
+      container.innerHTML = `
+        <div style="grid-column: 1/-1; text-align: center; padding: 40px 20px; color: var(--text-muted);">
+          <div style="font-size: 1.8rem; margin-bottom: 8px;">🔍</div>
+          <div style="font-size: 0.95rem;">${msgVazio}</div>
+        </div>
+      `;
       return;
     }
 
     // Ordena da mais recente para a mais antiga
-    const ordenadas = [...propostas].sort((a, b) => ((b.criada_em || '') > (a.criada_em || '') ? 1 : -1));
+    filtradas.sort((a, b) => ((b.criada_em || '') > (a.criada_em || '') ? 1 : -1));
 
-    container.innerHTML = ordenadas.map(p => {
+    container.innerHTML = filtradas.map(p => {
       const isAprovada = p.status === 'Aprovada';
       const itensResumo = (p.itens && p.itens.length > 0)
         ? p.itens.map(i => `${i.quantidade}x ${i.produto_nome}`).join(', ')
         : (p.escopo || 'Itens personalizados');
 
       return `
-        <div class="panel-box" style="margin-bottom: 0; display: flex; flex-direction: column; justify-content: space-between; border-color: ${isAprovada ? 'rgba(16, 185, 129, 0.4)' : 'var(--border)'};">
+        <div class="panel-box" style="margin-bottom: 0; display: flex; flex-direction: column; justify-content: space-between; border-color: ${isAprovada ? 'rgba(16, 185, 129, 0.45)' : 'rgba(245, 158, 11, 0.45)'}; box-shadow: ${isAprovada ? '0 4px 18px rgba(16, 185, 129, 0.08)' : '0 4px 18px rgba(245, 158, 11, 0.08)'};">
           <div>
-            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
-              <span class="status-badge ${isAprovada ? 'badge-pago' : 'badge-producao'}">
-                ${isAprovada ? '✅ Aprovada' : '⏳ Aguardando Aprovação'}
-              </span>
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; gap: 8px; flex-wrap: wrap;">
+              <div>
+                <span class="status-badge" style="${isAprovada ? 'background: rgba(16, 185, 129, 0.2); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.5);' : 'background: rgba(245, 158, 11, 0.2); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.5);'}">
+                  ${isAprovada ? '✅ Aprovada (Na Fila de Espera)' : '⏳ Aguardando Aprovação'}
+                </span>
+                ${!isAprovada ? `
+                  <div style="font-size: 0.70rem; color: #fbbf24; margin-top: 3px; font-weight: 600;">
+                    • Permanece em Orçamentos até aprovação
+                  </div>
+                ` : ''}
+              </div>
               <span style="font-size: 0.75rem; color: var(--text-muted);">${App.formatDate(p.criada_em)}</span>
             </div>
-            <h4 style="font-family: var(--font-display); font-size: 1.1rem; color: var(--text-primary); margin-bottom: 4px;">
-              ${App.escapeHtml(p.titulo || 'Proposta Comercial')}
+
+            <h4 style="font-family: var(--font-display); font-size: 1.1rem; color: var(--text-primary); margin: 6px 0 4px 0;">
+              ${App.escapeHtml(p.titulo || 'Orçamento Comercial')}
             </h4>
-            <div style="font-size: 0.85rem; color: var(--accent); margin-bottom: 8px; font-weight: 600;">
-              Cliente: ${App.escapeHtml(p.cliente)} ${p.telefone ? `<span style="color: var(--text-muted); font-size: 0.78rem;">(${App.escapeHtml(p.telefone)})</span>` : ''}
+            <div style="font-size: 0.86rem; color: var(--accent); margin-bottom: 8px; font-weight: 600;">
+              👤 Cliente: ${App.escapeHtml(p.cliente)} ${p.telefone ? `<span style="color: var(--text-muted); font-size: 0.78rem;">(${App.escapeHtml(p.telefone)})</span>` : ''}
             </div>
+
             <div style="font-size: 0.82rem; color: var(--text-secondary); line-height: 1.5; margin-bottom: 14px; background: rgba(255,255,255,0.02); padding: 8px 10px; border-radius: 6px; border: 1px solid var(--border);">
-              <div style="font-size: 0.72rem; color: var(--text-muted); text-transform: uppercase; font-weight: 700;">Itens Orçados:</div>
+              <div style="font-size: 0.70rem; color: var(--text-muted); text-transform: uppercase; font-weight: 700;">Itens Orçados:</div>
               <div style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 2px;" title="${App.escapeHtml(itensResumo)}">
                 ${App.escapeHtml(itensResumo)}
               </div>
@@ -60,23 +148,27 @@ const PropostasModule = {
 
           <div style="border-top: 1px solid var(--border); padding-top: 14px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;">
             <div>
-              <div style="font-size: 0.72rem; color: var(--text-muted);">Investimento Total</div>
+              <div style="font-size: 0.70rem; color: var(--text-muted);">Investimento Total</div>
               <div style="font-size: 1.18rem; font-weight: 700; color: var(--text-primary);">${App.formatMoney(p.investimento)}</div>
             </div>
-            <div style="display: flex; gap: 6px; align-items: center;">
+
+            <div style="display: flex; gap: 6px; align-items: center; flex-wrap: wrap;">
               ${isAprovada ? `
-                <button class="btn btn-secondary" onclick="App.navigate('encomendas')" style="padding: 6px 10px; font-size: 0.78rem; color: #34d399;" title="Ver na fila de produção">
-                  📦 Em Produção
+                <button class="btn btn-secondary" onclick="PropostasModule.irParaFilaDeEspera()" style="padding: 6px 10px; font-size: 0.78rem; color: #34d399; border-color: rgba(16, 185, 129, 0.4);" title="Ver esta encomenda na Fila de Espera">
+                  📦 Ver na Fila
                 </button>
               ` : `
-                <button class="btn btn-primary" onclick="PropostasModule.aprovarProposta('${p.id}')" title="Aprovar e encaminhar direto para Encomendas" style="padding: 6px 12px; font-size: 0.78rem; background: #10b981; border-color: #10b981;">
-                  ✅ Aprovar
+                <button class="btn btn-primary" onclick="PropostasModule.aprovarProposta('${p.id}')" title="Aprovar proposta e mover direto para Fila de Espera" style="padding: 6px 12px; font-size: 0.78rem; background: #10b981; border-color: #10b981; font-weight: 600;">
+                  ✅ Aprovar (Mover p/ Fila)
+                </button>
+                <button class="btn btn-secondary btn-icon" onclick="PropostasModule.openEditModal('${p.id}')" style="padding: 6px 8px; font-size: 0.78rem;" title="Editar orçamento">
+                  ✏️
                 </button>
               `}
-              <button class="btn btn-secondary" onclick="PropostasModule.visualizarProposta('${p.id}')" style="padding: 6px 10px; font-size: 0.78rem;" title="Visualizar proposta timbrada">
+              <button class="btn btn-secondary" onclick="PropostasModule.visualizarProposta('${p.id}')" style="padding: 6px 10px; font-size: 0.78rem;" title="Visualizar proposta formatada timbrada">
                 📄 Ver
               </button>
-              <button class="btn btn-secondary btn-icon" onclick="PropostasModule.deleteProposta('${p.id}')" title="Excluir proposta">
+              <button class="btn btn-secondary btn-icon" onclick="PropostasModule.deleteProposta('${p.id}')" title="Excluir orçamento">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
               </button>
             </div>
@@ -87,10 +179,14 @@ const PropostasModule = {
   },
 
   openNewModal() {
+    document.getElementById('prop-form-id').value = '';
+    const titleEl = document.getElementById('prop-modal-title');
+    if (titleEl) titleEl.textContent = 'Novo Orçamento Comercial';
+
     document.getElementById('prop-cliente').value = '';
     document.getElementById('prop-contato').value = '';
     document.getElementById('prop-telefone').value = '';
-    document.getElementById('prop-titulo').value = 'Proposta de Produtos Personalizados Exclusivos';
+    document.getElementById('prop-titulo').value = 'Orçamento de Produtos Personalizados Exclusivos';
     document.getElementById('prop-escopo').value = 'Fabricação e personalização a laser / 3D de peças conforme especificações do cliente com garantia de acabamento fino.';
     document.getElementById('prop-metodo').value = '1. Envio e aprovação de maquete digital 3D\n2. Fabricação com controle milimétrico de corte e gravação\n3. Limpeza, acabamento artesanal e controle de qualidade\n4. Embalagem reforçada e pronta para entrega';
     document.getElementById('prop-prazo').value = '5 a 7 dias úteis após aprovação da arte final';
@@ -106,6 +202,40 @@ const PropostasModule = {
         subtotal: 300.00
       }
     ];
+
+    this.renderItensTable();
+    App.openModal('modal-proposta');
+  },
+
+  openEditModal(id) {
+    const p = StorageService.get('propostas').find(item => item.id === id);
+    if (!p) return;
+
+    document.getElementById('prop-form-id').value = p.id;
+    const titleEl = document.getElementById('prop-modal-title');
+    if (titleEl) titleEl.textContent = 'Editar Orçamento Comercial';
+
+    document.getElementById('prop-cliente').value = p.cliente || '';
+    document.getElementById('prop-contato').value = p.contato || '';
+    document.getElementById('prop-telefone').value = p.telefone || '';
+    document.getElementById('prop-titulo').value = p.titulo || '';
+    document.getElementById('prop-escopo').value = p.escopo || '';
+    document.getElementById('prop-metodo').value = p.metodo || '';
+    document.getElementById('prop-prazo').value = p.prazo || '';
+    document.getElementById('prop-condicoes').value = p.condicoes || '';
+    document.getElementById('prop-status').value = p.status || 'Aguardando Aprovação';
+
+    propostaItensTemp = (p.itens && p.itens.length > 0)
+      ? JSON.parse(JSON.stringify(p.itens))
+      : [
+          {
+            produto_nome: p.titulo || 'Item Personalizado',
+            personalizacao: p.escopo || '',
+            quantidade: 1,
+            preco_unitario: Number(p.investimento) || 0,
+            subtotal: Number(p.investimento) || 0
+          }
+        ];
 
     this.renderItensTable();
     App.openModal('modal-proposta');
@@ -186,7 +316,8 @@ const PropostasModule = {
     if (invInput) invInput.value = total;
   },
 
-  save() {
+  save(aprovarDireto = false) {
+    const idExistente = document.getElementById('prop-form-id')?.value;
     const cliente = document.getElementById('prop-cliente').value.trim();
     const contato = document.getElementById('prop-contato').value.trim();
     const telefone = document.getElementById('prop-telefone').value.trim();
@@ -194,18 +325,24 @@ const PropostasModule = {
     const escopo = document.getElementById('prop-escopo').value.trim();
     const metodo = document.getElementById('prop-metodo').value.trim();
     const prazo = document.getElementById('prop-prazo').value.trim();
-    const statusEscolhido = document.getElementById('prop-status').value || 'Aguardando Aprovação';
+    let statusEscolhido = document.getElementById('prop-status')?.value || 'Aguardando Aprovação';
     const condicoes = document.getElementById('prop-condicoes').value.trim();
+
+    if (aprovarDireto === true) {
+      statusEscolhido = 'Aprovada';
+    } else if (statusEscolhido !== 'Aprovada') {
+      statusEscolhido = 'Aguardando Aprovação';
+    }
 
     const investimentoTotal = propostaItensTemp.reduce((acc, it) => acc + (Number(it.subtotal) || 0), 0);
 
     if (!cliente) {
-      App.toast('Por favor, informe o cliente da proposta.', 'error');
+      App.toast('Por favor, informe o cliente do orçamento.', 'error');
       return;
     }
 
     if (investimentoTotal <= 0) {
-      App.toast('Adicione ao menos um item com valor na proposta.', 'error');
+      App.toast('Adicione ao menos um item com valor no orçamento.', 'error');
       return;
     }
 
@@ -213,26 +350,32 @@ const PropostasModule = {
       cliente,
       contato,
       telefone,
-      titulo: titulo || 'Proposta de Personalizados',
+      titulo: titulo || 'Orçamento de Produtos Personalizados',
       escopo,
       metodo,
       prazo: prazo || '5 a 7 dias úteis',
       investimento: investimentoTotal,
       condicoes,
       status: statusEscolhido,
-      itens: JSON.parse(JSON.stringify(propostaItensTemp)),
-      criada_em: new Date().toISOString()
+      itens: JSON.parse(JSON.stringify(propostaItensTemp))
     };
 
-    const nova = StorageService.insert('propostas', payload);
+    let idOrcamento = idExistente;
+    if (idExistente) {
+      StorageService.update('propostas', idExistente, payload);
+    } else {
+      payload.criada_em = new Date().toISOString();
+      const novo = StorageService.insert('propostas', payload);
+      idOrcamento = novo.id;
+    }
+
     App.closeModal('modal-proposta');
 
-    if (statusEscolhido === 'Aprovada') {
-      this.aprovarProposta(nova.id);
+    if (statusEscolhido === 'Aprovada' || aprovarDireto === true) {
+      this.aprovarProposta(idOrcamento);
     } else {
-      App.toast('Proposta comercial gerada com sucesso!', 'success');
+      App.toast('Orçamento salvo com sucesso! Permanece na aba Orçamentos aguardando aprovação.', 'success');
       this.renderList();
-      this.visualizarProposta(nova.id);
     }
   },
 
@@ -241,8 +384,8 @@ const PropostasModule = {
     if (!p) return;
 
     if (p.status === 'Aprovada' && p.encomenda_id) {
-      App.toast('Esta proposta já foi aprovada e possui encomenda vinculada.', 'info');
-      App.navigate('encomendas');
+      App.toast('Este orçamento já foi aprovado e está na Fila de Espera.', 'info');
+      this.irParaFilaDeEspera();
       return;
     }
 
@@ -264,12 +407,12 @@ const PropostasModule = {
       telefone: p.telefone || p.contato || '',
       data_pedido: new Date().toISOString().split('T')[0],
       data_entrega_prevista: dataEntregaDefault,
-      status: 'Em produção',
+      status: 'Fila', // Fila de Espera!
       pagamento_status: 'Pendente',
       forma_pagamento: 'Pix',
       valor_total: Number(p.investimento) || 0,
       valor_pago: 0,
-      observacoes: `Origem: Proposta "${p.titulo}".\nPrazo Comercial: ${p.prazo || '5 a 7 dias'}.\nCondições: ${p.condicoes || ''}`,
+      observacoes: `Origem: Orçamento "${p.titulo}".\nPrazo Comercial: ${p.prazo || '5 a 7 dias'}.\nCondições: ${p.condicoes || ''}`,
       itens: itensEncomenda
     };
 
@@ -281,14 +424,46 @@ const PropostasModule = {
       aprovada_em: new Date().toISOString()
     });
 
-    App.toast('Proposta aprovada com sucesso! Encomenda criada e enviada para Produção. 🎉', 'success');
+    App.toast('Orçamento aprovado com sucesso! Encomenda movida para a Fila de Espera. 🎉', 'success');
     App.closeModal('modal-preview-proposta');
+    App.closeModal('modal-proposta');
     this.renderList();
 
-    // Redireciona imediatamente para a tela de Encomendas & Produção
+    // Redireciona imediatamente para a tela de Encomendas & Produção na subaba "Fila de Espera"
     setTimeout(() => {
-      App.navigate('encomendas');
+      this.irParaFilaDeEspera();
     }, 350);
+  },
+
+  irParaFilaDeEspera() {
+    App.navigate('encomendas');
+
+    // Se estiver filtrando apenas finalizadas, restaura a visão principal para exibir a fila
+    const filtroStatus = document.getElementById('filtro-enc-status');
+    if (filtroStatus && filtroStatus.value === 'Finalizadas') {
+      filtroStatus.value = '';
+    }
+
+    if (typeof EncomendasModule !== 'undefined' && EncomendasModule.render) {
+      EncomendasModule.render();
+    }
+
+    // Rola suavemente até o container do grupo "Fila de Espera" e aplica pulso visual
+    setTimeout(() => {
+      const grupoFila = document.getElementById('grupo-enc-Fila');
+      if (grupoFila) {
+        grupoFila.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        grupoFila.style.transition = 'box-shadow 0.4s ease, border-color 0.4s ease';
+        const originalBorder = grupoFila.style.borderColor;
+        const originalShadow = grupoFila.style.boxShadow;
+        grupoFila.style.borderColor = '#fbbf24';
+        grupoFila.style.boxShadow = '0 0 28px rgba(245, 158, 11, 0.5)';
+        setTimeout(() => {
+          grupoFila.style.borderColor = originalBorder;
+          grupoFila.style.boxShadow = originalShadow;
+        }, 2200);
+      }
+    }, 180);
   },
 
   visualizarProposta(id) {
@@ -305,12 +480,15 @@ const PropostasModule = {
       actionsContainer.innerHTML = `
         ${p.status !== 'Aprovada' ? `
           <button class="btn btn-primary" onclick="PropostasModule.aprovarProposta('${p.id}')" style="background: #10b981; border-color: #10b981; font-weight: 600;">
-            ✅ Aprovar & Gerar Encomenda
+            ✅ Aprovar & Mover p/ Fila de Espera
           </button>
         ` : `
           <span style="font-size: 0.85rem; color: #10b981; font-weight: 600; margin-right: 8px;">
-            ✅ Proposta Aprovada
+            ✅ Orçamento Aprovado (Na Fila de Espera)
           </span>
+          <button class="btn btn-secondary" onclick="PropostasModule.irParaFilaDeEspera()" style="font-size: 0.82rem; color: #34d399; border-color: rgba(16, 185, 129, 0.4);">
+            📦 Ver na Fila
+          </button>
         `}
         <button class="btn btn-secondary" onclick="PropostasModule.imprimirPropostaAtual()">🖨️ Imprimir / PDF</button>
         <button class="btn btn-secondary" onclick="App.closeModal('modal-preview-proposta')">Fechar</button>
@@ -329,12 +507,12 @@ const PropostasModule = {
           <div><strong style="color: #00a8f3;">WhatsApp:</strong> ${App.escapeHtml(config.telefone || '')}</div>
           <div><strong style="color: #00a8f3;">E-mail:</strong> ${App.escapeHtml(config.email || '')}</div>
           <div><strong style="color: #00a8f3;">Emissão:</strong> ${App.formatDate(p.criada_em)}</div>
-          <div><strong style="color: #00a8f3;">Status:</strong> ${p.status || 'Aguardando Aprovação'}</div>
+          <div><strong style="color: #00a8f3;">Status:</strong> ${p.status === 'Aprovada' ? 'Aprovado (Na Fila de Produção)' : 'Aguardando Aprovação'}</div>
         </div>
       </div>
 
       <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 18px; margin-bottom: 24px;">
-        <div style="font-size: 0.76rem; text-transform: uppercase; color: #0284c7; font-weight: 700; letter-spacing: 0.05em;">Proposta Comercial Preparada Para</div>
+        <div style="font-size: 0.76rem; text-transform: uppercase; color: #0284c7; font-weight: 700; letter-spacing: 0.05em;">Orçamento Comercial Preparado Para</div>
         <div style="font-size: 1.25rem; font-weight: 700; color: #0f172a; margin-top: 4px;">${App.escapeHtml(p.cliente)}</div>
         ${p.contato ? `<div style="font-size: 0.88rem; color: #475569;">A/C: ${App.escapeHtml(p.contato)} ${p.telefone ? `(${p.telefone})` : ''}</div>` : ''}
       </div>
@@ -412,9 +590,9 @@ const PropostasModule = {
   },
 
   deleteProposta(id) {
-    if (confirm('Deseja excluir esta proposta?')) {
+    if (confirm('Deseja excluir este orçamento?')) {
       StorageService.delete('propostas', id);
-      App.toast('Proposta excluída.', 'info');
+      App.toast('Orçamento excluído.', 'info');
       this.renderList();
     }
   },
