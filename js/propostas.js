@@ -9,7 +9,6 @@ let propostaItensTemp = [];
 
 const PropostasModule = {
   init() {
-    this.limparAprovadosLegados();
     this.renderList();
     window.addEventListener('seven_data_updated', (e) => {
       if (!e.detail || e.detail?.table === 'propostas') {
@@ -18,29 +17,11 @@ const PropostasModule = {
     });
   },
 
-  /**
-   * Remove da tabela 'propostas' qualquer orçamento que já tenha sido aprovado anteriormente,
-   * garantindo que ele não continue visível na página de orçamentos.
-   */
-  limparAprovadosLegados() {
-    try {
-      const propostas = StorageService.get('propostas') || [];
-      const aprovados = propostas.filter(p => p.status === 'Aprovada');
-      if (aprovados.length > 0) {
-        aprovados.forEach(p => {
-          StorageService.delete('propostas', p.id);
-        });
-      }
-    } catch (e) {
-      console.warn('Erro ao limpar orçamentos aprovados:', e);
-    }
-  },
-
   renderList() {
     const propostas = StorageService.get('propostas') || [];
 
     // Considera apenas orçamentos em aberto (não aprovados)
-    const pendentes = propostas.filter(p => p.status !== 'Aprovada');
+    const pendentes = propostas.filter(p => !p.status || !p.status.toLowerCase().includes('aprovad'));
 
     // Atualiza contadores
     const pendQtdEl = document.getElementById('propostas-pendentes-qtd');

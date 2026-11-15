@@ -334,17 +334,17 @@ const StorageService = {
   recordLocalAction(id) {
     if (!id) return;
     this.recentLocalActions.set(id, Date.now());
-    // Limpa ações antigas após 12 segundos
+    // Limpa ações antigas após 20 segundos
     setTimeout(() => {
       this.recentLocalActions.delete(id);
-    }, 12000);
+    }, 20000);
   },
 
   isLocalAction(id) {
     if (!id) return false;
     const time = this.recentLocalActions.get(id);
     if (!time) return false;
-    return (Date.now() - time) < 12000;
+    return (Date.now() - time) < 20000;
   },
 
   init() {
@@ -372,7 +372,7 @@ const StorageService = {
       this.supabaseClient = window.supabase.createClient(SUPABASE_CONFIG.url, SUPABASE_CONFIG.anonKey);
       const channel = this.supabaseClient.channel('seven-realtime-master');
 
-      const tables = ['encomendas', 'crm_cards', 'estoque', 'despesas', 'propostas', 'filamentos', 'calc_3d_historico'];
+      const tables = ['encomendas', 'crm_cards', 'estoque', 'despesas', 'propostas', 'filamentos', 'calc_3d_historico', 'calc_3d_config', 'config'];
       tables.forEach(table => {
         channel.on('postgres_changes', { event: '*', schema: 'public', table: table }, (payload) => {
           console.log(`⚡ [Realtime Supabase] Alteração detectada em ${table}:`, payload);
@@ -519,20 +519,34 @@ const StorageService = {
 
     try {
       await Promise.all(tables.map(async (table) => {
-        const res = await fetch(`${SUPABASE_CONFIG.url}/rest/v1/${table}?select=*&order=created_at.desc`, {
-          headers: this.getHeaders()
-        });
-        if (res.ok) {
-          const rows = await res.json();
-          if (Array.isArray(rows)) {
-            const key = STORAGE_KEYS[table.toUpperCase()];
-            const prevStr = localStorage.getItem(key) || '[]';
-            const newStr = JSON.stringify(rows);
-            if (prevStr !== newStr) {
-              localStorage.setItem(key, newStr);
-              window.dispatchEvent(new CustomEvent('seven_data_updated', { detail: { table } }));
+        try {
+          const res = await fetch(`${SUPABASE_CONFIG.url}/rest/v1/${table}?select=*&order=created_at.desc`, {
+            headers: this.getHeaders()
+          });
+          if (res.ok) {
+            const rows = await res.json();
+            if (Array.isArray(rows)) {
+              const key = STORAGE_KEYS[table.toUpperCase()];
+              const currentItems = this.get(table);
+              const cloudIds = new Set(rows.map(r => r.id));
+
+              // Protege itens recém-inseridos localmente que ainda possam estar em trânsito de rede
+              const pendingLocal = currentItems.filter(item => !cloudIds.has(item.id) && this.isLocalAction(item.id));
+              const merged = [...pendingLocal, ...rows];
+
+              const prevStr = localStorage.getItem(key) || '[]';
+              const newStr = JSON.stringify(merged);
+              if (prevStr !== newStr) {
+                localStorage.setItem(key, newStr);
+                window.dispatchEvent(new CustomEvent('seven_data_updated', { detail: { table } }));
+              }
             }
+          } else {
+            const err = await res.text();
+            console.warn(`[Supabase] Erro ao buscar tabela ${table}:`, res.status, err);
           }
+        } catch (fetchErr) {
+          console.warn(`[Supabase] Falha de conexão ao sincronizar ${table}:`, fetchErr);
         }
       }));
 
@@ -551,6 +565,22 @@ const StorageService = {
             if (typeof App !== 'undefined' && App.loadConfigView) {
               App.loadConfigView();
             }
+          }
+        }
+      }
+
+      // Busca configurações da calculadora 3D
+      const calcCfgRes = await fetch(`${SUPABASE_CONFIG.url}/rest/v1/calc_3d_config?id=eq.main_3d_calc&select=*`, {
+        headers: this.getHeaders()
+      });
+      if (calcCfgRes.ok) {
+        const calcCfgRows = await calcCfgRes.json();
+        if (Array.isArray(calcCfgRows) && calcCfgRows.length > 0) {
+          const calcCfgStr = JSON.stringify(calcCfgRows[0]);
+          const curCalcCfgStr = localStorage.getItem(STORAGE_KEYS.CALC_3D_CONFIG);
+          if (curCalcCfgStr !== calcCfgStr) {
+            localStorage.setItem(STORAGE_KEYS.CALC_3D_CONFIG, calcCfgStr);
+            window.dispatchEvent(new CustomEvent('seven_data_updated', { detail: { table: 'calc_3d_config' } }));
           }
         }
       }
@@ -603,11 +633,19 @@ const StorageService = {
       headers: this.getHeaders('resolution=merge-duplicates,return=representation'),
       body: JSON.stringify(newItem)
     })
-      .then(res => {
-        if (res.ok) this.updateSyncBadge('online', 'Tempo Real Ativo ⚡');
-        else this.updateSyncBadge('offline', 'Erro ao salvar');
+      .then(async res => {
+        if (res.ok) {
+          this.updateSyncBadge('online', 'Tempo Real Ativo ⚡');
+        } else {
+          const errText = await res.text();
+          console.error(`[Supabase] Erro ao inserir em ${table}:`, res.status, errText);
+          this.updateSyncBadge('offline', 'Erro ao salvar');
+        }
       })
-      .catch(() => this.updateSyncBadge('offline', 'Modo Offline'));
+      .catch(err => {
+        console.error(`[Supabase] Erro de rede ao inserir em ${table}:`, err);
+        this.updateSyncBadge('offline', 'Modo Offline');
+      });
 
     return newItem;
   },
@@ -632,11 +670,19 @@ const StorageService = {
       headers: this.getHeaders(),
       body: JSON.stringify({ ...updates, updated_at: updatedAt })
     })
-      .then(res => {
-        if (res.ok) this.updateSyncBadge('online', 'Tempo Real Ativo ⚡');
-        else this.updateSyncBadge('offline', 'Erro ao atualizar');
+      .then(async res => {
+        if (res.ok) {
+          this.updateSyncBadge('online', 'Tempo Real Ativo ⚡');
+        } else {
+          const errText = await res.text();
+          console.error(`[Supabase] Erro ao atualizar ${table}:`, res.status, errText);
+          this.updateSyncBadge('offline', 'Erro ao atualizar');
+        }
       })
-      .catch(() => this.updateSyncBadge('offline', 'Modo Offline'));
+      .catch(err => {
+        console.error(`[Supabase] Erro de rede ao atualizar ${table}:`, err);
+        this.updateSyncBadge('offline', 'Modo Offline');
+      });
 
     return list[index];
   },
@@ -653,11 +699,19 @@ const StorageService = {
       method: 'DELETE',
       headers: this.getHeaders()
     })
-      .then(res => {
-        if (res.ok) this.updateSyncBadge('online', 'Tempo Real Ativo ⚡');
-        else this.updateSyncBadge('offline', 'Erro ao remover');
+      .then(async res => {
+        if (res.ok) {
+          this.updateSyncBadge('online', 'Tempo Real Ativo ⚡');
+        } else {
+          const errText = await res.text();
+          console.error(`[Supabase] Erro ao remover de ${table}:`, res.status, errText);
+          this.updateSyncBadge('offline', 'Erro ao remover');
+        }
       })
-      .catch(() => this.updateSyncBadge('offline', 'Modo Offline'));
+      .catch(err => {
+        console.error(`[Supabase] Erro de rede ao remover de ${table}:`, err);
+        this.updateSyncBadge('offline', 'Modo Offline');
+      });
 
     return true;
   },
@@ -710,6 +764,14 @@ const StorageService = {
     };
     localStorage.setItem(STORAGE_KEYS.CALC_3D_CONFIG, JSON.stringify(payload));
     window.dispatchEvent(new CustomEvent('seven_data_updated', { detail: { table: 'calc_3d_config' } }));
+
+    // Sincroniza com Supabase
+    fetch(`${SUPABASE_CONFIG.url}/rest/v1/calc_3d_config`, {
+      method: 'POST',
+      headers: this.getHeaders('resolution=merge-duplicates,return=representation'),
+      body: JSON.stringify(payload)
+    }).catch(err => console.error('[Supabase] Erro ao salvar calc_3d_config:', err));
+
     return payload;
   }
 };
