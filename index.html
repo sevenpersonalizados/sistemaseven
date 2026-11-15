@@ -685,6 +685,9 @@
                 <span class="themed-chip">
                   🛠️ <strong id="calc-kpi-param-op" style="color: #ffffff;">R$ 3,50/h</strong>
                 </span>
+                <span class="themed-chip">
+                  📈 Margem: <strong id="calc-kpi-param-margem" style="color: #ffffff;">100%</strong>
+                </span>
                 <button type="button" class="btn btn-secondary btn-sm" onclick="CalculadoraModule.abrirModalConfig()">
                   ⚙️ Parâmetros & Energia
                 </button>
@@ -747,7 +750,7 @@
                 <div class="form-group">
                   <label>Quantidade de Peças Produzidas</label>
                   <input type="number" min="1" step="1" id="calc-form-qtd-pecas" class="form-control" value="1">
-                  <small style="color: var(--text-muted); font-size: 0.72rem;">Divide o custo total pelo número de peças</small>
+                  <small style="color: var(--text-muted); font-size: 0.72rem;">Divide o custo e preço pelo total de peças</small>
                 </div>
 
                 <div class="form-group">
@@ -755,6 +758,32 @@
                   <input type="text" id="calc-form-obs" class="form-control" placeholder="Ex: Bico 0.4mm, Layer 0.20, Infill 15%">
                   <small style="color: var(--text-muted); font-size: 0.72rem;">Configurações e notas da peça</small>
                 </div>
+              </div>
+
+              <!-- MARGEM DE LUCRO DESEJADA -->
+              <div class="form-group" style="background: rgba(249, 115, 22, 0.06); border: 1px dashed rgba(249, 115, 22, 0.35); border-radius: var(--radius-sm); padding: 12px 14px; margin-top: 6px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; flex-wrap: wrap; gap: 4px;">
+                  <label style="margin: 0; font-weight: 700; color: #fb923c; display: flex; align-items: center; gap: 6px; font-size: 0.82rem;">
+                    <span>📈</span> Margem de Lucro Desejada (% sobre o custo)
+                  </label>
+                  <span style="font-size: 0.72rem; color: var(--text-muted);">Markup comercial</span>
+                </div>
+                <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+                  <div style="position: relative; flex: 1; min-width: 110px;">
+                    <input type="number" min="0" step="5" id="calc-form-margem" class="form-control" style="font-weight: 800; font-size: 1.1rem; color: #fb923c; padding-right: 32px;" value="100">
+                    <span style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); font-weight: 700; color: #fb923c;">%</span>
+                  </div>
+                  <div style="display: flex; gap: 6px; flex-wrap: wrap;">
+                    <button type="button" class="preset-chip" onclick="CalculadoraModule.setMargemPreset(50)">50%</button>
+                    <button type="button" class="preset-chip" onclick="CalculadoraModule.setMargemPreset(80)">80%</button>
+                    <button type="button" class="preset-chip" onclick="CalculadoraModule.setMargemPreset(100)">100%</button>
+                    <button type="button" class="preset-chip" onclick="CalculadoraModule.setMargemPreset(150)">150%</button>
+                    <button type="button" class="preset-chip" onclick="CalculadoraModule.setMargemPreset(200)">200%</button>
+                  </div>
+                </div>
+                <small style="color: var(--text-muted); font-size: 0.72rem; margin-top: 4px; display: block;">
+                  Ex: 100% dobra o valor do custo para venda; 150% multiplica por 2,5.
+                </small>
               </div>
 
               <div style="display: flex; gap: 10px; margin-top: 14px; flex-wrap: wrap;">
@@ -792,7 +821,7 @@
               </div>
 
               <!-- MINI-CARDS DE COMPONENTES DE CUSTO -->
-              <div class="calc-breakdown-grid" style="margin-bottom: 20px;">
+              <div class="calc-breakdown-grid" style="margin-bottom: 16px;">
                 <!-- MATERIAL -->
                 <div class="calc-breakdown-card">
                   <div class="calc-breakdown-label">🧵 Custo do Filamento</div>
@@ -815,7 +844,7 @@
                 </div>
               </div>
 
-              <!-- GRANDES CARDS DE DESTAQUE: CUSTO TOTAL & UNITÁRIO -->
+              <!-- CARDS DE DESTAQUE: CUSTO TOTAL & UNITÁRIO -->
               <div class="calc-highlight-box">
                 <div>
                   <div class="calc-highlight-label">Custo Total de Produção</div>
@@ -830,6 +859,33 @@
                   <div style="font-size: 0.72rem; color: #a7f3d0; margin-top: 2px;">
                     Custo Real Estimado
                   </div>
+                </div>
+              </div>
+
+              <!-- GRANDE CARD DE PREÇO DE VENDA SUGERIDO & LUCRO ESTIMADO -->
+              <div class="calc-sale-box" style="margin-top: 14px;">
+                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; flex-wrap: wrap; gap: 8px;">
+                  <div>
+                    <div style="font-size: 0.74rem; text-transform: uppercase; letter-spacing: 0.05em; color: #93c5fd; font-weight: 700;">
+                      🏷️ Preço de Venda Sugerido (Total)
+                    </div>
+                    <div class="calc-sale-main" id="calc-res-preco-venda-total">R$ 0,00</div>
+                  </div>
+                  <div style="text-align: right;">
+                    <div style="font-size: 0.74rem; text-transform: uppercase; letter-spacing: 0.05em; color: #a7f3d0; font-weight: 700;">
+                      Preço por Peça
+                    </div>
+                    <div class="calc-sale-sub" id="calc-res-preco-venda-unitario">R$ 0,00 / un</div>
+                  </div>
+                </div>
+
+                <div style="display: flex; justify-content: space-between; align-items: center; padding-top: 10px; border-top: 1px solid rgba(255, 255, 255, 0.12); font-size: 0.82rem; flex-wrap: wrap; gap: 6px;">
+                  <span style="color: rgba(255, 255, 255, 0.75);">
+                    Margem Aplicada: <strong style="color: #fb923c;" id="calc-res-margem-badge">+100%</strong>
+                  </span>
+                  <span style="color: #34d399; font-weight: 700;">
+                    Lucro Estimado: <strong style="color: #10b981; font-size: 0.95rem;" id="calc-res-lucro-total">R$ 0,00</strong> (<span id="calc-res-lucro-unitario">R$ 0,00</span>/un)
+                  </span>
                 </div>
               </div>
             </div>
@@ -853,10 +909,16 @@
                   Registros: <strong style="color: #ffffff;" id="calc-hist-kpi-qtd">0</strong>
                 </div>
                 <div style="background: rgba(249, 115, 22, 0.1); padding: 6px 12px; border-radius: 8px; border: 1px solid rgba(249, 115, 22, 0.3); font-size: 0.8rem;">
-                  Filamento Total: <strong style="color: #fb923c;" id="calc-hist-kpi-gramas">0 g</strong>
+                  Filamento: <strong style="color: #fb923c;" id="calc-hist-kpi-gramas">0 g</strong>
                 </div>
                 <div style="background: rgba(16, 185, 129, 0.1); padding: 6px 12px; border-radius: 8px; border: 1px solid rgba(16, 185, 129, 0.3); font-size: 0.8rem;">
-                  Custo Acumulado: <strong style="color: #10b981;" id="calc-hist-kpi-custo">R$ 0,00</strong>
+                  Custo Total: <strong style="color: #10b981;" id="calc-hist-kpi-custo">R$ 0,00</strong>
+                </div>
+                <div style="background: rgba(0, 168, 243, 0.1); padding: 6px 12px; border-radius: 8px; border: 1px solid rgba(0, 168, 243, 0.3); font-size: 0.8rem;">
+                  Venda Total: <strong style="color: #38bdf8;" id="calc-hist-kpi-venda">R$ 0,00</strong>
+                </div>
+                <div style="background: rgba(16, 185, 129, 0.1); padding: 6px 12px; border-radius: 8px; border: 1px solid rgba(16, 185, 129, 0.3); font-size: 0.8rem;">
+                  Lucro Est.: <strong style="color: #34d399;" id="calc-hist-kpi-lucro">R$ 0,00</strong>
                 </div>
               </div>
             </div>
@@ -875,7 +937,7 @@
                     <th>Consumo & Tempo</th>
                     <th style="text-align: center;">Lote</th>
                     <th>Composição dos Custos</th>
-                    <th>Custo Total / Unit.</th>
+                    <th>Custo & Preço de Venda</th>
                     <th style="text-align: right;">Ações</th>
                   </tr>
                 </thead>
@@ -1314,6 +1376,12 @@
           <label>Custo Operacional por Hora (R$ / hora) *</label>
           <input type="number" step="0.01" min="0" id="cfg-custo-operacional-hora" class="form-control" placeholder="Ex: 3.50">
           <small style="color: var(--text-muted); font-size: 0.74rem;">Provisão para manutenção preventiva, desgaste de bicos, correias e depreciação da máquina</small>
+        </div>
+
+        <div class="form-group">
+          <label>Margem de Lucro Padrão (% sobre o custo) *</label>
+          <input type="number" step="5" min="0" id="cfg-margem-lucro-padrao" class="form-control" placeholder="Ex: 100" value="100">
+          <small style="color: var(--text-muted); font-size: 0.74rem;">Margem percentual sugerida por padrão para novas peças (ex: 100% dobra o valor do custo)</small>
         </div>
       </div>
       <div class="modal-footer">

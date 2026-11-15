@@ -293,7 +293,8 @@ const INITIAL_DATA = {
     id: 'main_3d_calc',
     tarifa_kwh: 0.85,
     potencia_impressora_w: 200,
-    custo_operacional_hora: 3.50
+    custo_operacional_hora: 3.50,
+    margem_lucro_padrao: 100
   },
   calc_3d_historico: [
     {
@@ -313,6 +314,10 @@ const INITIAL_DATA = {
       custo_operacional: 19.25,
       custo_total: 41.185,
       custo_unitario: 20.5925,
+      margem_lucro_pct: 100,
+      preco_venda_total: 82.37,
+      preco_venda_unitario: 41.18,
+      lucro_total: 41.185,
       observacoes: 'Bico 0.4mm, camada 0.2mm, infill 15%'
     }
   ]

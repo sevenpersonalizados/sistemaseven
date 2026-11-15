@@ -31,6 +31,7 @@ const CalculadoraModule = {
       'calc-form-horas',
       'calc-form-minutos',
       'calc-form-qtd-pecas',
+      'calc-form-margem',
       'calc-form-produto'
     ];
 
@@ -54,6 +55,14 @@ const CalculadoraModule = {
       buscaHistorico.addEventListener('input', (e) => {
         this.renderHistorico(e.target.value);
       });
+    }
+  },
+
+  setMargemPreset(val) {
+    const input = document.getElementById('calc-form-margem');
+    if (input) {
+      input.value = val;
+      this.calcular();
     }
   },
 
@@ -122,6 +131,16 @@ const CalculadoraModule = {
     const custoTotal = custoMaterial + custoEnergia + custoOperacional;
     const custoUnitario = qtdPecas > 0 ? (custoTotal / qtdPecas) : custoTotal;
 
+    // 6. Margem de lucro e Preço de venda sugerido
+    const inputMargem = document.getElementById('calc-form-margem');
+    let margemPct = inputMargem ? parseFloat(inputMargem.value) : (Number(cfg.margem_lucro_padrao) || 100);
+    if (isNaN(margemPct) || margemPct < 0) margemPct = 0;
+
+    const lucroTotal = custoTotal * (margemPct / 100);
+    const precoVendaTotal = custoTotal + lucroTotal;
+    const precoVendaUnitario = qtdPecas > 0 ? (precoVendaTotal / qtdPecas) : precoVendaTotal;
+    const lucroUnitario = qtdPecas > 0 ? (lucroTotal / qtdPecas) : lucroTotal;
+
     // Atualiza a visualização no Painel de Resultados
     this.atualizarPainelResultados({
       produtoNome,
@@ -139,7 +158,12 @@ const CalculadoraModule = {
       custoHoraOp,
       custoOperacional,
       custoTotal,
-      custoUnitario
+      custoUnitario,
+      margemPct,
+      lucroTotal,
+      lucroUnitario,
+      precoVendaTotal,
+      precoVendaUnitario
     });
 
     return {
@@ -155,7 +179,12 @@ const CalculadoraModule = {
       custoEnergia,
       custoOperacional,
       custoTotal,
-      custoUnitario
+      custoUnitario,
+      margemPct,
+      lucroTotal,
+      lucroUnitario,
+      precoVendaTotal,
+      precoVendaUnitario
     };
   },
 
@@ -208,7 +237,7 @@ const CalculadoraModule = {
       elDetOp.textContent = `${res.tempoTotalHoras.toFixed(2).replace('.', ',')}h × ${App.formatMoney(res.custoHoraOp)}/h`;
     }
 
-    // Destaques Principais
+    // Destaques de Custo
     const elTotal = document.getElementById('calc-res-custo-total');
     if (elTotal) elTotal.textContent = App.formatMoney(res.custoTotal);
 
@@ -219,6 +248,22 @@ const CalculadoraModule = {
     if (elPecasBadge) {
       elPecasBadge.textContent = `${res.qtdPecas} ${res.qtdPecas === 1 ? 'peça produzida' : 'peças produzidas'}`;
     }
+
+    // Destaques de Preço de Venda & Margem de Lucro
+    const elPrecoTotal = document.getElementById('calc-res-preco-venda-total');
+    if (elPrecoTotal) elPrecoTotal.textContent = App.formatMoney(res.precoVendaTotal);
+
+    const elPrecoUnit = document.getElementById('calc-res-preco-venda-unitario');
+    if (elPrecoUnit) elPrecoUnit.textContent = `${App.formatMoney(res.precoVendaUnitario)} / un`;
+
+    const elMargemBadge = document.getElementById('calc-res-margem-badge');
+    if (elMargemBadge) elMargemBadge.textContent = `+${res.margemPct}%`;
+
+    const elLucroTotal = document.getElementById('calc-res-lucro-total');
+    if (elLucroTotal) elLucroTotal.textContent = App.formatMoney(res.lucroTotal);
+
+    const elLucroUnit = document.getElementById('calc-res-lucro-unitario');
+    if (elLucroUnit) elLucroUnit.textContent = `${App.formatMoney(res.lucroUnitario)}`;
   },
 
   // Salva o cálculo atual no histórico permanente
@@ -251,11 +296,16 @@ const CalculadoraModule = {
       custo_operacional: dados.custoOperacional,
       custo_total: dados.custoTotal,
       custo_unitario: dados.custoUnitario,
+      margem_lucro_pct: dados.margemPct,
+      preco_venda_total: dados.precoVendaTotal,
+      preco_venda_unitario: dados.precoVendaUnitario,
+      lucro_total: dados.lucroTotal,
+      lucro_unitario: dados.lucroUnitario,
       observacoes: obs
     };
 
     StorageService.insert('calc_3d_historico', payload);
-    App.toast('Impressão 3D salva no histórico com sucesso! 🎉', 'success');
+    App.toast('Impressão 3D e preço sugerido salvos no histórico! 🎉', 'success');
     this.renderHistorico();
   },
 
@@ -265,6 +315,9 @@ const CalculadoraModule = {
     document.getElementById('calc-form-horas').value = '';
     document.getElementById('calc-form-minutos').value = '';
     document.getElementById('calc-form-qtd-pecas').value = '1';
+    const cfg = StorageService.getCalc3DConfig();
+    const inputMargem = document.getElementById('calc-form-margem');
+    if (inputMargem) inputMargem.value = cfg.margem_lucro_padrao || 100;
     document.getElementById('calc-form-obs').value = '';
     this.calcular();
     App.toast('Calculadora limpa para novo cálculo.', 'info');
@@ -290,6 +343,8 @@ const CalculadoraModule = {
     const totalPecas = filtrados.reduce((acc, it) => acc + (Number(it.quantidade_pecas) || 1), 0);
     const totalGramas = filtrados.reduce((acc, it) => acc + (Number(it.gramas) || 0), 0);
     const totalCusto = filtrados.reduce((acc, it) => acc + (Number(it.custo_total) || 0), 0);
+    const totalVenda = filtrados.reduce((acc, it) => acc + (Number(it.preco_venda_total) || (Number(it.custo_total) * 2)), 0);
+    const totalLucro = filtrados.reduce((acc, it) => acc + (Number(it.lucro_total) || (Number(it.custo_total))), 0);
 
     const elKpiQtd = document.getElementById('calc-hist-kpi-qtd');
     if (elKpiQtd) elKpiQtd.textContent = filtrados.length;
@@ -306,6 +361,12 @@ const CalculadoraModule = {
     const elKpiCusto = document.getElementById('calc-hist-kpi-custo');
     if (elKpiCusto) elKpiCusto.textContent = App.formatMoney(totalCusto);
 
+    const elKpiVenda = document.getElementById('calc-hist-kpi-venda');
+    if (elKpiVenda) elKpiVenda.textContent = App.formatMoney(totalVenda);
+
+    const elKpiLucro = document.getElementById('calc-hist-kpi-lucro');
+    if (elKpiLucro) elKpiLucro.textContent = App.formatMoney(totalLucro);
+
     if (filtrados.length === 0) {
       container.innerHTML = `
         <tr>
@@ -321,6 +382,10 @@ const CalculadoraModule = {
     container.innerHTML = filtrados.map(item => {
       const dataFmt = item.data ? App.formatDate(item.data) : 'Hoje';
       const tempoStr = `${item.tempo_horas || 0}h ${(item.tempo_minutos || 0).toString().padStart(2, '0')}m`;
+      const margem = item.margem_lucro_pct !== undefined ? item.margem_lucro_pct : 100;
+      const precoVenda = item.preco_venda_total || (Number(item.custo_total) * (1 + margem / 100));
+      const precoUnit = item.preco_venda_unitario || (precoVenda / (item.quantidade_pecas || 1));
+      const lucro = item.lucro_total || (precoVenda - item.custo_total);
 
       return `
         <tr>
@@ -350,11 +415,14 @@ const CalculadoraModule = {
             </div>
           </td>
           <td>
-            <div style="font-size: 0.92rem; font-weight: 800; color: #10b981;">
-              ${App.formatMoney(item.custo_total)}
+            <div style="font-size: 0.8rem; color: var(--text-muted);">
+              Custo: <strong style="color: #10b981;">${App.formatMoney(item.custo_total)}</strong> (${App.formatMoney(item.custo_unitario)}/un)
+            </div>
+            <div style="font-size: 0.96rem; font-weight: 800; color: #38bdf8; margin-top: 3px;">
+              ${App.formatMoney(precoVenda)}
             </div>
             <div style="font-size: 0.75rem; color: #34d399;">
-              ${App.formatMoney(item.custo_unitario)} / un
+              ${App.formatMoney(precoUnit)}/un • <span style="color: #fb923c; font-weight: 700;">+${margem}%</span>
             </div>
           </td>
           <td style="text-align: right;">
@@ -362,7 +430,7 @@ const CalculadoraModule = {
               <button class="btn btn-secondary btn-icon" onclick="CalculadoraModule.carregarNaCalculadora('${item.id}')" title="Reutilizar dados na calculadora">
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
               </button>
-              <button class="btn btn-secondary btn-icon" onclick="CalculadoraModule.verDetalhes('${item.id}')" title="Visualizar ficha de custos">
+              <button class="btn btn-secondary btn-icon" onclick="CalculadoraModule.verDetalhes('${item.id}')" title="Visualizar ficha de custos e margem">
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
               </button>
               <button class="btn btn-secondary btn-icon" onclick="CalculadoraModule.excluirHistorico('${item.id}')" style="color: var(--danger);" title="Excluir do histórico">
@@ -388,6 +456,12 @@ const CalculadoraModule = {
     document.getElementById('calc-form-horas').value = item.tempo_horas || '';
     document.getElementById('calc-form-minutos').value = item.tempo_minutos || '';
     document.getElementById('calc-form-qtd-pecas').value = item.quantidade_pecas || '1';
+    
+    const inputMargem = document.getElementById('calc-form-margem');
+    if (inputMargem) {
+      inputMargem.value = item.margem_lucro_pct !== undefined ? item.margem_lucro_pct : 100;
+    }
+
     document.getElementById('calc-form-obs').value = item.observacoes || '';
 
     this.calcular();
@@ -402,6 +476,11 @@ const CalculadoraModule = {
 
     const dataFmt = item.data ? App.formatDate(item.data) : 'Hoje';
     const tempoStr = `${item.tempo_horas || 0}h ${(item.tempo_minutos || 0).toString().padStart(2, '0')}m (${(item.tempo_total_horas || 0).toFixed(2).replace('.', ',')}h)`;
+    const margem = item.margem_lucro_pct !== undefined ? item.margem_lucro_pct : 100;
+    const precoVenda = item.preco_venda_total || (Number(item.custo_total) * (1 + margem / 100));
+    const precoUnit = item.preco_venda_unitario || (precoVenda / (item.quantidade_pecas || 1));
+    const lucro = item.lucro_total || (precoVenda - item.custo_total);
+    const lucroUnit = lucro / (item.quantidade_pecas || 1);
 
     const modalBody = document.getElementById('calc-detalhes-modal-body');
     if (!modalBody) return;
@@ -442,7 +521,7 @@ const CalculadoraModule = {
         Composição Detalhada dos Custos
       </h5>
 
-      <div style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 24px;">
+      <div style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 20px;">
         <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; background: rgba(255, 255, 255, 0.02); border-radius: 8px; border: 1px solid var(--border);">
           <div>
             <div style="font-weight: 600; color: #ffffff;">🧵 1. Custo do Filamento</div>
@@ -468,14 +547,43 @@ const CalculadoraModule = {
         </div>
       </div>
 
-      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px; background: linear-gradient(135deg, rgba(16, 185, 129, 0.15), rgba(16, 185, 129, 0.05)); border: 1.5px solid rgba(16, 185, 129, 0.45); border-radius: 12px; padding: 16px;">
+      <!-- CUSTO TOTAL DE PRODUÇÃO -->
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px; background: rgba(16, 185, 129, 0.08); border: 1.5px solid rgba(16, 185, 129, 0.35); border-radius: 12px; padding: 14px; margin-bottom: 16px;">
         <div>
-          <div style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted);">Custo Total Produção</div>
-          <div style="font-size: 1.45rem; font-weight: 800; color: #10b981; font-family: var(--font-display);">${App.formatMoney(item.custo_total)}</div>
+          <div style="font-size: 0.74rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted);">Custo Total Produção</div>
+          <div style="font-size: 1.35rem; font-weight: 800; color: #10b981; font-family: var(--font-display);">${App.formatMoney(item.custo_total)}</div>
         </div>
         <div>
-          <div style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted);">Custo Unitário p/ Peça</div>
-          <div style="font-size: 1.45rem; font-weight: 800; color: #34d399; font-family: var(--font-display);">${App.formatMoney(item.custo_unitario)}</div>
+          <div style="font-size: 0.74rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted);">Custo Unitário p/ Peça</div>
+          <div style="font-size: 1.35rem; font-weight: 800; color: #34d399; font-family: var(--font-display);">${App.formatMoney(item.custo_unitario)}</div>
+        </div>
+      </div>
+
+      <!-- PREÇO DE VENDA E LUCRO COM MARGEM -->
+      <div style="background: linear-gradient(135deg, rgba(0, 168, 243, 0.16) 0%, rgba(16, 185, 129, 0.12) 100%); border: 1.5px solid rgba(0, 168, 243, 0.45); border-radius: 12px; padding: 16px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+          <span style="font-size: 0.76rem; text-transform: uppercase; letter-spacing: 0.05em; color: #93c5fd; font-weight: 700;">
+            🏷️ Formação de Preço de Venda
+          </span>
+          <span style="background: rgba(249, 115, 22, 0.2); color: #fb923c; border: 1px solid rgba(249, 115, 22, 0.45); font-size: 0.78rem; font-weight: 700; padding: 2px 8px; border-radius: 999px;">
+            Margem: +${margem}%
+          </span>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 12px;">
+          <div>
+            <div style="font-size: 0.72rem; color: var(--text-muted);">Preço de Venda Sugerido (Total)</div>
+            <div style="font-size: 1.5rem; font-weight: 800; color: #38bdf8; font-family: var(--font-display);">${App.formatMoney(precoVenda)}</div>
+          </div>
+          <div>
+            <div style="font-size: 0.72rem; color: var(--text-muted);">Preço Sugerido por Peça</div>
+            <div style="font-size: 1.5rem; font-weight: 800; color: #34d399; font-family: var(--font-display);">${App.formatMoney(precoUnit)}</div>
+          </div>
+        </div>
+
+        <div style="padding-top: 10px; border-top: 1px solid rgba(255, 255, 255, 0.1); display: flex; justify-content: space-between; align-items: center; font-size: 0.85rem;">
+          <span style="color: var(--text-secondary);">Lucro Líquido Estimado:</span>
+          <strong style="color: #10b981; font-size: 1.05rem;">${App.formatMoney(lucro)} (${App.formatMoney(lucroUnit)}/peça)</strong>
         </div>
       </div>
 
@@ -497,12 +605,14 @@ const CalculadoraModule = {
     }
   },
 
-  // Modal de Parâmetros Gerais (Energia e Impressora)
+  // Modal de Parâmetros Gerais (Energia, Impressora e Margem Padrão)
   abrirModalConfig() {
     const cfg = StorageService.getCalc3DConfig();
     document.getElementById('cfg-tarifa-kwh').value = cfg.tarifa_kwh || 0.85;
     document.getElementById('cfg-potencia-watts').value = cfg.potencia_impressora_w || 200;
     document.getElementById('cfg-custo-operacional-hora').value = cfg.custo_operacional_hora || 3.50;
+    const inputMargem = document.getElementById('cfg-margem-lucro-padrao');
+    if (inputMargem) inputMargem.value = cfg.margem_lucro_padrao || 100;
     App.openModal('modal-calc-config');
   },
 
@@ -510,14 +620,16 @@ const CalculadoraModule = {
     const tarifa = parseFloat(document.getElementById('cfg-tarifa-kwh')?.value) || 0;
     const potencia = parseFloat(document.getElementById('cfg-potencia-watts')?.value) || 0;
     const custoHora = parseFloat(document.getElementById('cfg-custo-operacional-hora')?.value) || 0;
+    const margem = parseFloat(document.getElementById('cfg-margem-lucro-padrao')?.value) || 100;
 
     StorageService.saveCalc3DConfig({
       tarifa_kwh: tarifa,
       potencia_impressora_w: potencia,
-      custo_operacional_hora: custoHora
+      custo_operacional_hora: custoHora,
+      margem_lucro_padrao: margem
     });
 
-    App.toast('Parâmetros da impressora e energia atualizados!', 'success');
+    App.toast('Parâmetros da impressora, energia e margem atualizados!', 'success');
     App.closeModal('modal-calc-config');
     this.carregarParametrosConfig();
     this.calcular();
@@ -533,6 +645,9 @@ const CalculadoraModule = {
 
     const badgeOp = document.getElementById('calc-kpi-param-op');
     if (badgeOp) badgeOp.textContent = `${App.formatMoney(cfg.custo_operacional_hora)}/h`;
+
+    const badgeMargem = document.getElementById('calc-kpi-param-margem');
+    if (badgeMargem) badgeMargem.textContent = `${cfg.margem_lucro_padrao || 100}%`;
   },
 
   // Modal de Gestão de Filamentos

@@ -684,6 +684,58 @@ body {
   line-height: 1.1;
 }
 
+/* Card de Preço de Venda Sugerido & Margem de Lucro */
+.calc-sale-box {
+  background: linear-gradient(135deg, rgba(0, 168, 243, 0.18) 0%, rgba(16, 185, 129, 0.14) 100%);
+  border: 1.5px solid rgba(0, 168, 243, 0.45);
+  border-radius: var(--radius-md);
+  padding: 16px 20px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+  transition: var(--transition);
+}
+
+.calc-sale-box:hover {
+  border-color: rgba(0, 168, 243, 0.7);
+  box-shadow: 0 6px 24px rgba(0, 168, 243, 0.2);
+}
+
+.calc-sale-main {
+  font-family: var(--font-display);
+  font-size: 2rem;
+  font-weight: 800;
+  color: #38bdf8;
+  line-height: 1.1;
+  margin-top: 2px;
+}
+
+.calc-sale-sub {
+  font-family: var(--font-display);
+  font-size: 1.65rem;
+  font-weight: 800;
+  color: #34d399;
+  line-height: 1.1;
+  margin-top: 2px;
+}
+
+.preset-chip {
+  padding: 4px 10px;
+  font-size: 0.74rem;
+  font-weight: 700;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 6px;
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.preset-chip:hover, .preset-chip:active {
+  background: rgba(249, 115, 22, 0.25);
+  border-color: #fb923c;
+  color: #fb923c;
+  transform: translateY(-1px);
+}
+
 @media (max-width: 992px) {
   .calc-grid {
     grid-template-columns: 1fr;
@@ -696,6 +748,12 @@ body {
   .calc-highlight-box {
     grid-template-columns: 1fr;
     gap: 12px;
+  }
+  .calc-sale-main {
+    font-size: 1.75rem;
+  }
+  .calc-sale-sub {
+    font-size: 1.45rem;
   }
 }
 
