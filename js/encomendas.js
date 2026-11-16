@@ -139,10 +139,10 @@ const EncomendasModule = {
     const htmlGrupos = statusGrupos.map(grupo => {
       let ordensGrupo = encomendas.filter(e => {
         if (grupo.key === 'Finalizadas') {
-          return (e.status === 'Entregue' || e.status === 'Pronto') && e.pagamento_status === 'Pago';
+          return e.status === 'Entregue' || e.status === 'Cancelada' || (e.status === 'Pronto' && e.pagamento_status === 'Pago');
         }
         if (!filtroStatus && grupo.key === 'Pronto') {
-          const isFin = (e.status === 'Entregue' || e.status === 'Pronto') && e.pagamento_status === 'Pago';
+          const isFin = e.status === 'Entregue' || e.status === 'Cancelada' || (e.status === 'Pronto' && e.pagamento_status === 'Pago');
           if (isFin) return false;
         }
         return e.status === grupo.key;
@@ -381,7 +381,7 @@ const EncomendasModule = {
     
     StorageService.update('encomendas', id, { status: newStatus });
     
-    if ((newStatus === 'Pronto' || newStatus === 'Entregue') && enc.pagamento_status === 'Pago') {
+    if (newStatus === 'Entregue' || newStatus === 'Cancelada' || (newStatus === 'Pronto' && enc.pagamento_status === 'Pago')) {
       App.toast(`Status alterado para "${newStatus}"! Encomenda movida para Finalizados. 🎉`, 'success');
     } else {
       App.toast(`Status da encomenda #${id.substring(id.length - 5)} alterado para "${newStatus}".`, 'info');
@@ -405,8 +405,8 @@ const EncomendasModule = {
     
     StorageService.update('encomendas', id, updateData);
     
-    if (newPagto === 'Pago' && (enc.status === 'Pronto' || enc.status === 'Entregue')) {
-      App.toast(`Pagamento quitado! Encomenda movida para Finalizados. 🎉`, 'success');
+    if (enc.status === 'Entregue' || enc.status === 'Cancelada' || (enc.status === 'Pronto' && newPagto === 'Pago')) {
+      App.toast(`Pagamento atualizado! Encomenda no histórico de Finalizados. 🎉`, 'success');
     } else {
       App.toast(`Financeiro da encomenda #${id.substring(id.length - 5)} alterado para "${newPagto}".`, 'info');
     }
@@ -775,19 +775,25 @@ const EncomendasModule = {
     StorageService.update('encomendas', id, {
       status: 'Entregue'
     });
-    App.toast('Encomenda marcada como Entregue!', 'success');
+    App.toast('Encomenda marcada como Entregue e movida para Finalizados! 🎉', 'success');
     this.render();
     this.renderFinalizados();
+    App.renderDashboard();
   },
 
   renderFinalizados() {
     const encomendas = StorageService.get('encomendas');
     const finalizadas = encomendas.filter(e => {
-      if (e.status === 'Cancelada') return false;
-      return (e.status === 'Entregue' || e.status === 'Pronto') && e.pagamento_status === 'Pago';
+      // Encomendas com status Entregue ou Cancelada vão SEMPRE para Finalizados
+      if (e.status === 'Entregue' || e.status === 'Cancelada') return true;
+      // Encomendas Prontas com pagamento quitado também vão para Finalizados
+      return e.status === 'Pronto' && e.pagamento_status === 'Pago';
     }).sort((a, b) => ((b.data_entrega_prevista || b.data_pedido || '') > (a.data_entrega_prevista || a.data_pedido || '') ? 1 : -1));
 
-    const totalFaturado = finalizadas.reduce((acc, e) => acc + (Number(e.valor_pago) || Number(e.valor_total) || 0), 0);
+    const totalFaturado = finalizadas.reduce((acc, e) => {
+      if (e.status === 'Cancelada') return acc;
+      return acc + (Number(e.valor_pago) || Number(e.valor_total) || 0);
+    }, 0);
     const totalEl = document.getElementById('finalizados-total-valor');
     if (totalEl) totalEl.textContent = App.formatMoney(totalFaturado);
 
@@ -798,7 +804,7 @@ const EncomendasModule = {
     if (!tbody) return;
 
     if (finalizadas.length === 0) {
-      tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; padding: 36px; color: var(--text-muted);"><div style="font-size: 1.5rem; margin-bottom: 8px;">✅</div>Nenhuma encomenda finalizada ainda. Quando uma encomenda estiver pronta e com o pagamento quitado, ela aparecerá automaticamente aqui no histórico.</td></tr>`;
+      tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; padding: 36px; color: var(--text-muted);"><div style="font-size: 1.5rem; margin-bottom: 8px;">✅</div>Nenhuma encomenda finalizada ainda. Quando uma encomenda for marcada como Entregue, Cancelada ou estiver Pronta e Quitada, ela aparecerá automaticamente aqui no histórico.</td></tr>`;
       return;
     }
 

@@ -92,7 +92,7 @@ const App = {
       dashboard: { title: 'Painel Geral & Indicadores', sub: 'Visão executiva do estúdio de personalização' },
       propostas: { title: 'Orçamentos & Propostas', sub: 'Crie orçamentos de alto valor prontos para aprovar e produzir' },
       encomendas: { title: 'Encomendas & Produção', sub: 'Controle de prazos, etapas e personalizações' },
-      finalizados: { title: 'Histórico de Finalizados', sub: 'Encomendas entregues e quitadas' },
+      finalizados: { title: 'Histórico de Finalizados', sub: 'Encomendas entregues, canceladas e concluídas' },
       estoque: { title: 'Estoque de Insumos', sub: 'Filamentos 3D, chapas laser, copos e embalagens' },
       financeiro: { title: 'Financeiro & Fluxo de Caixa', sub: 'Entradas, despesas operacionais e balanço' },
       calculadora: { title: 'Calculadora de Filamentos', sub: 'Custos de produção 3D: filamento, energia elétrica e desgaste operacional' },
@@ -131,15 +131,14 @@ const App = {
     const est = StorageService.get('estoque');
     const crm = StorageService.get('crm_cards');
 
-    // 1. Encomendas em aberto (exclui canceladas e finalizadas com sucesso)
+    // 1. Encomendas Finalizadas (Entregues, Canceladas ou Prontas e Quitadas)
     const encFinalizadas = enc.filter(e => {
-      if (e.status === 'Cancelada') return false;
-      return (e.status === 'Entregue' || e.status === 'Pronto') && e.pagamento_status === 'Pago';
+      return e.status === 'Entregue' || e.status === 'Cancelada' || (e.status === 'Pronto' && e.pagamento_status === 'Pago');
     });
 
     const encAbertas = enc.filter(e => {
-      if (e.status === 'Cancelada') return false;
-      const isFin = (e.status === 'Entregue' || e.status === 'Pronto') && e.pagamento_status === 'Pago';
+      if (e.status === 'Entregue' || e.status === 'Cancelada') return false;
+      const isFin = e.status === 'Pronto' && e.pagamento_status === 'Pago';
       return !isFin;
     });
 
