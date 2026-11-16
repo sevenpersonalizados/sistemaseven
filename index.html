@@ -48,126 +48,129 @@
   <meta http-equiv="Expires" content="0">
 
   <!-- Estilos Customizados -->
-  <link rel="stylesheet" href="css/styles.css?v=22">
+  <link rel="stylesheet" href="css/styles.css?v=27">
 </head>
 
 <body>
 
-  <div class="app-container">
+  <!-- OVERLAY ESCURO PARA QUANDO A GAVETA DO MENU ABRIR NO CELULAR -->
+  <div class="sidebar-backdrop" id="sidebar-backdrop" onclick="App.closeSidebar(event)"></div>
 
-    <!-- SIDEBAR DE NAVEGAÇÃO -->
-    <aside class="sidebar" id="app-sidebar">
-      <div class="sidebar-header" style="display: flex; justify-content: space-between; align-items: center;">
-        <img src="logo.png" alt="Seven Personalizados" class="brand-logo-img">
-        <button type="button" id="close-sidebar-btn" class="btn-icon mobile-only" onclick="App.closeSidebar(event)"
-          style="background: rgba(255, 255, 255, 0.08); border: 1px solid rgba(255, 255, 255, 0.15); border-radius: 8px; color: #ffffff; font-size: 1.2rem; cursor: pointer; width: 34px; height: 34px; display: flex; align-items: center; justify-content: center;"
-          title="Fechar Menu">✕</button>
-      </div>
+  <!-- SIDEBAR DE NAVEGAÇÃO -->
+  <aside class="sidebar" id="app-sidebar">
+    <div class="sidebar-header" style="display: flex; justify-content: space-between; align-items: center;">
+      <img src="logo.png" alt="Seven Personalizados" class="brand-logo-img">
+      <button type="button" id="close-sidebar-btn" class="btn-icon mobile-only" onclick="App.closeSidebar(event)"
+        style="background: rgba(255, 255, 255, 0.08); border: 1px solid rgba(255, 255, 255, 0.15); border-radius: 8px; color: #ffffff; font-size: 1.2rem; cursor: pointer; width: 34px; height: 34px; display: flex; align-items: center; justify-content: center;"
+        title="Fechar Menu">✕</button>
+    </div>
 
-      <ul class="nav-menu">
-        <li class="nav-section-title">Principal</li>
-        <li class="nav-item">
-          <button type="button" class="active" data-view="dashboard" id="nav-btn-dashboard">
-            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <rect x="3" y="3" width="7" height="7" />
-              <rect x="14" y="3" width="7" height="7" />
-              <rect x="14" y="14" width="7" height="7" />
-              <rect x="3" y="14" width="7" height="7" />
-            </svg>
-            <span>Painel Geral</span>
-          </button>
-        </li>
-        <li class="nav-item">
-          <button type="button" data-view="propostas" id="nav-btn-propostas">
-            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-              <polyline points="14 2 14 8 20 8" />
-              <line x1="16" y1="13" x2="8" y2="13" />
-              <line x1="16" y1="17" x2="8" y2="17" />
-              <polyline points="10 9 9 9 8 9" />
-            </svg>
-            <span>Orçamentos</span>
-            <span class="badge-counter" id="nav-badge-propostas">0</span>
-          </button>
-        </li>
+    <ul class="nav-menu">
+      <li class="nav-section-title">Principal</li>
+      <li class="nav-item">
+        <button type="button" class="active" data-view="dashboard" id="nav-btn-dashboard">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="3" width="7" height="7" />
+            <rect x="14" y="3" width="7" height="7" />
+            <rect x="14" y="14" width="7" height="7" />
+            <rect x="3" y="14" width="7" height="7" />
+          </svg>
+          <span>Painel Geral</span>
+        </button>
+      </li>
+      <li class="nav-item">
+        <button type="button" data-view="propostas" id="nav-btn-propostas">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+            <polyline points="14 2 14 8 20 8" />
+            <line x1="16" y1="13" x2="8" y2="13" />
+            <line x1="16" y1="17" x2="8" y2="17" />
+            <polyline points="10 9 9 9 8 9" />
+          </svg>
+          <span>Orçamentos</span>
+          <span class="badge-counter" id="nav-badge-propostas">0</span>
+        </button>
+      </li>
 
-        <li class="nav-section-title">Operação & Vendas</li>
-        <li class="nav-item">
-          <button type="button" data-view="encomendas" id="nav-btn-encomendas">
-            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" />
-              <line x1="3" y1="6" x2="21" y2="6" />
-              <path d="M16 10a4 4 0 0 1-8 0" />
-            </svg>
-            <span>Encomendas</span>
-            <span class="badge-counter" id="nav-badge-encomendas">0</span>
-          </button>
-        </li>
-        <li class="nav-item">
-          <button type="button" data-view="finalizados" id="nav-btn-finalizados">
-            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
-              <polyline points="22 4 12 14.01 9 11.01" />
-            </svg>
-            <span>Finalizados</span>
-            <span class="badge-counter" id="nav-badge-finalizados">0</span>
-          </button>
-        </li>
-        <li class="nav-item">
-          <button type="button" data-view="estoque" id="nav-btn-estoque">
-            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path
-                d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
-              <polyline points="3.27 6.96 12 12.01 20.73 6.96" />
-              <line x1="12" y1="22.08" x2="12" y2="12" />
-            </svg>
-            <span>Estoque Insumos</span>
-            <span class="badge-counter" id="nav-badge-estoque">0</span>
-          </button>
-        </li>
-        <li class="nav-item">
-          <button type="button" data-view="calculadora" id="nav-btn-calculadora">
-            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <circle cx="12" cy="12" r="9" />
-              <circle cx="12" cy="12" r="3.5" />
-              <path d="M12 3v5.5M12 15.5V21M3 12h5.5M15.5 12H21" />
-            </svg>
-            <span>Calculadora de Filamentos</span>
-          </button>
-        </li>
+      <li class="nav-section-title">Operação & Vendas</li>
+      <li class="nav-item">
+        <button type="button" data-view="encomendas" id="nav-btn-encomendas">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" />
+            <line x1="3" y1="6" x2="21" y2="6" />
+            <path d="M16 10a4 4 0 0 1-8 0" />
+          </svg>
+          <span>Encomendas</span>
+          <span class="badge-counter" id="nav-badge-encomendas">0</span>
+        </button>
+      </li>
+      <li class="nav-item">
+        <button type="button" data-view="finalizados" id="nav-btn-finalizados">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+            <polyline points="22 4 12 14.01 9 11.01" />
+          </svg>
+          <span>Finalizados</span>
+          <span class="badge-counter" id="nav-badge-finalizados">0</span>
+        </button>
+      </li>
+      <li class="nav-item">
+        <button type="button" data-view="estoque" id="nav-btn-estoque">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path
+              d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
+            <polyline points="3.27 6.96 12 12.01 20.73 6.96" />
+            <line x1="12" y1="22.08" x2="12" y2="12" />
+          </svg>
+          <span>Estoque Insumos</span>
+          <span class="badge-counter" id="nav-badge-estoque">0</span>
+        </button>
+      </li>
+      <li class="nav-item">
+        <button type="button" data-view="calculadora" id="nav-btn-calculadora">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="9" />
+            <circle cx="12" cy="12" r="3.5" />
+            <path d="M12 3v5.5M12 15.5V21M3 12h5.5M15.5 12H21" />
+          </svg>
+          <span>Calculadora de Filamentos</span>
+        </button>
+      </li>
 
-        <li class="nav-section-title">Financeiro & Sistema</li>
-        <li class="nav-item">
-          <button type="button" data-view="financeiro" id="nav-btn-financeiro">
-            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <line x1="12" y1="1" x2="12" y2="23" />
-              <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
-            </svg>
-            <span>Financeiro</span>
-          </button>
-        </li>
-        <li class="nav-item">
-          <button type="button" data-view="configuracoes" id="nav-btn-configuracoes">
-            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <circle cx="12" cy="12" r="3" />
-              <path
-                d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" />
-            </svg>
-            <span>Configurações</span>
-          </button>
-        </li>
-      </ul>
+      <li class="nav-section-title">Financeiro & Sistema</li>
+      <li class="nav-item">
+        <button type="button" data-view="financeiro" id="nav-btn-financeiro">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="12" y1="1" x2="12" y2="23" />
+            <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
+          </svg>
+          <span>Financeiro</span>
+        </button>
+      </li>
+      <li class="nav-item">
+        <button type="button" data-view="configuracoes" id="nav-btn-configuracoes">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="3" />
+            <path
+              d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" />
+          </svg>
+          <span>Configurações</span>
+        </button>
+      </li>
+    </ul>
 
-      <div class="sidebar-footer">
-        <div class="user-profile">
-          <div class="avatar">SP</div>
-          <div class="user-info">
-            <div class="user-name">Administrador</div>
-            <div class="user-role">Seven Personalizados</div>
-          </div>
+    <div class="sidebar-footer">
+      <div class="user-profile">
+        <div class="avatar">SP</div>
+        <div class="user-info">
+          <div class="user-name">Administrador</div>
+          <div class="user-role">Seven Personalizados</div>
         </div>
       </div>
-    </aside>
+    </div>
+  </aside>
+
+  <div class="app-container">
 
     <!-- ÁREA PRINCIPAL -->
     <main class="main-wrapper">
@@ -192,17 +195,9 @@
         </div>
 
         <div class="topbar-actions">
-          <button type="button" id="notification-toggle-btn" class="btn btn-secondary btn-sm"
-            onclick="NotificationModule.requestPermission()" title="Ativar Notificações no iPhone / Computador">
-            <span>🔔</span> <span class="desktop-only">Notificações</span>
-          </button>
           <button type="button" id="cloud-sync-badge" class="btn btn-secondary btn-sm"
             onclick="StorageService.syncFromSupabase()" title="Clique para sincronizar com o banco de dados Supabase">
             🟢 <span class="desktop-only">Tempo Real ⚡</span>
-          </button>
-          <button type="button" class="btn btn-secondary btn-sm"
-            onclick="NotificationModule.forcarAtualizacaoApp()" title="Atualizar versão e limpar cache do app">
-            <span>🔄</span> <span class="desktop-only">Atualizar App</span>
           </button>
           <button class="btn btn-secondary btn-sm desktop-only" onclick="PropostasModule.openNewModal()">
             <span>📄</span> Novo Orçamento
@@ -1563,23 +1558,20 @@
     </button>
   </nav>
 
-  <!-- OVERLAY ESCURO PARA QUANDO A GAVETA DO MENU ABRIR NO CELULAR -->
-  <div class="sidebar-backdrop" id="sidebar-backdrop" onclick="App.closeSidebar(event)"></div>
-
   <!-- CONTAINER DE TOASTS -->
   <div class="toast-container" id="toast-container"></div>
 
-  <!-- SCRIPTS DO SISTEMA (com cache-busting v26) -->
-  <script src="js/notifications.js?v=26"></script>
-  <script src="js/storage.js?v=26"></script>
-  <script src="js/crm.js?v=26"></script>
-  <script src="js/encomendas.js?v=26"></script>
-  <script src="js/estoque.js?v=26"></script>
-  <script src="js/financeiro.js?v=26"></script>
-  <script src="js/propostas.js?v=26"></script>
-  <script src="js/calculadora.js?v=26"></script>
-  <script src="js/configuracoes.js?v=26"></script>
-  <script src="js/app.js?v=26"></script>
+  <!-- SCRIPTS DO SISTEMA (com cache-busting v27) -->
+  <script src="js/notifications.js?v=27"></script>
+  <script src="js/storage.js?v=27"></script>
+  <script src="js/crm.js?v=27"></script>
+  <script src="js/encomendas.js?v=27"></script>
+  <script src="js/estoque.js?v=27"></script>
+  <script src="js/financeiro.js?v=27"></script>
+  <script src="js/propostas.js?v=27"></script>
+  <script src="js/calculadora.js?v=27"></script>
+  <script src="js/configuracoes.js?v=27"></script>
+  <script src="js/app.js?v=27"></script>
 </body>
 
 </html>

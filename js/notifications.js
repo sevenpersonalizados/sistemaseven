@@ -255,54 +255,8 @@ const NotificationModule = {
   },
 
   async show({ title, body, icon = './favicon-192.png', tag = 'seven-alert' }) {
-    // 1. Toca som suave
-    this.playChime();
-
-    // 2. Exibe o banner flutuante em destaque no topo da tela do app
-    this.showInAppBanner({ title, body });
-
-    // 3. Se a permissão nativa foi concedida, dispara notificação do sistema / banner do celular
-    if (this.getPermission() === 'granted') {
-      try {
-        if ('serviceWorker' in navigator) {
-          const reg = this.swRegistration || (await Promise.race([
-            navigator.serviceWorker.ready,
-            new Promise(resolve => setTimeout(resolve, 1500))
-          ]));
-
-          if (reg && reg.showNotification) {
-            await reg.showNotification(title, {
-              body: body,
-              icon: icon,
-              badge: './favicon-192.png',
-              vibrate: [200, 100, 200],
-              tag: tag,
-              renotify: true,
-              data: { url: './index.html' }
-            });
-            return;
-          }
-        }
-      } catch (err) {
-        console.warn('Tentando fallback de notificação:', err);
-      }
-
-      // Fallback via postMessage para o Service Worker
-      if (navigator.serviceWorker && navigator.serviceWorker.controller) {
-        navigator.serviceWorker.controller.postMessage({
-          action: 'SHOW_NOTIFICATION',
-          payload: { title, body, icon, tag }
-        });
-        return;
-      }
-
-      // Fallback via API clássica de Notification
-      try {
-        if ('Notification' in window) {
-          new Notification(title, { body, icon });
-        }
-      } catch (e) {}
-    }
+    // Notificações ativas desativadas a pedido do usuário
+    return;
   },
 
   // Força limpeza total de caches e Service Worker no celular

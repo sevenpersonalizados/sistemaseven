@@ -729,32 +729,6 @@ const StorageService = {
         }
       }
 
-      // Sincroniza alertas recentes para garantir entrega em celulares em background
-      try {
-        const threeMinAgo = new Date(Date.now() - 3 * 60 * 1000).toISOString();
-        const altRes = await fetch(`${SUPABASE_CONFIG.url}/rest/v1/alertas_sistema?created_at=gte.${threeMinAgo}&order=created_at.desc&limit=5`, {
-          headers: this.getHeaders()
-        });
-        if (altRes.ok) {
-          const alerts = await altRes.json();
-          if (Array.isArray(alerts)) {
-            alerts.forEach(a => {
-              const seenKey = 'seven_seen_alt_' + a.id;
-              if (!sessionStorage.getItem(seenKey) && !this.isLocalAction(a.id)) {
-                sessionStorage.setItem(seenKey, '1');
-                if (typeof NotificationModule !== 'undefined') {
-                  NotificationModule.show({
-                    title: a.titulo || '🔔 Alerta Seven Personalizados',
-                    body: a.mensagem || 'Notificação recebida com sucesso!',
-                    tag: a.id
-                  });
-                }
-              }
-            });
-          }
-        }
-      } catch (altErr) {}
-
       this.isCloudConnected = true;
       this.updateSyncBadge('online', 'Tempo Real Ativo ⚡');
     } catch (err) {

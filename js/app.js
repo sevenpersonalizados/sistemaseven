@@ -494,10 +494,12 @@ const App = {
       sb.style.setProperty('-webkit-transform', 'translateX(0)', 'important');
       sb.style.setProperty('transform', 'translateX(0)', 'important');
       sb.style.setProperty('display', 'flex', 'important');
+      sb.style.setProperty('z-index', '99999', 'important');
     }
     if (bd) {
       bd.classList.add('active');
       bd.style.setProperty('display', 'block', 'important');
+      bd.style.setProperty('z-index', '99980', 'important');
     }
     document.body.classList.add('sidebar-open');
     document.body.style.overflow = 'hidden';
@@ -515,10 +517,12 @@ const App = {
       sb.style.removeProperty('-webkit-transform');
       sb.style.removeProperty('transform');
       sb.style.removeProperty('display');
+      sb.style.removeProperty('z-index');
     }
     if (bd) {
       bd.classList.remove('active');
       bd.style.setProperty('display', 'none', 'important');
+      bd.style.removeProperty('z-index');
     }
     document.body.classList.remove('sidebar-open');
     document.body.style.overflow = '';

@@ -1456,10 +1456,10 @@ select option:checked {
   display: none !important;
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.65) !important;
-  backdrop-filter: blur(2px) !important;
-  -webkit-backdrop-filter: blur(2px) !important;
-  z-index: 2900 !important;
+  background: rgba(0, 0, 0, 0.72) !important;
+  backdrop-filter: blur(4px) !important;
+  -webkit-backdrop-filter: blur(4px) !important;
+  z-index: 99980 !important;
   opacity: 0;
   pointer-events: none;
   transition: opacity 0.25s ease;
@@ -1768,7 +1768,7 @@ select option:checked {
     max-width: 85vw !important;
     height: 100vh !important;
     height: 100dvh !important;
-    z-index: 3000 !important;
+    z-index: 99990 !important;
     background: #0f172a !important;
     backdrop-filter: none !important;
     -webkit-backdrop-filter: none !important;
@@ -1784,6 +1784,7 @@ select option:checked {
   .sidebar.open {
     -webkit-transform: translateX(0) !important;
     transform: translateX(0) !important;
+    z-index: 99999 !important;
   }
 
   /* Oculta a barra de rodapé do app enquanto o menu estiver aberto */
@@ -2055,6 +2056,8 @@ select option:checked {
   /* Oculta completamente a barra inferior quando qualquer modal estiver aberto */
   body.modal-open .mobile-bottom-nav,
   body.modal-open .bottom-nav-fab,
+  body.modal-open .sidebar-backdrop,
+  body.modal-open .sidebar,
   body:has(.modal-overlay.active) .mobile-bottom-nav,
   body:has(.modal-overlay.active) .bottom-nav-fab {
     display: none !important;
@@ -2066,26 +2069,34 @@ select option:checked {
   .modal-overlay {
     position: fixed !important;
     inset: 0 !important;
-    z-index: 9999 !important;
+    z-index: 100000 !important;
     padding: 0 !important;
-    display: flex !important;
+    display: none !important;
     align-items: flex-end !important;
     background: rgba(0, 0, 0, 0.85) !important;
+    backdrop-filter: blur(4px) !important;
+    -webkit-backdrop-filter: blur(4px) !important;
+  }
+
+  .modal-overlay.active {
+    display: flex !important;
   }
 
   .modal-container {
     width: 100% !important;
     max-width: 100% !important;
-    max-height: 94vh !important;
-    max-height: 94dvh !important;
+    height: auto !important;
+    max-height: 90vh !important;
+    max-height: 90dvh !important;
     margin: 0 !important;
     border-radius: 20px 20px 0 0 !important;
     padding: 0 !important;
     display: flex !important;
     flex-direction: column !important;
     box-shadow: 0 -10px 50px rgba(0, 0, 0, 0.95) !important;
-    z-index: 10000 !important;
+    z-index: 100001 !important;
     background: #0f172a !important;
+    overflow: hidden !important;
   }
 
   .modal-header {
@@ -2096,29 +2107,30 @@ select option:checked {
   }
 
   .modal-body {
-    padding: 16px 20px !important;
+    padding: 16px 20px 24px 20px !important;
     flex: 1 1 auto !important;
-    max-height: calc(94dvh - 145px) !important;
+    max-height: calc(90dvh - 130px) !important;
     overflow-y: auto !important;
     -webkit-overflow-scrolling: touch !important;
   }
 
   .modal-footer {
-    padding: 14px 20px calc(24px + env(safe-area-inset-bottom, 16px)) 20px !important;
+    padding: 12px 18px calc(16px + env(safe-area-inset-bottom, 14px)) 18px !important;
     flex-shrink: 0 !important;
     background: #0b1120 !important;
-    border-top: 1px solid rgba(255, 255, 255, 0.12) !important;
+    border-top: 1px solid rgba(255, 255, 255, 0.15) !important;
     display: flex !important;
     gap: 10px !important;
     position: sticky !important;
     bottom: 0 !important;
-    z-index: 10001 !important;
+    z-index: 100002 !important;
+    box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.5) !important;
   }
 
   .modal-footer .btn {
     flex: 1 !important;
-    padding: 13px 14px !important;
-    font-size: 0.95rem !important;
+    padding: 12px 14px !important;
+    font-size: 0.92rem !important;
     font-weight: 700 !important;
     border-radius: 10px !important;
   }
