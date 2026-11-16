@@ -1224,46 +1224,42 @@
             <input type="text" id="prop-telefone" class="form-control" placeholder="(00) 00000-0000">
           </div>
           <div class="form-group">
-            <label>Título do Orçamento *</label>
-            <input type="text" id="prop-titulo" class="form-control"
-              placeholder="Ex: Orçamento de Brindes e Peças Exclusivas">
+            <label>Categoria de Produção *</label>
+            <select id="prop-categoria" class="form-control" required></select>
           </div>
         </div>
+        <div class="form-group">
+          <label>Título do Orçamento *</label>
+          <input type="text" id="prop-titulo" class="form-control"
+            placeholder="Ex: Orçamento de Brindes e Peças Exclusivas">
+        </div>
 
-        <!-- ITENS DETALHADOS DA PROPOSTA (COMO NA ENCOMENDA) -->
-        <div class="panel-box"
-          style="margin: 16px 0; padding: 16px; background: rgba(0, 168, 243, 0.03); border-color: rgba(0, 168, 243, 0.25);">
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+        <!-- Bloco de Itens & Personalização da Proposta (Zero Barra de Rolagem Horizontal) -->
+        <div style="margin: 20px 0;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 8px;">
             <div>
-              <h4 style="margin: 0; font-size: 0.95rem; color: var(--text-primary);">Itens Detalhados do Orçamento</h4>
-              <p style="margin: 2px 0 0 0; font-size: 0.76rem; color: var(--text-muted);">Defina produtos,
-                personalização e valores unitários</p>
+              <label style="font-weight: 700; color: var(--text-primary); font-size: 0.95rem; display: flex; align-items: center; gap: 6px;">
+                <span>🧵</span> Itens & Personalização do Orçamento
+              </label>
+              <div style="font-size: 0.74rem; color: var(--text-muted);">
+                Defina produtos, cores, arte e valores com opções pré-programadas
+              </div>
             </div>
-            <button type="button" class="btn btn-secondary" onclick="PropostasModule.addItemRow()"
-              style="padding: 5px 12px; font-size: 0.78rem;">
-              <span>+</span> Adicionar Item
-            </button>
+            <button type="button" class="btn btn-primary" style="padding: 6px 14px; font-size: 0.8rem;"
+              onclick="PropostasModule.addItemRow()">+ Adicionar Item</button>
           </div>
-          <div class="table-responsive">
-            <table class="modern-table">
-              <thead>
-                <tr>
-                  <th>Produto / Item</th>
-                  <th>Personalização / Detalhes</th>
-                  <th style="width: 80px;">Qtd</th>
-                  <th style="width: 110px;">Valor Un.</th>
-                  <th style="width: 110px;">Subtotal</th>
-                  <th style="width: 40px;"></th>
-                </tr>
-              </thead>
-              <tbody id="prop-itens-tbody"></tbody>
-            </table>
-          </div>
-          <div
-            style="display: flex; justify-content: space-between; align-items: center; margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--border);">
-            <span style="font-size: 0.82rem; color: var(--text-muted);">Soma automática de todos os itens</span>
-            <div style="font-size: 1.05rem;">
-              Investimento Total: <strong id="prop-itens-total-badge" style="color: var(--primary);">R$ 0,00</strong>
+
+          <!-- Container dos Cards de Itens (100% responsivo, sem scroll horizontal) -->
+          <div id="prop-itens-container" style="display: flex; flex-direction: column; gap: 12px;"></div>
+
+          <!-- Datalist com sugestões dinâmicas de produtos estabelecidos para o orçamento -->
+          <datalist id="prop-datalist-produtos"></datalist>
+
+          <!-- Resumo de Total dos Itens -->
+          <div style="background: rgba(0, 0, 0, 0.35); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 12px 16px; margin-top: 10px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
+            <span style="font-size: 0.85rem; color: var(--text-secondary);">Soma dos itens orçados:</span>
+            <div style="font-size: 1.15rem; font-weight: 800; color: #34d399;">
+              Investimento Total: <span id="prop-itens-total-badge" style="color: var(--accent); margin-left: 4px;">R$ 0,00</span>
             </div>
           </div>
           <input type="hidden" id="prop-investimento" value="0">
@@ -1557,17 +1553,17 @@
   <!-- CONTAINER DE TOASTS -->
   <div class="toast-container" id="toast-container"></div>
 
-  <!-- SCRIPTS DO SISTEMA (com cache-busting v23) -->
-  <script src="js/notifications.js?v=23"></script>
-  <script src="js/storage.js?v=23"></script>
-  <script src="js/crm.js?v=23"></script>
-  <script src="js/encomendas.js?v=23"></script>
-  <script src="js/estoque.js?v=23"></script>
-  <script src="js/financeiro.js?v=23"></script>
-  <script src="js/propostas.js?v=23"></script>
-  <script src="js/calculadora.js?v=23"></script>
-  <script src="js/configuracoes.js?v=23"></script>
-  <script src="js/app.js?v=23"></script>
+  <!-- SCRIPTS DO SISTEMA (com cache-busting v24) -->
+  <script src="js/notifications.js?v=24"></script>
+  <script src="js/storage.js?v=24"></script>
+  <script src="js/crm.js?v=24"></script>
+  <script src="js/encomendas.js?v=24"></script>
+  <script src="js/estoque.js?v=24"></script>
+  <script src="js/financeiro.js?v=24"></script>
+  <script src="js/propostas.js?v=24"></script>
+  <script src="js/calculadora.js?v=24"></script>
+  <script src="js/configuracoes.js?v=24"></script>
+  <script src="js/app.js?v=24"></script>
 </body>
 
 </html>

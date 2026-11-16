@@ -80,20 +80,24 @@ const PropostasModule = {
 
     container.innerHTML = filtradas.map(p => {
       const itensResumo = (p.itens && p.itens.length > 0)
-        ? p.itens.map(i => `${i.quantidade}x ${i.produto_nome}`).join(', ')
+        ? p.itens.map(i => `${i.quantidade}x ${i.produto_nome}${i.cor ? ` (${i.cor})` : ''}`).join(', ')
         : (p.escopo || 'Itens personalizados');
+
+      const coresList = [...new Set((p.itens || []).filter(i => i.cor).map(i => i.cor))];
 
       return `
         <div class="panel-box" style="margin-bottom: 0; display: flex; flex-direction: column; justify-content: space-between; border-color: rgba(245, 158, 11, 0.45); box-shadow: 0 4px 18px rgba(245, 158, 11, 0.08);">
           <div>
             <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; gap: 8px; flex-wrap: wrap;">
-              <div>
+              <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
                 <span class="status-badge" style="background: rgba(245, 158, 11, 0.2); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.5);">
                   ⏳ Aguardando Aprovação
                 </span>
-                <div style="font-size: 0.70rem; color: #fbbf24; margin-top: 3px; font-weight: 600;">
-                  • Permanece em Orçamentos até aprovação
-                </div>
+                ${p.categoria ? `
+                  <span class="badge-cor-tag" style="background: rgba(0, 168, 243, 0.16); color: #38bdf8; border: 1px solid rgba(0, 168, 243, 0.45); font-size: 0.72rem; padding: 2px 8px; border-radius: 999px;">
+                    🏷️ ${App.escapeHtml(p.categoria)}
+                  </span>
+                ` : ''}
               </div>
               <span style="font-size: 0.75rem; color: var(--text-muted);">${App.formatDate(p.criada_em)}</span>
             </div>
@@ -106,7 +110,14 @@ const PropostasModule = {
             </div>
 
             <div style="font-size: 0.82rem; color: var(--text-secondary); line-height: 1.5; margin-bottom: 14px; background: rgba(255,255,255,0.02); padding: 8px 10px; border-radius: 6px; border: 1px solid var(--border);">
-              <div style="font-size: 0.70rem; color: var(--text-muted); text-transform: uppercase; font-weight: 700;">Itens Orçados:</div>
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; gap: 6px; flex-wrap: wrap;">
+                <span style="font-size: 0.70rem; color: var(--text-muted); text-transform: uppercase; font-weight: 700;">Itens Orçados:</span>
+                ${coresList.length > 0 ? `
+                  <span class="badge-cor-tag" style="font-size: 0.70rem; padding: 1px 7px;" title="Cores: ${coresList.join(', ')}">
+                    🎨 ${App.escapeHtml(coresList.join(', '))}
+                  </span>
+                ` : ''}
+              </div>
               <div style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 2px;" title="${App.escapeHtml(itensResumo)}">
                 ${App.escapeHtml(itensResumo)}
               </div>
@@ -151,6 +162,15 @@ const PropostasModule = {
     document.getElementById('prop-cliente').value = '';
     document.getElementById('prop-contato').value = '';
     document.getElementById('prop-telefone').value = '';
+
+    // Popula categorias cadastradas dinamicamente (igual na Nova Encomenda)
+    const catSelect = document.getElementById('prop-categoria');
+    if (catSelect) {
+      const cats = StorageService.getCategoriasProducao();
+      catSelect.innerHTML = cats.map(c => `<option value="${App.escapeHtml(c)}">${App.escapeHtml(c)}</option>`).join('');
+      catSelect.value = cats[0] || '3D';
+    }
+
     document.getElementById('prop-titulo').value = 'Orçamento de Produtos Personalizados Exclusivos';
     document.getElementById('prop-escopo').value = 'Fabricação e personalização a laser / 3D de peças conforme especificações do cliente com garantia de acabamento fino.';
     document.getElementById('prop-metodo').value = '1. Envio e aprovação de maquete digital 3D\n2. Fabricação com controle milimétrico de corte e gravação\n3. Limpeza, acabamento artesanal e controle de qualidade\n4. Embalagem reforçada e pronta para entrega';
@@ -159,11 +179,13 @@ const PropostasModule = {
 
     propostaItensTemp = [
       {
-        produto_nome: 'Taça de Gin Personalizada',
-        personalizacao: 'Gravação frente (Arte / Nome)',
-        quantidade: 20,
-        preco_unitario: 15.00,
-        subtotal: 300.00
+        produto_nome: '',
+        cor: '',
+        personalizacao: '',
+        observacao: '',
+        quantidade: 1,
+        preco_unitario: 0,
+        subtotal: 0
       }
     ];
 
@@ -182,6 +204,15 @@ const PropostasModule = {
     document.getElementById('prop-cliente').value = p.cliente || '';
     document.getElementById('prop-contato').value = p.contato || '';
     document.getElementById('prop-telefone').value = p.telefone || '';
+
+    // Popula categorias cadastradas dinamicamente (igual na Nova Encomenda)
+    const catSelect = document.getElementById('prop-categoria');
+    if (catSelect) {
+      const cats = StorageService.getCategoriasProducao();
+      catSelect.innerHTML = cats.map(c => `<option value="${App.escapeHtml(c)}">${App.escapeHtml(c)}</option>`).join('');
+      catSelect.value = p.categoria || cats[0] || '3D';
+    }
+
     document.getElementById('prop-titulo').value = p.titulo || '';
     document.getElementById('prop-escopo').value = p.escopo || '';
     document.getElementById('prop-metodo').value = p.metodo || '';
@@ -189,11 +220,21 @@ const PropostasModule = {
     document.getElementById('prop-condicoes').value = p.condicoes || '';
 
     propostaItensTemp = (p.itens && p.itens.length > 0)
-      ? JSON.parse(JSON.stringify(p.itens))
+      ? p.itens.map(it => ({
+          produto_nome: it.produto_nome || '',
+          cor: it.cor || '',
+          personalizacao: it.personalizacao || '',
+          observacao: it.observacao || it.obs || '',
+          quantidade: Number(it.quantidade) || 1,
+          preco_unitario: Number(it.preco_unitario) || 0,
+          subtotal: Number(it.subtotal) || 0
+        }))
       : [
           {
             produto_nome: p.titulo || 'Item Personalizado',
+            cor: '',
             personalizacao: p.escopo || '',
+            observacao: '',
             quantidade: 1,
             preco_unitario: Number(p.investimento) || 0,
             subtotal: Number(p.investimento) || 0
@@ -207,7 +248,9 @@ const PropostasModule = {
   addItemRow() {
     propostaItensTemp.push({
       produto_nome: '',
+      cor: '',
       personalizacao: '',
+      observacao: '',
       quantidade: 1,
       preco_unitario: 0,
       subtotal: 0
@@ -222,53 +265,157 @@ const PropostasModule = {
     }
   },
 
-  updateItemRow(index, field, value) {
+  updateItemField(index, field, value) {
     const item = propostaItensTemp[index];
     if (!item) return;
-
     item[field] = value;
-    if (field === 'quantidade' || field === 'preco_unitario') {
-      const q = Number(item.quantidade) || 0;
-      const p = Number(item.preco_unitario) || 0;
-      item.subtotal = q * p;
+    if (field === 'produto_nome') {
+      const titleEl = document.getElementById(`prop-item-title-${index}`);
+      if (titleEl) {
+        titleEl.textContent = value.trim() || 'Selecione ou digite o produto';
+      }
     }
-    this.renderItensTable();
+  },
+
+  updateItemCalc(index, field, value) {
+    const item = propostaItensTemp[index];
+    if (!item) return;
+    item[field] = value;
+    const q = Number(item.quantidade) || 0;
+    const p = Number(item.preco_unitario) || 0;
+    item.subtotal = q * p;
+
+    const subtotalEl = document.getElementById(`prop-item-subtotal-${index}`);
+    if (subtotalEl) {
+      subtotalEl.textContent = App.formatMoney(item.subtotal);
+    }
+
+    const total = propostaItensTemp.reduce((acc, it) => acc + (Number(it.subtotal) || 0), 0);
+    const totalEl = document.getElementById('prop-itens-total-badge');
+    if (totalEl) totalEl.textContent = App.formatMoney(total);
+    const invInput = document.getElementById('prop-investimento');
+    if (invInput) invInput.value = total;
   },
 
   renderItensTable() {
-    const container = document.getElementById('prop-itens-tbody');
+    const container = document.getElementById('prop-itens-container') || document.getElementById('prop-itens-tbody');
     if (!container) return;
+
+    // Atualiza opções do datalist com produtos estabelecidos (igual na Nova Encomenda)
+    const datalist = document.getElementById('prop-datalist-produtos');
+    if (datalist) {
+      const prodsEstabelecidos = StorageService.getProdutosEstabelecidos();
+      const estoqueItens = StorageService.get('estoque') || [];
+      const opcoesUnicas = new Set();
+      let optionsHtml = '';
+      prodsEstabelecidos.forEach(p => {
+        const nome = typeof p === 'object' ? p.nome : p;
+        if (nome && !opcoesUnicas.has(nome)) {
+          opcoesUnicas.add(nome);
+          optionsHtml += `<option value="${App.escapeHtml(nome)}">`;
+        }
+      });
+      estoqueItens.forEach(e => {
+        if (e.nome && !opcoesUnicas.has(e.nome)) {
+          opcoesUnicas.add(e.nome);
+          optionsHtml += `<option value="${App.escapeHtml(e.nome)}">`;
+        }
+      });
+      datalist.innerHTML = optionsHtml;
+    }
+
+    // Cores pré-programadas do sistema (igual na Nova Encomenda)
+    const coresDisponiveis = StorageService.getCoresDisponiveis();
 
     let total = 0;
 
     container.innerHTML = propostaItensTemp.map((item, idx) => {
       total += (Number(item.subtotal) || 0);
+      const corAtual = item.cor || '';
+
       return `
-        <tr>
-          <td>
-            <input type="text" class="form-control" style="padding: 6px 10px;" value="${App.escapeHtml(item.produto_nome)}" 
-                   placeholder="Ex: Taça de Gin Acrílica" onchange="PropostasModule.updateItemRow(${idx}, 'produto_nome', this.value)">
-          </td>
-          <td>
-            <input type="text" class="form-control" style="padding: 6px 10px;" value="${App.escapeHtml(item.personalizacao || '')}" 
-                   placeholder="Ex: Nome da Aniversariante" onchange="PropostasModule.updateItemRow(${idx}, 'personalizacao', this.value)">
-          </td>
-          <td style="width: 80px;">
-            <input type="number" min="1" class="form-control" style="padding: 6px 10px;" value="${item.quantidade}" 
-                   onchange="PropostasModule.updateItemRow(${idx}, 'quantidade', this.value)">
-          </td>
-          <td style="width: 110px;">
-            <input type="number" step="0.5" class="form-control" style="padding: 6px 10px;" value="${item.preco_unitario}" 
-                   onchange="PropostasModule.updateItemRow(${idx}, 'preco_unitario', this.value)">
-          </td>
-          <td style="width: 110px; font-weight: 600; vertical-align: middle;">
-            ${App.formatMoney(item.subtotal || 0)}
-          </td>
-          <td style="width: 40px; text-align: center; vertical-align: middle;">
-            <button type="button" class="btn-icon" style="background: transparent; color: var(--danger); border: none; cursor: pointer;" 
-                    onclick="PropostasModule.removeItemRow(${idx})">✕</button>
-          </td>
-        </tr>
+        <div class="prop-item-card" style="background: rgba(255, 255, 255, 0.025); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 10px; padding: 14px 16px; margin-bottom: 14px; box-shadow: 0 4px 14px rgba(0,0,0,0.25);">
+          <!-- Topo do Item -->
+          <div style="display: flex; justify-content: space-between; align-items: center; padding-bottom: 8px; margin-bottom: 12px; border-bottom: 1px solid rgba(255, 255, 255, 0.07);">
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <span style="font-size: 0.72rem; font-weight: 800; text-transform: uppercase; padding: 2px 8px; border-radius: 999px; background: rgba(0, 168, 243, 0.18); color: #38bdf8; border: 1px solid rgba(0, 168, 243, 0.45);">
+                Item #${idx + 1}
+              </span>
+              <span id="prop-item-title-${idx}" style="font-size: 0.84rem; font-weight: 600; color: #ffffff;">
+                ${App.escapeHtml(item.produto_nome || 'Selecione ou digite o produto')}
+              </span>
+            </div>
+            ${propostaItensTemp.length > 1 ? `
+              <button type="button" class="btn-icon" style="background: rgba(239, 68, 68, 0.12); border: 1px solid rgba(239, 68, 68, 0.4); color: #f87171; cursor: pointer; padding: 3px 8px; border-radius: 6px; font-size: 0.75rem; font-weight: 600;" 
+                      onclick="PropostasModule.removeItemRow(${idx})" title="Remover este item">
+                ✕ Excluir Item
+              </button>
+            ` : ''}
+          </div>
+
+          <!-- Linha 1: Produto Pré-programado e Cor Pré-programada -->
+          <div class="form-row" style="margin-bottom: 10px;">
+            <div class="form-group" style="margin-bottom: 0;">
+              <label style="font-size: 0.78rem; font-weight: 600; color: var(--text-primary);">Produto *</label>
+              <input type="text" list="prop-datalist-produtos" class="form-control" style="height: 38px;" 
+                     value="${App.escapeHtml(item.produto_nome || '')}" 
+                     placeholder="Selecione da lista ou digite..." 
+                     oninput="PropostasModule.updateItemField(${idx}, 'produto_nome', this.value)">
+            </div>
+            <div class="form-group" style="margin-bottom: 0;">
+              <label style="font-size: 0.78rem; font-weight: 600; color: var(--text-primary);">Cor</label>
+              <select class="form-control" style="height: 38px;" 
+                      onchange="PropostasModule.updateItemField(${idx}, 'cor', this.value)">
+                <option value="">(Sem cor / Padrão)</option>
+                ${coresDisponiveis.map(c => `
+                  <option value="${App.escapeHtml(c)}" ${c === corAtual ? 'selected' : ''}>
+                    ${App.escapeHtml(c)}
+                  </option>
+                `).join('')}
+              </select>
+            </div>
+          </div>
+
+          <!-- Linha 2: Personalização / Arte e Observação do Produto -->
+          <div class="form-row" style="margin-bottom: 10px;">
+            <div class="form-group" style="margin-bottom: 0;">
+              <label style="font-size: 0.78rem; font-weight: 600; color: var(--text-primary);">Personalização / Detalhes</label>
+              <input type="text" class="form-control" style="height: 38px;" 
+                     value="${App.escapeHtml(item.personalizacao || '')}" 
+                     placeholder="Ex: Nome da Aniversariante, Frase, Logo..." 
+                     oninput="PropostasModule.updateItemField(${idx}, 'personalizacao', this.value)">
+            </div>
+            <div class="form-group" style="margin-bottom: 0;">
+              <label style="font-size: 0.78rem; font-weight: 600; color: var(--text-primary);">Observação do Item</label>
+              <input type="text" class="form-control" style="height: 38px;" 
+                     value="${App.escapeHtml(item.observacao || '')}" 
+                     placeholder="Ex: Acabamento especial, tamanho, embalagem..." 
+                     oninput="PropostasModule.updateItemField(${idx}, 'observacao', this.value)">
+            </div>
+          </div>
+
+          <!-- Linha 3: Quantidade, Valor Unitário e Subtotal -->
+          <div class="form-row" style="margin-bottom: 0; align-items: flex-end;">
+            <div class="form-group" style="margin-bottom: 0;">
+              <label style="font-size: 0.78rem; font-weight: 600; color: var(--text-primary);">Quantidade</label>
+              <input type="number" min="1" class="form-control" style="height: 38px;" 
+                     value="${item.quantidade || 1}" 
+                     oninput="PropostasModule.updateItemCalc(${idx}, 'quantidade', this.value)">
+            </div>
+            <div class="form-group" style="margin-bottom: 0;">
+              <label style="font-size: 0.78rem; font-weight: 600; color: var(--text-primary);">Valor Unitário (R$)</label>
+              <input type="number" step="0.5" class="form-control" style="height: 38px;" 
+                     value="${item.preco_unitario || 0}" 
+                     oninput="PropostasModule.updateItemCalc(${idx}, 'preco_unitario', this.value)">
+            </div>
+            <div class="form-group" style="margin-bottom: 0;">
+              <label style="font-size: 0.78rem; font-weight: 600; color: var(--text-primary);">Subtotal</label>
+              <div id="prop-item-subtotal-${idx}" style="height: 38px; display: flex; align-items: center; font-size: 1.05rem; font-weight: 700; color: #34d399; background: rgba(0,0,0,0.25); border: 1px solid var(--border); border-radius: 6px; padding: 0 12px;">
+                ${App.formatMoney(item.subtotal || 0)}
+              </div>
+            </div>
+          </div>
+        </div>
       `;
     }).join('');
 
@@ -284,6 +431,7 @@ const PropostasModule = {
     const cliente = document.getElementById('prop-cliente').value.trim();
     const contato = document.getElementById('prop-contato').value.trim();
     const telefone = document.getElementById('prop-telefone').value.trim();
+    const categoria = document.getElementById('prop-categoria')?.value || '3D';
     const titulo = document.getElementById('prop-titulo').value.trim();
     const escopo = document.getElementById('prop-escopo').value.trim();
     const metodo = document.getElementById('prop-metodo').value.trim();
@@ -306,6 +454,7 @@ const PropostasModule = {
       cliente,
       contato,
       telefone,
+      categoria,
       titulo: titulo || 'Orçamento de Produtos Personalizados',
       escopo,
       metodo,
@@ -364,7 +513,7 @@ const PropostasModule = {
 
     const novaEncomenda = {
       cliente_nome: p.cliente,
-      categoria: p.categoria || 'Corte e Gravação',
+      categoria: p.categoria || '3D',
       telefone: p.telefone || p.contato || '',
       data_pedido: new Date().toISOString().split('T')[0],
       data_entrega_prevista: dataEntregaDefault,
@@ -471,6 +620,7 @@ const PropostasModule = {
         <div style="font-size: 0.76rem; text-transform: uppercase; color: #0284c7; font-weight: 700; letter-spacing: 0.05em;">Orçamento Comercial Preparado Para</div>
         <div style="font-size: 1.25rem; font-weight: 700; color: #0f172a; margin-top: 4px;">${App.escapeHtml(p.cliente)}</div>
         ${p.contato ? `<div style="font-size: 0.88rem; color: #475569;">A/C: ${App.escapeHtml(p.contato)} ${p.telefone ? `(${p.telefone})` : ''}</div>` : ''}
+        ${p.categoria ? `<div style="font-size: 0.82rem; color: #64748b; margin-top: 4px;">Categoria de Produção: <strong style="color: #0284c7;">${App.escapeHtml(p.categoria)}</strong></div>` : ''}
       </div>
 
       <div style="margin-bottom: 24px;">
@@ -488,17 +638,22 @@ const PropostasModule = {
             <thead>
               <tr style="background: #f1f5f9; color: #334155; text-align: left; border-bottom: 2px solid #cbd5e1;">
                 <th style="padding: 10px 12px;">Produto / Item</th>
-                <th style="padding: 10px 12px;">Personalização & Arte</th>
-                <th style="padding: 10px 12px; text-align: center; width: 70px;">Qtd</th>
-                <th style="padding: 10px 12px; text-align: right; width: 110px;">Valor Unit.</th>
-                <th style="padding: 10px 12px; text-align: right; width: 120px;">Subtotal</th>
+                <th style="padding: 10px 12px; width: 100px;">Cor</th>
+                <th style="padding: 10px 12px;">Personalização & Detalhes</th>
+                <th style="padding: 10px 12px; text-align: center; width: 60px;">Qtd</th>
+                <th style="padding: 10px 12px; text-align: right; width: 100px;">Valor Unit.</th>
+                <th style="padding: 10px 12px; text-align: right; width: 110px;">Subtotal</th>
               </tr>
             </thead>
             <tbody>
               ${itensList.map(item => `
                 <tr style="border-bottom: 1px solid #e2e8f0; color: #1e293b;">
                   <td style="padding: 10px 12px; font-weight: 600;">${App.escapeHtml(item.produto_nome || 'Item')}</td>
-                  <td style="padding: 10px 12px; color: #475569;">${App.escapeHtml(item.personalizacao || 'Padrão')}</td>
+                  <td style="padding: 10px 12px; color: #0284c7; font-weight: 600;">${item.cor ? App.escapeHtml(item.cor) : '<span style="color:#94a3b8;">—</span>'}</td>
+                  <td style="padding: 10px 12px; color: #475569;">
+                    ${App.escapeHtml(item.personalizacao || 'Padrão')}
+                    ${item.observacao ? `<br><small style="color: #64748b; font-style: italic;">Obs: ${App.escapeHtml(item.observacao)}</small>` : ''}
+                  </td>
                   <td style="padding: 10px 12px; text-align: center; font-weight: 600;">${item.quantidade}</td>
                   <td style="padding: 10px 12px; text-align: right;">${App.formatMoney(item.preco_unitario || 0)}</td>
                   <td style="padding: 10px 12px; text-align: right; font-weight: 700; color: #0284c7;">${App.formatMoney(item.subtotal || 0)}</td>
@@ -507,7 +662,7 @@ const PropostasModule = {
             </tbody>
             <tfoot>
               <tr style="background: #f8fafc; border-top: 2px solid #00a8f3;">
-                <td colspan="4" style="padding: 12px; font-weight: 700; color: #0f172a; text-align: right; font-size: 0.95rem;">Investimento Total:</td>
+                <td colspan="5" style="padding: 12px; font-weight: 700; color: #0f172a; text-align: right; font-size: 0.95rem;">Investimento Total:</td>
                 <td style="padding: 12px; font-weight: 800; color: #0284c7; text-align: right; font-size: 1.15rem;">${App.formatMoney(p.investimento)}</td>
               </tr>
             </tfoot>
@@ -591,9 +746,10 @@ const PropostasModule = {
       itensTexto = p.itens.map(it => {
         const qtd = it.quantidade || 1;
         const nome = it.produto_nome || 'Item Personalizado';
+        const cor = it.cor ? ` [Cor: ${it.cor}]` : '';
         const precoUn = it.preco_unitario ? ` (${App.formatMoney(it.preco_unitario)} un)` : '';
         const sub = it.subtotal ? ` = *${App.formatMoney(it.subtotal)}*` : '';
-        let lin = `• *${qtd}x ${nome}*${precoUn}${sub}`;
+        let lin = `• *${qtd}x ${nome}*${cor}${precoUn}${sub}`;
         if (it.personalizacao && it.personalizacao.trim()) {
           lin += `\n   _Arte / Personalização: ${it.personalizacao.trim()}_`;
         }
