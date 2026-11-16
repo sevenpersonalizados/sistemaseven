@@ -1408,17 +1408,32 @@
               </select>
             </div>
             <div class="form-group">
-              <label>Marca / Fabricante</label>
-              <input type="text" id="fil-modal-marca" class="form-control"
-                placeholder="Ex: Voolt3D, Creality, 3DFila...">
+              <label>Marca / Fabricante *</label>
+              <select id="fil-modal-marca" class="form-control"></select>
+            </div>
+            <div class="form-group">
+              <label>Cor do Filamento *</label>
+              <select id="fil-modal-cor" class="form-control"></select>
             </div>
           </div>
 
           <div class="form-row">
             <div class="form-group">
-              <label>Cor *</label>
-              <input type="text" id="fil-modal-cor" class="form-control"
-                placeholder="Ex: Preto, Branco, Dourado Silk...">
+              <label>Local da Compra</label>
+              <input type="text" id="fil-modal-local-compra" list="fil-datalist-locais" class="form-control"
+                placeholder="Ex: Mercado Livre, Shopee, Site Oficial...">
+              <datalist id="fil-datalist-locais">
+                <option value="Mercado Livre">
+                <option value="Shopee">
+                <option value="Amazon">
+                <option value="Site Oficial da Marca">
+                <option value="Loja Física">
+                <option value="Distribuidor Autorizado">
+              </datalist>
+            </div>
+            <div class="form-group">
+              <label>Data da Compra</label>
+              <input type="date" id="fil-modal-data-compra" class="form-control">
             </div>
             <div class="form-group">
               <label>Peso do Rolo (gramas) *</label>
@@ -1454,6 +1469,7 @@
               <tr>
                 <th>Material & Marca</th>
                 <th>Cor</th>
+                <th>Local & Data da Compra</th>
                 <th>Peso</th>
                 <th>Preço Rolo</th>
                 <th>Custo/g</th>
@@ -1553,17 +1569,17 @@
   <!-- CONTAINER DE TOASTS -->
   <div class="toast-container" id="toast-container"></div>
 
-  <!-- SCRIPTS DO SISTEMA (com cache-busting v24) -->
-  <script src="js/notifications.js?v=24"></script>
-  <script src="js/storage.js?v=24"></script>
-  <script src="js/crm.js?v=24"></script>
-  <script src="js/encomendas.js?v=24"></script>
-  <script src="js/estoque.js?v=24"></script>
-  <script src="js/financeiro.js?v=24"></script>
-  <script src="js/propostas.js?v=24"></script>
-  <script src="js/calculadora.js?v=24"></script>
-  <script src="js/configuracoes.js?v=24"></script>
-  <script src="js/app.js?v=24"></script>
+  <!-- SCRIPTS DO SISTEMA (com cache-busting v25) -->
+  <script src="js/notifications.js?v=25"></script>
+  <script src="js/storage.js?v=25"></script>
+  <script src="js/crm.js?v=25"></script>
+  <script src="js/encomendas.js?v=25"></script>
+  <script src="js/estoque.js?v=25"></script>
+  <script src="js/financeiro.js?v=25"></script>
+  <script src="js/propostas.js?v=25"></script>
+  <script src="js/calculadora.js?v=25"></script>
+  <script src="js/configuracoes.js?v=25"></script>
+  <script src="js/app.js?v=25"></script>
 </body>
 
 </html>

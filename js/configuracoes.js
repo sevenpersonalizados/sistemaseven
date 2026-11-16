@@ -36,6 +36,7 @@ const ConfiguracoesModule = {
     const categoriasProd = StorageService.getCategoriasProducao();
     const formasPagto = StorageService.getFormasPagamento();
     const categoriasDesp = StorageService.getCategoriasDespesa();
+    const marcasFilamento = StorageService.getMarcasFilamento();
 
     const tab = this.activeSubtab;
     const showGrupos = (tab === 'todos' || tab === 'grupos');
@@ -283,6 +284,42 @@ const ConfiguracoesModule = {
                     <span style="font-weight: 600;">${App.escapeHtml(item)}</span>
                     <div style="display: inline-flex; align-items: center; gap: 4px; margin-left: 4px;">
                       <button type="button" class="btn-icon" style="background: transparent; border: none; color: var(--danger); cursor: pointer; font-size: 0.78rem; padding: 2px;" title="Remover" onclick="ConfiguracoesModule.removerCategoriaDespesa(${idx})">✕</button>
+                    </div>
+                  </div>
+                `).join('')}
+              </div>
+            </div>
+
+            <!-- 6. GRUPO: MARCAS DE FILAMENTO 3D -->
+            <div class="cfg-group-box" style="background: rgba(255, 255, 255, 0.02); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 1.25rem; border-left: 4px solid #fb923c;">
+              <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.5rem;">
+                <div>
+                  <h4 style="margin: 0; font-size: 1rem; font-weight: 700; color: #fb923c; display: flex; align-items: center; gap: 6px;">
+                    <span>🧵</span> Marcas de Filamento 3D
+                  </h4>
+                  <p style="margin: 3px 0 0 0; font-size: 0.76rem; color: var(--text-muted);">
+                    Marcas e fabricantes pré-selecionados na gestão de filamentos e cálculo 3D
+                  </p>
+                </div>
+                <span class="cfg-count-pill">${marcasFilamento.length}</span>
+              </div>
+
+              <!-- Input para adicionar nova marca -->
+              <div style="display: flex; gap: 0.45rem; margin: 0.85rem 0;">
+                <input type="text" id="cfg_new_marca_filamento" class="form-control" style="height: 38px; font-size: 0.84rem;" placeholder="Ex: Voolt3D, Creality, Bambu Lab..." onkeydown="if(event.key==='Enter'){event.preventDefault(); ConfiguracoesModule.adicionarMarcaFilamento();}">
+                <button type="button" class="btn btn-primary" style="height: 38px; padding: 0 0.95rem; font-size: 0.82rem; flex-shrink: 0;" onclick="ConfiguracoesModule.adicionarMarcaFilamento()">
+                  + Adicionar
+                </button>
+              </div>
+
+              <!-- Lista de marcas -->
+              <div class="cfg-tags-list" style="display: flex; flex-wrap: wrap; gap: 0.5rem;">
+                ${marcasFilamento.map((item, idx) => `
+                  <div class="cfg-tag-item" style="display: inline-flex; align-items: center; gap: 0.45rem; background: rgba(251, 146, 60, 0.08); border: 1px solid rgba(251, 146, 60, 0.35); border-radius: 8px; padding: 0.4rem 0.75rem; font-size: 0.84rem; color: #ffffff;">
+                    <span style="font-weight: 600;">${App.escapeHtml(item)}</span>
+                    <div style="display: inline-flex; align-items: center; gap: 4px; margin-left: 4px;">
+                      <button type="button" class="btn-icon" style="background: transparent; border: none; color: var(--text-muted); cursor: pointer; font-size: 0.75rem; padding: 2px;" title="Renomear" onclick="ConfiguracoesModule.editarMarcaFilamento(${idx})">✏️</button>
+                      <button type="button" class="btn-icon" style="background: transparent; border: none; color: var(--danger); cursor: pointer; font-size: 0.78rem; padding: 2px;" title="Remover" onclick="ConfiguracoesModule.removerMarcaFilamento(${idx})">✕</button>
                     </div>
                   </div>
                 `).join('')}
@@ -627,6 +664,47 @@ const ConfiguracoesModule = {
     StorageService.removeCategoriaDespesa(index);
     App.toast('Categoria de despesa removida.', 'info');
     this.render();
+  },
+
+  /* --- GESTÃO DE MARCAS DE FILAMENTO --- */
+  adicionarMarcaFilamento() {
+    const input = document.getElementById('cfg_new_marca_filamento');
+    const valor = input ? input.value.trim() : '';
+    if (!valor) return;
+    StorageService.addMarcaFilamento(valor);
+    input.value = '';
+    App.toast(`Marca "${valor}" adicionada às opções!`, 'success');
+    this.render();
+    if (typeof CalculadoraModule !== 'undefined' && CalculadoraModule.popularOpcoesFormFilamento) {
+      CalculadoraModule.popularOpcoesFormFilamento();
+    }
+  },
+
+  editarMarcaFilamento(index) {
+    const marcas = StorageService.getMarcasFilamento();
+    const atual = marcas[index];
+    const novoNome = prompt('Editar nome da marca de filamento:', atual);
+    if (novoNome && novoNome.trim() && novoNome.trim() !== atual) {
+      StorageService.editMarcaFilamento(index, novoNome.trim());
+      App.toast('Marca atualizada!', 'info');
+      this.render();
+      if (typeof CalculadoraModule !== 'undefined' && CalculadoraModule.popularOpcoesFormFilamento) {
+        CalculadoraModule.popularOpcoesFormFilamento();
+      }
+    }
+  },
+
+  removerMarcaFilamento(index) {
+    const marcas = StorageService.getMarcasFilamento();
+    const nome = marcas[index];
+    if (confirm(`Remover "${nome}" da lista de marcas de filamento?`)) {
+      StorageService.removeMarcaFilamento(index);
+      App.toast('Marca removida.', 'info');
+      this.render();
+      if (typeof CalculadoraModule !== 'undefined' && CalculadoraModule.popularOpcoesFormFilamento) {
+        CalculadoraModule.popularOpcoesFormFilamento();
+      }
+    }
   },
 
   salvarEmpresaForm() {

@@ -650,9 +650,41 @@ const CalculadoraModule = {
     if (badgeMargem) badgeMargem.textContent = `${cfg.margem_lucro_padrao || 100}%`;
   },
 
+  // Popula os selects de Marca e Cor do formulário de filamentos com as opções pré-programadas
+  popularOpcoesFormFilamento(marcaSelecionada = null, corSelecionada = null) {
+    const selMarca = document.getElementById('fil-modal-marca');
+    if (selMarca) {
+      const marcas = StorageService.getMarcasFilamento() || [];
+      const listaMarcas = [...marcas];
+      if (marcaSelecionada && !listaMarcas.some(m => m.toLowerCase() === marcaSelecionada.toLowerCase())) {
+        listaMarcas.push(marcaSelecionada);
+      }
+      selMarca.innerHTML = listaMarcas.map(m => `
+        <option value="${App.escapeHtml(m)}" ${marcaSelecionada && m.toLowerCase() === marcaSelecionada.toLowerCase() ? 'selected' : ''}>
+          ${App.escapeHtml(m)}
+        </option>
+      `).join('');
+    }
+
+    const selCor = document.getElementById('fil-modal-cor');
+    if (selCor) {
+      const cores = StorageService.getCoresDisponiveis() || [];
+      const listaCores = [...cores];
+      if (corSelecionada && !listaCores.some(c => c.toLowerCase() === corSelecionada.toLowerCase())) {
+        listaCores.push(corSelecionada);
+      }
+      selCor.innerHTML = listaCores.map(c => `
+        <option value="${App.escapeHtml(c)}" ${corSelecionada && c.toLowerCase() === corSelecionada.toLowerCase() ? 'selected' : ''}>
+          ${App.escapeHtml(c)}
+        </option>
+      `).join('');
+    }
+  },
+
   // Modal de Gestão de Filamentos
   abrirModalFilamentos() {
     this.filamentoEditandoId = null;
+    this.popularOpcoesFormFilamento();
     this.limparFormFilamento();
     this.renderFilamentosTabela();
     App.openModal('modal-gerenciar-filamentos');
@@ -660,9 +692,12 @@ const CalculadoraModule = {
 
   limparFormFilamento() {
     this.filamentoEditandoId = null;
+    this.popularOpcoesFormFilamento();
     document.getElementById('fil-modal-material').value = 'PLA';
-    document.getElementById('fil-modal-marca').value = '';
-    document.getElementById('fil-modal-cor').value = '';
+    const localInput = document.getElementById('fil-modal-local-compra');
+    if (localInput) localInput.value = '';
+    const dataInput = document.getElementById('fil-modal-data-compra');
+    if (dataInput) dataInput.value = new Date().toISOString().split('T')[0];
     document.getElementById('fil-modal-peso').value = '1000';
     document.getElementById('fil-modal-preco').value = '';
     document.getElementById('fil-modal-form-title').textContent = 'Cadastrar Novo Filamento';
@@ -687,7 +722,7 @@ const CalculadoraModule = {
     const filamentos = StorageService.get('filamentos') || [];
 
     if (filamentos.length === 0) {
-      container.innerHTML = `<tr><td colspan="6" style="text-align: center; padding: 24px; color: var(--text-muted);">Nenhum filamento cadastrado ainda.</td></tr>`;
+      container.innerHTML = `<tr><td colspan="7" style="text-align: center; padding: 24px; color: var(--text-muted);">Nenhum filamento cadastrado ainda.</td></tr>`;
       return;
     }
 
@@ -699,14 +734,18 @@ const CalculadoraModule = {
       return `
         <tr>
           <td>
-            <strong>${App.escapeHtml(f.material)}</strong>
-            <div style="font-size: 0.74rem; color: var(--text-muted);">${App.escapeHtml(f.marca || 'Genérica')}</div>
+            <strong style="color: #ffffff; font-size: 0.92rem;">${App.escapeHtml(f.material)}</strong>
+            <div style="font-size: 0.74rem; color: #38bdf8; font-weight: 600;">🏷️ ${App.escapeHtml(f.marca || 'Genérica')}</div>
           </td>
           <td>
             <span style="display: inline-flex; align-items: center; gap: 6px;">
               <span style="width: 10px; height: 10px; border-radius: 50%; background: #fb923c; display: inline-block;"></span>
               ${App.escapeHtml(f.cor || 'Padrão')}
             </span>
+          </td>
+          <td>
+            ${f.local_compra ? `<div style="font-weight: 600; font-size: 0.82rem; color: #f1f5f9;">🏪 ${App.escapeHtml(f.local_compra)}</div>` : '<span style="color: var(--text-muted); font-size: 0.8rem;">—</span>'}
+            ${f.data_compra ? `<div style="font-size: 0.72rem; color: #94a3b8; margin-top: 2px;">📅 ${App.formatDate(f.data_compra)}</div>` : ''}
           </td>
           <td>${peso}g</td>
           <td><strong>${App.formatMoney(preco)}</strong></td>
@@ -732,8 +771,10 @@ const CalculadoraModule = {
 
   salvarFilamentoForm() {
     const material = document.getElementById('fil-modal-material')?.value.trim();
-    const marca = document.getElementById('fil-modal-marca')?.value.trim() || 'Seven 3D';
-    const cor = document.getElementById('fil-modal-cor')?.value.trim();
+    const marca = document.getElementById('fil-modal-marca')?.value.trim() || 'Voolt3D';
+    const cor = document.getElementById('fil-modal-cor')?.value.trim() || 'Preto';
+    const localCompra = document.getElementById('fil-modal-local-compra')?.value.trim() || '';
+    const dataCompra = document.getElementById('fil-modal-data-compra')?.value || '';
     const peso = parseFloat(document.getElementById('fil-modal-peso')?.value) || 1000;
     const preco = parseFloat(document.getElementById('fil-modal-preco')?.value) || 0;
 
@@ -742,7 +783,7 @@ const CalculadoraModule = {
       return;
     }
     if (!cor) {
-      App.toast('Informe a cor do filamento.', 'warning');
+      App.toast('Selecione a cor do filamento.', 'warning');
       return;
     }
     if (preco <= 0) {
@@ -756,6 +797,8 @@ const CalculadoraModule = {
       material,
       marca,
       cor,
+      local_compra: localCompra,
+      data_compra: dataCompra,
       peso_rolo_g: peso,
       preco_rolo: preco,
       custo_por_g: custoPorGrama,
@@ -782,13 +825,21 @@ const CalculadoraModule = {
     if (!f) return;
 
     this.filamentoEditandoId = id;
+    this.popularOpcoesFormFilamento(f.marca, f.cor);
+
     document.getElementById('fil-modal-material').value = f.material || 'PLA';
     document.getElementById('fil-modal-marca').value = f.marca || '';
     document.getElementById('fil-modal-cor').value = f.cor || '';
+    
+    const localInput = document.getElementById('fil-modal-local-compra');
+    if (localInput) localInput.value = f.local_compra || '';
+    const dataInput = document.getElementById('fil-modal-data-compra');
+    if (dataInput) dataInput.value = f.data_compra || '';
+
     document.getElementById('fil-modal-peso').value = f.peso_rolo_g || 1000;
     document.getElementById('fil-modal-preco').value = f.preco_rolo || '';
 
-    document.getElementById('fil-modal-form-title').textContent = `Editar Filamento — ${f.material} ${f.cor}`;
+    document.getElementById('fil-modal-form-title').textContent = `Editar Filamento — ${f.material} ${f.cor} (${f.marca || ''})`;
     document.getElementById('fil-modal-btn-submit').textContent = 'Salvar Alterações';
     this.atualizarPreviewCustoGrama();
     document.getElementById('fil-modal-material').focus();

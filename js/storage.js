@@ -42,6 +42,9 @@ const INITIAL_DATA = {
     produtos_estabelecidos: [
       'Copo Térmico Inox', 'Taça de Gin Acrílica', 'Chaveiro MDF', 'Troféu Acrílico',
       'Quadro MDF Vazado', 'Peça Impressa 3D', 'Luminária LED Acrílico', 'Caneca Personalizada'
+    ],
+    marcas_filamento: [
+      'Voolt3D', 'Creality', '3D Fila', 'eSun', 'Sunlu', 'Sethi3D', 'National 3D', 'PrintaLot'
     ]
   },
   crm_cards: [
@@ -898,7 +901,10 @@ const StorageService = {
           : INITIAL_DATA.config.categorias_despesa,
         formas_pagamento: Array.isArray(parsed.formas_pagamento) && parsed.formas_pagamento.length > 0
           ? parsed.formas_pagamento
-          : INITIAL_DATA.config.formas_pagamento
+          : INITIAL_DATA.config.formas_pagamento,
+        marcas_filamento: Array.isArray(parsed.marcas_filamento) && parsed.marcas_filamento.length > 0
+          ? parsed.marcas_filamento
+          : INITIAL_DATA.config.marcas_filamento
       };
     } catch {
       return INITIAL_DATA.config;
@@ -1027,6 +1033,46 @@ const StorageService = {
     }
     lista.splice(index, 1);
     this.saveConfig({ ...cfg, cores: lista });
+  },
+
+  /* --- MARCAS DE FILAMENTO 3D --- */
+  getMarcasFilamento() {
+    return this.getConfig().marcas_filamento || [
+      'Voolt3D', 'Creality', '3D Fila', 'eSun', 'Sunlu', 'Sethi3D', 'National 3D', 'PrintaLot'
+    ];
+  },
+
+  addMarcaFilamento(nome) {
+    const val = (nome || '').trim();
+    if (!val) return;
+    const cfg = this.getConfig();
+    const lista = [...(this.getMarcasFilamento())];
+    if (!lista.some(m => m.toLowerCase() === val.toLowerCase())) {
+      lista.push(val);
+      this.saveConfig({ ...cfg, marcas_filamento: lista });
+    }
+  },
+
+  editMarcaFilamento(index, novoNome) {
+    const val = (novoNome || '').trim();
+    if (!val) return;
+    const cfg = this.getConfig();
+    const lista = [...(this.getMarcasFilamento())];
+    if (lista[index] !== undefined) {
+      lista[index] = val;
+      this.saveConfig({ ...cfg, marcas_filamento: lista });
+    }
+  },
+
+  removeMarcaFilamento(index) {
+    const cfg = this.getConfig();
+    const lista = [...(this.getMarcasFilamento())];
+    if (lista.length <= 1) {
+      alert('É necessário manter pelo menos uma marca de filamento cadastrada.');
+      return;
+    }
+    lista.splice(index, 1);
+    this.saveConfig({ ...cfg, marcas_filamento: lista });
   },
 
   /* --- PRODUTOS ESTABELECIDOS (APENAS NOMES / SEM PREÇOS) --- */
