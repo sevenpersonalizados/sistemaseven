@@ -48,7 +48,7 @@
   <meta http-equiv="Expires" content="0">
 
   <!-- Estilos Customizados -->
-  <link rel="stylesheet" href="css/styles.css?v=28">
+  <link rel="stylesheet" href="css/styles.css?v=29">
 </head>
 
 <body>
@@ -136,7 +136,14 @@
           <span>Calculadora de Filamentos</span>
         </button>
       </li>
-
+      <li class="nav-item">
+        <button type="button" data-view="calculadora-laser" id="nav-btn-calculadora-laser">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
+          </svg>
+          <span>Calculadora Laser</span>
+        </button>
+      </li>
       <li class="nav-section-title">Financeiro & Sistema</li>
       <li class="nav-item">
         <button type="button" data-view="financeiro" id="nav-btn-financeiro">
@@ -931,6 +938,307 @@
           </div>
         </section>
 
+        <!-- VIEW: CALCULADORA DE CORTE & GRAVAÇÃO LASER -->
+        <section class="view-section" id="view-calculadora-laser">
+          <!-- PAINEL SUPERIOR TEMÁTICO CYAN / LASER -->
+          <div class="themed-panel theme-laser" style="margin-bottom: 24px;">
+            <div class="themed-header">
+              <div style="display: flex; align-items: center; gap: 14px; flex-wrap: wrap;">
+                <span class="themed-icon-box" style="font-size: 1.4rem;">⚡</span>
+                <div>
+                  <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+                    <h3 class="themed-title">Calculadora de Corte & Gravação Laser</h3>
+                    <span
+                      style="font-size: 0.72rem; font-weight: 700; text-transform: uppercase; padding: 3px 10px; border-radius: 999px; background: rgba(6, 182, 212, 0.22); color: #38bdf8; border: 1px solid rgba(6, 182, 212, 0.55);">
+                      CORTE & GRAVAÇÃO LASER
+                    </span>
+                  </div>
+                  <div class="themed-subtitle">
+                    Cálculo de MDF por cores (Cru, Branco, Preto, Azul, Vermelho, Gold e Silver) + tempo de máquina a R$ 30,00/h
+                  </div>
+                </div>
+              </div>
+
+              <!-- Ações Rápidas de Configuração -->
+              <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+                <span
+                  style="font-size: 0.78rem; font-weight: 700; color: #a5b4fc; background: rgba(0, 0, 0, 0.35); border: 1px solid var(--border); padding: 6px 12px; border-radius: var(--radius-sm); display: inline-flex; align-items: center; gap: 6px;">
+                  ⚡ Hora Laser: <strong id="calc-laser-kpi-hora-laser" style="color: #38bdf8;">R$ 30,00/h</strong>
+                  <span style="opacity: 0.6;">(</span><span id="calc-laser-kpi-min-laser" style="color: #34d399;">R$ 0,50/min</span><span style="opacity: 0.6;">)</span>
+                </span>
+                <button type="button" class="btn btn-secondary btn-sm" onclick="CalculadoraLaserModule.abrirModalConfig()">
+                  ⚙️ Configurar Chapas & Laser
+                </button>
+                <button type="button" class="btn btn-secondary btn-sm" onclick="CalculadoraLaserModule.limparFormulario()">
+                  🔄 Limpar
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- GRID PRINCIPAL: SIMULADOR (ESQUERDA) + CARTÃO EXECUTIVO DE RESULTADO (DIREITA) -->
+          <div class="calc-grid">
+            <!-- COLUNA ESQUERDA: PARÂMETROS DA PEÇA & CORTE -->
+            <div class="card" style="padding: 22px;">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; border-bottom: 1px solid var(--border); padding-bottom: 12px; flex-wrap: wrap; gap: 8px;">
+                <h4 style="margin: 0; font-size: 1.05rem; color: #ffffff; display: flex; align-items: center; gap: 8px;">
+                  <span>📐</span> Dimensões da Peça & Tempo Laser
+                </h4>
+                <div style="display: flex; gap: 4px; background: rgba(0,0,0,0.4); padding: 3px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.08);">
+                  <button type="button" class="calc-laser-unit-btn active" data-unit="cm" onclick="CalculadoraLaserModule.setUnidade('cm')">Centímetros (cm)</button>
+                  <button type="button" class="calc-laser-unit-btn" data-unit="m" onclick="CalculadoraLaserModule.setUnidade('m')">Metros (m)</button>
+                </div>
+              </div>
+
+              <!-- Produto e Quantidade -->
+              <div class="form-row" style="margin-bottom: 16px;">
+                <div class="form-group" style="flex: 2;">
+                  <label>Nome do Produto / Peça</label>
+                  <input type="text" id="calc-laser-produto" class="form-control"
+                    placeholder="Ex: Mandala Floral 30cm, Troféu Acrílico, Caixa MDF..." value="Mandala Floral 30cm">
+                </div>
+                <div class="form-group" style="flex: 1;">
+                  <label>Quantidade de Peças</label>
+                  <input type="number" id="calc-laser-qtd" class="form-control" value="1" min="1" step="1">
+                </div>
+              </div>
+
+              <!-- Dimensões da Peça -->
+              <div class="form-group" style="margin-bottom: 16px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                  <label id="calc-laser-dim-label" style="margin-bottom: 0;">Largura e Altura da Peça (em cm)</label>
+                  <span id="calc-laser-area-badge" class="badge-cor-tag" style="font-size: 0.74rem;">Área: 0,0900 m² (900 cm²)</span>
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                  <div>
+                    <input type="number" id="calc-laser-largura" class="form-control" value="30" step="0.1" min="0" placeholder="Largura">
+                  </div>
+                  <div>
+                    <input type="number" id="calc-laser-comprimento" class="form-control" value="30" step="0.1" min="0" placeholder="Altura / Comprimento">
+                  </div>
+                </div>
+              </div>
+
+              <!-- Tempo de Máquina Laser -->
+              <div class="form-group" style="margin-bottom: 16px; background: rgba(6, 182, 212, 0.05); border: 1px solid rgba(6, 182, 212, 0.2); border-radius: var(--radius-sm); padding: 14px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; flex-wrap: wrap; gap: 6px;">
+                  <label style="margin: 0; font-weight: 700; color: #38bdf8; display: flex; align-items: center; gap: 6px;">
+                    <span>⏱️</span> Tempo de Corte & Gravação na Máquina Laser
+                  </label>
+                  <span id="calc-laser-tempo-calc-badge" style="font-size: 0.8rem; font-weight: 700; color: #38bdf8;">
+                    ⏱️ 10 min = R$ 5,00 (a R$ 30,00/h)
+                  </span>
+                </div>
+                <div style="display: flex; align-items: center; gap: 12px;">
+                  <input type="number" id="calc-laser-tempo-min" class="form-control" value="10" min="0" step="1"
+                    placeholder="Minutos de laser" style="max-width: 180px; font-size: 1.1rem; font-weight: 700;">
+                  <span style="font-size: 0.85rem; color: var(--text-muted);">minutos de operação</span>
+                </div>
+              </div>
+
+              <!-- Cores / Materiais (Cru, Branco, Preto, Azul, Vermelho, Gold e Silver) -->
+              <div class="form-group" style="margin-bottom: 18px;">
+                <label style="display: flex; justify-content: space-between; align-items: center;">
+                  <span>🎨 Escolha a Cor do Material</span>
+                  <span style="font-size: 0.74rem; color: var(--text-muted);">Calculado proporcionalmente da chapa</span>
+                </label>
+                <div id="calc-laser-cor-chips" class="laser-color-chips-wrap">
+                  <!-- Renderizado via CalculadoraLaserModule.renderCorChips() -->
+                </div>
+              </div>
+
+              <!-- Margem de Lucro e Custos Extras -->
+              <div class="form-row">
+                <div class="form-group" style="flex: 1;">
+                  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                    <label style="margin: 0;">Margem de Lucro (%)</label>
+                    <div style="display: flex; gap: 4px;">
+                      <button type="button" class="preset-chip" onclick="CalculadoraLaserModule.setMargemPreset(50)">50%</button>
+                      <button type="button" class="preset-chip" onclick="CalculadoraLaserModule.setMargemPreset(80)">80%</button>
+                      <button type="button" class="preset-chip" onclick="CalculadoraLaserModule.setMargemPreset(100)">100%</button>
+                      <button type="button" class="preset-chip" onclick="CalculadoraLaserModule.setMargemPreset(150)">150%</button>
+                    </div>
+                  </div>
+                  <input type="number" id="calc-laser-margem" class="form-control" value="100" min="0" step="5">
+                </div>
+
+                <div class="form-group" style="flex: 1;">
+                  <label>Custos Extras / Insumos (R$)</label>
+                  <input type="number" id="calc-laser-extras" class="form-control" value="0" min="0" step="0.5"
+                    placeholder="Fita 3M, cola, embalagem...">
+                </div>
+              </div>
+
+              <!-- Botões de Ação do Simulador -->
+              <div style="display: flex; gap: 10px; margin-top: 14px; flex-wrap: wrap;">
+                <button type="button" class="btn btn-primary" style="flex: 1; min-width: 170px;"
+                  onclick="CalculadoraLaserModule.salvarNoHistorico()">
+                  💾 Salvar no Histórico
+                </button>
+                <button type="button" class="btn btn-secondary" style="flex: 1; min-width: 170px;"
+                  onclick="CalculadoraLaserModule.copiarWhatsAppAtual()">
+                  💬 Copiar WhatsApp
+                </button>
+                <button type="button" class="btn btn-secondary"
+                  onclick="CalculadoraLaserModule.enviarParaOrcamento()" title="Criar Proposta Comercial com esta peça">
+                  📄 Gerar Orçamento
+                </button>
+              </div>
+            </div>
+
+            <!-- COLUNA DIREITA: CARTÃO EXECUTIVO DE RESULTADO & COMPOSIÇÃO -->
+            <div class="card" style="padding: 22px; background: linear-gradient(180deg, rgba(13, 18, 31, 0.98) 0%, rgba(15, 23, 42, 0.95) 100%); border-color: rgba(6, 182, 212, 0.35); box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);">
+              <div style="border-bottom: 1px solid var(--border); padding-bottom: 12px; margin-bottom: 18px; display: flex; justify-content: space-between; align-items: center;">
+                <h4 style="margin: 0; font-size: 1.05rem; color: #38bdf8; display: flex; align-items: center; gap: 8px;">
+                  <span>📊</span> Composição & Preço Final
+                </h4>
+                <span class="status-badge badge-pago" style="font-size: 0.72rem; padding: 2px 8px;">Laser Seven</span>
+              </div>
+
+              <!-- Destaque do Preço de Venda Sugerido -->
+              <div style="background: rgba(6, 182, 212, 0.1); border: 1px solid rgba(6, 182, 212, 0.35); border-radius: var(--radius-md); padding: 18px; text-align: center; margin-bottom: 20px;">
+                <div style="font-size: 0.78rem; text-transform: uppercase; font-weight: 700; color: #38bdf8; letter-spacing: 0.05em;">
+                  Preço de Venda Sugerido (Unitário)
+                </div>
+                <div id="res-laser-preco-venda-unit" style="font-size: 2.2rem; font-weight: 800; color: #34d399; margin: 4px 0; letter-spacing: -0.02em;">
+                  R$ 0,00
+                </div>
+                <div style="font-size: 0.82rem; color: var(--text-secondary);">
+                  Lucro Bruto Unitário: <strong id="res-laser-lucro-unit" style="color: #ffffff;">R$ 0,00 (100%)</strong>
+                </div>
+              </div>
+
+              <!-- Quebra dos Custos Unitários -->
+              <div style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; background: rgba(255,255,255,0.03); border-radius: 6px; border: 1px solid rgba(255,255,255,0.06);">
+                  <div style="font-size: 0.84rem; color: var(--text-secondary);">
+                    <span>🎨</span> Material (<span id="res-laser-material-nome" style="color: #ffffff; font-weight: 600;">MDF Cru</span>)
+                    <div style="font-size: 0.72rem; color: var(--text-muted);" id="res-laser-custo-m2">R$ 10,27/m²</div>
+                  </div>
+                  <strong id="res-laser-custo-material" style="color: #fbbf24; font-size: 0.95rem;">R$ 0,00</strong>
+                </div>
+
+                <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; background: rgba(255,255,255,0.03); border-radius: 6px; border: 1px solid rgba(255,255,255,0.06);">
+                  <div style="font-size: 0.84rem; color: var(--text-secondary);">
+                    <span>⏱️</span> Tempo Máquina Laser
+                    <div style="font-size: 0.72rem; color: var(--text-muted);">R$ 30,00/h (R$ 0,50/min)</div>
+                  </div>
+                  <strong id="res-laser-custo-tempo" style="color: #38bdf8; font-size: 0.95rem;">R$ 0,00</strong>
+                </div>
+
+                <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; background: rgba(255,255,255,0.03); border-radius: 6px; border: 1px solid rgba(255,255,255,0.06);">
+                  <div style="font-size: 0.84rem; color: var(--text-secondary);">
+                    <span>📦</span> Extras & Acabamentos
+                  </div>
+                  <strong id="res-laser-custo-extras" style="color: var(--text-muted); font-size: 0.95rem;">R$ 0,00</strong>
+                </div>
+
+                <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 12px; background: rgba(239, 68, 68, 0.08); border-radius: 6px; border: 1px solid rgba(239, 68, 68, 0.25);">
+                  <div style="font-size: 0.88rem; font-weight: 700; color: #ffffff;">
+                    Custo Total Unitário de Produção
+                  </div>
+                  <strong id="res-laser-custo-total-unit" style="color: #f87171; font-size: 1.05rem;">R$ 0,00</strong>
+                </div>
+              </div>
+
+              <!-- Bloco Dinâmico do Lote Completo (aparece quando Qtd > 1) -->
+              <div id="res-laser-lote-box" style="display: none; background: rgba(0, 0, 0, 0.4); border: 1px solid rgba(255,255,255,0.1); border-radius: var(--radius-sm); padding: 14px; margin-top: 10px;">
+                <div style="font-size: 0.8rem; font-weight: 700; color: #a5b4fc; text-transform: uppercase; margin-bottom: 8px;">
+                  📦 Totais do Lote (<span id="res-laser-lote-qtd">1 peças</span>)
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; text-align: center;">
+                  <div style="background: rgba(255,255,255,0.03); padding: 8px; border-radius: 6px;">
+                    <div style="font-size: 0.72rem; color: var(--text-muted);">Custo Lote</div>
+                    <strong id="res-laser-lote-custo" style="color: #f87171; font-size: 0.9rem;">R$ 0,00</strong>
+                  </div>
+                  <div style="background: rgba(52, 211, 153, 0.1); padding: 8px; border-radius: 6px; border: 1px solid rgba(52, 211, 153, 0.2);">
+                    <div style="font-size: 0.72rem; color: #34d399;">Venda Lote</div>
+                    <strong id="res-laser-lote-venda" style="color: #34d399; font-size: 0.95rem;">R$ 0,00</strong>
+                  </div>
+                  <div style="background: rgba(255,255,255,0.03); padding: 8px; border-radius: 6px;">
+                    <div style="font-size: 0.72rem; color: var(--text-muted);">Lucro Lote</div>
+                    <strong id="res-laser-lote-lucro" style="color: #38bdf8; font-size: 0.9rem;">R$ 0,00</strong>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- TABELA COMPARATIVA DE TODAS AS 7 CORES -->
+          <div class="card" style="margin-bottom: 24px;">
+            <div class="card-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+              <div>
+                <h4 style="margin: 0; font-size: 1.05rem; color: #ffffff; display: flex; align-items: center; gap: 8px;">
+                  <span>📑</span> Comparativo de Cores para as Medidas Informadas
+                </h4>
+                <div style="font-size: 0.78rem; color: var(--text-muted);">
+                  Veja instantaneamente os custos e valores de venda em cada um dos 7 acabamentos para a mesma peça
+                </div>
+              </div>
+              <button type="button" class="btn btn-secondary btn-sm" onclick="CalculadoraLaserModule.abrirModalConfig()">
+                ⚙️ Ajustar Preços das Chapas
+              </button>
+            </div>
+
+            <div class="table-responsive">
+              <table class="table" style="margin: 0;">
+                <thead>
+                  <tr>
+                    <th>Cor / Material</th>
+                    <th>Dimensões da Chapa Inteira</th>
+                    <th>Custo m²</th>
+                    <th>Custo Material Peça</th>
+                    <th>Tempo Laser (R$)</th>
+                    <th>Custo Total</th>
+                    <th style="text-align: right;">Preço de Venda</th>
+                    <th style="text-align: center;">Status</th>
+                  </tr>
+                </thead>
+                <tbody id="calc-laser-tabela-cores-tbody">
+                  <!-- Renderizado dinamicamente via CalculadoraLaserModule.renderTabelaCores() -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- HISTÓRICO DE CÁLCULOS SALVOS -->
+          <div class="card">
+            <div class="card-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+              <div>
+                <h4 style="margin: 0; font-size: 1.05rem; color: #ffffff; display: flex; align-items: center; gap: 8px;">
+                  <span>🕒</span> Histórico de Cálculos & Simulações Laser
+                </h4>
+                <div style="font-size: 0.78rem; color: var(--text-muted);">
+                  Peças e orçamentos calculados anteriormente para recarregar ou exportar
+                </div>
+              </div>
+              <div style="display: flex; gap: 10px; align-items: center;">
+                <input type="text" id="calc-laser-historico-busca" class="form-control form-control-sm"
+                  placeholder="Buscar peça ou cor..." style="width: 220px;">
+              </div>
+            </div>
+
+            <div class="table-responsive">
+              <table class="table" style="margin: 0;">
+                <thead>
+                  <tr>
+                    <th>Produto / Data</th>
+                    <th>Material / Cor</th>
+                    <th>Dimensões & Área</th>
+                    <th>Tempo Laser</th>
+                    <th style="text-align: center;">Qtd</th>
+                    <th>Custo & Preço Venda</th>
+                    <th style="text-align: right;">Ações</th>
+                  </tr>
+                </thead>
+                <tbody id="calc-laser-historico-tbody">
+                  <!-- Renderizado dinamicamente via CalculadoraLaserModule.renderHistorico() -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
       </div>
     </main>
   </div>
@@ -1365,6 +1673,75 @@
     </div>
   </div>
 
+  <!-- MODAL: CONFIGURAÇÃO DE CHAPAS & HORA MÁQUINA LASER -->
+  <div class="modal-overlay" id="modal-calc-laser-config">
+    <div class="modal-container" style="max-width: 680px;">
+      <div class="modal-header">
+        <h3 style="color: #ffffff; display: flex; align-items: center; gap: 8px;">
+          <span>⚙️</span> Parâmetros da Calculadora Laser
+        </h3>
+        <button class="btn-icon"
+          style="background: transparent; border: none; color: var(--text-muted); cursor: pointer;"
+          onclick="App.closeModal('modal-calc-laser-config')">✕</button>
+      </div>
+
+      <div class="modal-body">
+        <!-- Taxa Horária da Máquina Laser -->
+        <div style="background: rgba(6, 182, 212, 0.08); border: 1px solid rgba(6, 182, 212, 0.3); border-radius: var(--radius-sm); padding: 16px; margin-bottom: 20px;">
+          <div style="font-weight: 700; color: #38bdf8; font-size: 0.95rem; margin-bottom: 4px; display: flex; align-items: center; gap: 6px;">
+            <span>⚡</span> Custo da Hora Máquina Laser
+          </div>
+          <div style="font-size: 0.78rem; color: var(--text-secondary); margin-bottom: 12px;">
+            Valor cobrado pelo funcionamento do tubo laser, eletricidade, exaustor e manutenção.
+          </div>
+          <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+            <div style="position: relative; max-width: 180px;">
+              <span style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--text-muted); font-weight: 700;">R$</span>
+              <input type="number" step="0.5" id="cfg-laser-hora-val" class="form-control" value="30.00" style="padding-left: 38px; font-size: 1.1rem; font-weight: 700;">
+            </div>
+            <span style="font-size: 0.88rem; color: #ffffff;">por hora (R$ 0,50 por minuto)</span>
+          </div>
+        </div>
+
+        <!-- Tabela das Chapas e Cores -->
+        <div style="margin-bottom: 14px;">
+          <label style="font-weight: 700; color: #ffffff; font-size: 0.92rem; display: flex; align-items: center; gap: 6px; margin-bottom: 4px;">
+            <span>🎨</span> Dimensões e Valores das Chapas (por Cor)
+          </label>
+          <div style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 12px;">
+            Insira o tamanho inteiro e o valor pago em cada chapa para cálculo automático do custo por m²
+          </div>
+
+          <div class="table-responsive">
+            <table class="table" style="margin: 0; font-size: 0.85rem;">
+              <thead>
+                <tr>
+                  <th>Cor / Material</th>
+                  <th>Esp. (mm)</th>
+                  <th>Largura (m)</th>
+                  <th>Compr. (m)</th>
+                  <th>Preço Chapa (R$)</th>
+                  <th>Área e Custo m²</th>
+                </tr>
+              </thead>
+              <tbody id="cfg-laser-chapas-tbody">
+                <!-- Renderizado via CalculadoraLaserModule.abrirModalConfig() -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="CalculadoraLaserModule.restaurarPadroes()" style="color: #fbbf24;">
+          🔄 Restaurar Padrões
+        </button>
+        <button type="button" class="btn btn-secondary" onclick="App.closeModal('modal-calc-laser-config')">Cancelar</button>
+        <button type="button" class="btn btn-primary" onclick="CalculadoraLaserModule.salvarConfigForm()">Salvar Parâmetros</button>
+      </div>
+    </div>
+  </div>
+
   <!-- MODAL: GERENCIAMENTO DE FILAMENTOS -->
   <div class="modal-overlay" id="modal-gerenciar-filamentos">
     <div class="modal-container" style="max-width: 820px;">
@@ -1558,17 +1935,18 @@
   <!-- CONTAINER DE TOASTS -->
   <div class="toast-container" id="toast-container"></div>
 
-  <!-- SCRIPTS DO SISTEMA (com cache-busting v28) -->
-  <script src="js/notifications.js?v=28"></script>
-  <script src="js/storage.js?v=28"></script>
-  <script src="js/crm.js?v=28"></script>
-  <script src="js/encomendas.js?v=28"></script>
-  <script src="js/estoque.js?v=28"></script>
-  <script src="js/financeiro.js?v=28"></script>
-  <script src="js/propostas.js?v=28"></script>
-  <script src="js/calculadora.js?v=28"></script>
-  <script src="js/configuracoes.js?v=28"></script>
-  <script src="js/app.js?v=28"></script>
+  <!-- SCRIPTS DO SISTEMA (com cache-busting v29) -->
+  <script src="js/notifications.js?v=29"></script>
+  <script src="js/storage.js?v=29"></script>
+  <script src="js/crm.js?v=29"></script>
+  <script src="js/encomendas.js?v=29"></script>
+  <script src="js/estoque.js?v=29"></script>
+  <script src="js/financeiro.js?v=29"></script>
+  <script src="js/propostas.js?v=29"></script>
+  <script src="js/calculadora.js?v=29"></script>
+  <script src="js/calculadora-laser.js?v=29"></script>
+  <script src="js/configuracoes.js?v=29"></script>
+  <script src="js/app.js?v=29"></script>
 </body>
 
 </html>

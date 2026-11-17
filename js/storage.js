@@ -17,6 +17,8 @@ const STORAGE_KEYS = {
   FILAMENTOS: 'seven_filamentos_v1',
   CALC_3D_CONFIG: 'seven_calc_3d_config_v1',
   CALC_3D_HISTORICO: 'seven_calc_3d_historico_v1',
+  CALC_LASER_CONFIG: 'seven_calc_laser_config_v1',
+  CALC_LASER_HISTORICO: 'seven_calc_laser_historico_v1',
   CONFIG: 'seven_config_v1',
   SUPABASE_SETTINGS: 'seven_supabase_config_v1'
 };
@@ -338,6 +340,45 @@ const INITIAL_DATA = {
       preco_venda_unitario: 41.18,
       lucro_total: 41.185,
       observacoes: 'Bico 0.4mm, camada 0.2mm, infill 15%'
+    }
+  ],
+  calc_laser_config: {
+    id: 'main_laser_calc',
+    valor_hora_laser: 30.00, // R$ 30,00 por hora (R$ 0,50 por minuto)
+    margem_padrao: 100, // 100% de margem
+    chapas: [
+      { id: 'cru', nome: 'MDF Cru', cor: 'Cru', espessura_mm: 3, largura_m: 2.13, comprimento_m: 2.75, preco_chapa: 60.18, cor_hex: '#d97706', bg_badge: 'rgba(217, 119, 6, 0.2)', text_color: '#fbbf24' },
+      { id: 'branco', nome: 'MDF Branco', cor: 'Branco', espessura_mm: 3, largura_m: 1.20, comprimento_m: 1.85, preco_chapa: 99.55, cor_hex: '#f8fafc', bg_badge: 'rgba(255, 255, 255, 0.15)', text_color: '#f8fafc' },
+      { id: 'preto', nome: 'MDF Preto', cor: 'Preto', espessura_mm: 3, largura_m: 1.20, comprimento_m: 1.85, preco_chapa: 105.00, cor_hex: '#334155', bg_badge: 'rgba(51, 65, 85, 0.4)', text_color: '#cbd5e1' },
+      { id: 'azul', nome: 'MDF Azul', cor: 'Azul', espessura_mm: 3, largura_m: 1.20, comprimento_m: 1.85, preco_chapa: 110.00, cor_hex: '#3b82f6', bg_badge: 'rgba(59, 130, 246, 0.2)', text_color: '#60a5fa' },
+      { id: 'vermelho', nome: 'MDF Vermelho', cor: 'Vermelho', espessura_mm: 3, largura_m: 1.20, comprimento_m: 1.85, preco_chapa: 110.00, cor_hex: '#ef4444', bg_badge: 'rgba(239, 68, 68, 0.2)', text_color: '#f87171' },
+      { id: 'gold', nome: 'Gold (Dourado)', cor: 'Gold', espessura_mm: 2, largura_m: 1.00, comprimento_m: 2.00, preco_chapa: 180.00, cor_hex: '#eab308', bg_badge: 'rgba(234, 179, 8, 0.22)', text_color: '#fde047' },
+      { id: 'silver', nome: 'Silver (Prata)', cor: 'Silver', espessura_mm: 2, largura_m: 1.00, comprimento_m: 2.00, preco_chapa: 180.00, cor_hex: '#94a3b8', bg_badge: 'rgba(148, 163, 184, 0.22)', text_color: '#e2e8f0' }
+    ]
+  },
+  calc_laser_historico: [
+    {
+      id: 'calc-laser-1',
+      data: new Date().toISOString().split('T')[0],
+      produto_nome: 'Mandala Laser 30x30cm (Exemplo)',
+      cor_id: 'cru',
+      cor_nome: 'MDF Cru',
+      espessura_mm: 3,
+      largura_m: 0.30,
+      comprimento_m: 0.30,
+      area_m2: 0.09,
+      tempo_minutos: 10,
+      valor_hora_laser: 30.00,
+      custo_material: 0.92,
+      custo_laser: 5.00,
+      custos_extras: 0.00,
+      custo_unitario: 5.92,
+      margem_lucro_pct: 100,
+      preco_venda_unitario: 11.84,
+      quantidade_pecas: 1,
+      custo_total: 5.92,
+      preco_venda_total: 11.84,
+      lucro_total: 5.92
     }
   ]
 };
@@ -1139,6 +1180,51 @@ const StorageService = {
     }).catch(err => console.error('[Supabase] Erro ao salvar calc_3d_config:', err));
 
     return payload;
+  },
+
+  getCalcLaserConfig() {
+    try {
+      const data = localStorage.getItem(STORAGE_KEYS.CALC_LASER_CONFIG);
+      return data ? JSON.parse(data) : INITIAL_DATA.calc_laser_config;
+    } catch {
+      return INITIAL_DATA.calc_laser_config;
+    }
+  },
+
+  saveCalcLaserConfig(cfg) {
+    const payload = {
+      id: 'main_laser_calc',
+      ...cfg,
+      updated_at: new Date().toISOString()
+    };
+    localStorage.setItem(STORAGE_KEYS.CALC_LASER_CONFIG, JSON.stringify(payload));
+    window.dispatchEvent(new CustomEvent('seven_data_updated', { detail: { table: 'calc_laser_config' } }));
+    return payload;
+  },
+
+  getCalcLaserHistorico() {
+    try {
+      const data = localStorage.getItem(STORAGE_KEYS.CALC_LASER_HISTORICO);
+      return data ? JSON.parse(data) : INITIAL_DATA.calc_laser_historico;
+    } catch {
+      return INITIAL_DATA.calc_laser_historico;
+    }
+  },
+
+  saveCalcLaserHistoricoItem(item) {
+    const list = this.getCalcLaserHistorico();
+    list.unshift(item);
+    localStorage.setItem(STORAGE_KEYS.CALC_LASER_HISTORICO, JSON.stringify(list));
+    window.dispatchEvent(new CustomEvent('seven_data_updated', { detail: { table: 'calc_laser_historico' } }));
+    return list;
+  },
+
+  deleteCalcLaserHistoricoItem(id) {
+    let list = this.getCalcLaserHistorico();
+    list = list.filter(i => i.id !== id);
+    localStorage.setItem(STORAGE_KEYS.CALC_LASER_HISTORICO, JSON.stringify(list));
+    window.dispatchEvent(new CustomEvent('seven_data_updated', { detail: { table: 'calc_laser_historico' } }));
+    return list;
   }
 };
 

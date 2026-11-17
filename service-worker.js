@@ -3,7 +3,7 @@
  * Suporte a modo standalone no iPhone (iOS), cache e Notificações Push
  */
 
-const CACHE_NAME = 'seven-cache-v28';
+const CACHE_NAME = 'seven-cache-v29';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
@@ -16,6 +16,7 @@ const ASSETS_TO_CACHE = [
   './js/financeiro.js',
   './js/propostas.js',
   './js/calculadora.js',
+  './js/calculadora-laser.js',
   './js/configuracoes.js',
   './js/app.js',
   './manifest.json',

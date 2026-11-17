@@ -96,6 +96,7 @@ const App = {
       estoque: { title: 'Estoque de Insumos', sub: 'Filamentos 3D, chapas laser, copos e embalagens' },
       financeiro: { title: 'Financeiro & Fluxo de Caixa', sub: 'Entradas, despesas operacionais e balanço' },
       calculadora: { title: 'Calculadora de Filamentos', sub: 'Custos de produção 3D: filamento, energia elétrica e desgaste operacional' },
+      'calculadora-laser': { title: 'Calculadora Laser', sub: 'Corte & Gravação: R$ 30,00/h de máquina, chapas de MDF por cores e acrílicos' },
       configuracoes: { title: 'Configurações do Estúdio', sub: 'Dados da empresa, dados bancários e integrações' }
     };
 
@@ -117,6 +118,10 @@ const App = {
         CalculadoraModule.carregarParametrosConfig();
         CalculadoraModule.calcular();
         CalculadoraModule.renderHistorico();
+      }
+    } else if (viewName === 'calculadora-laser') {
+      if (typeof CalculadoraLaserModule !== 'undefined') {
+        CalculadoraLaserModule.render();
       }
     } else if (viewName === 'configuracoes') {
       if (typeof ConfiguracoesModule !== 'undefined') {

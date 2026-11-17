@@ -599,6 +599,92 @@ body {
   border: 1px solid rgba(249, 115, 22, 0.45);
 }
 
+.theme-laser {
+  border: 1px solid rgba(6, 182, 212, 0.45);
+  border-left: 6px solid #06b6d4;
+  box-shadow: 0 6px 24px rgba(6, 182, 212, 0.14);
+}
+.theme-laser .themed-header {
+  background: linear-gradient(90deg, rgba(6, 182, 212, 0.22) 0%, rgba(13, 18, 31, 0.95) 100%);
+  border-bottom: 1px solid rgba(6, 182, 212, 0.45);
+}
+.theme-laser .themed-icon-box {
+  border: 1px solid rgba(6, 182, 212, 0.45);
+  background: rgba(6, 182, 212, 0.18);
+  color: #38bdf8;
+}
+
+/* Calculadora Laser Chips & Seletores */
+.laser-color-chips-wrap {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.laser-color-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 14px;
+  border-radius: var(--radius-sm);
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: var(--text-primary);
+  font-family: var(--font-main);
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  user-select: none;
+}
+
+.laser-color-chip:hover {
+  background: rgba(255, 255, 255, 0.09);
+  border-color: rgba(255, 255, 255, 0.25);
+  transform: translateY(-1px);
+}
+
+.laser-color-chip.active {
+  background: rgba(6, 182, 212, 0.22);
+  border-color: #06b6d4;
+  color: #38bdf8;
+  box-shadow: 0 0 14px rgba(6, 182, 212, 0.4);
+}
+
+.laser-color-dot {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  display: inline-block;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.5);
+}
+
+.laser-row-selected {
+  background: rgba(6, 182, 212, 0.15) !important;
+  border-left: 3px solid #06b6d4;
+}
+
+.calc-laser-unit-btn {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: var(--text-muted);
+  padding: 5px 12px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.18s ease;
+}
+
+.calc-laser-unit-btn.active {
+  background: #00a8f3;
+  color: #ffffff;
+  border-color: #00a8f3;
+  box-shadow: 0 0 10px rgba(0, 168, 243, 0.4);
+}
+
 /* Calculadora 3D Layout */
 .calc-grid {
   display: grid;
