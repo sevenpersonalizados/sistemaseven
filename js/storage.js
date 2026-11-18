@@ -328,8 +328,11 @@ const INITIAL_DATA = {
       tempo_horas: 5,
       tempo_minutos: 30,
       tempo_total_horas: 5.5,
+      tempo_horas_dec: 5.5,
+      tempo_formatado: '5h 30m',
       quantidade_pecas: 2,
       custo_filamento: 21.00,
+      custo_material: 21.00,
       consumo_kwh: 1.1,
       custo_energia: 0.935,
       custo_operacional: 19.25,
@@ -339,6 +342,8 @@ const INITIAL_DATA = {
       preco_venda_total: 82.37,
       preco_venda_unitario: 41.18,
       lucro_total: 41.185,
+      lucro_estimado_total: 41.185,
+      lucro_estimado_unitario: 20.5925,
       observacoes: 'Bico 0.4mm, camada 0.2mm, infill 15%'
     }
   ],
@@ -675,7 +680,7 @@ const StorageService = {
     if (!isSilent) {
       this.updateSyncBadge('syncing', 'Sincronizando nuvem...');
     }
-    const tables = ['crm_cards', 'encomendas', 'estoque', 'despesas', 'propostas', 'filamentos', 'calc_3d_historico'];
+    const tables = ['crm_cards', 'encomendas', 'estoque', 'despesas', 'propostas', 'filamentos', 'calc_3d_historico', 'calc_laser_historico'];
 
     try {
       await Promise.all(tables.map(async (table) => {
@@ -690,9 +695,22 @@ const StorageService = {
               const currentItems = this.get(table);
               const cloudIds = new Set(rows.map(r => r.id));
 
-              // Protege itens recém-inseridos localmente que ainda possam estar em trânsito de rede
-              const pendingLocal = currentItems.filter(item => !cloudIds.has(item.id) && this.isLocalAction(item.id));
-              const merged = [...pendingLocal, ...rows];
+              let merged;
+              if (rows.length === 0 && currentItems.length > 0) {
+                // Nuvem retornou vazio para esta tabela: preserva dados locais e tenta sincronizar com o Supabase
+                merged = currentItems;
+                currentItems.forEach(item => {
+                  fetch(`${SUPABASE_CONFIG.url}/rest/v1/${table}`, {
+                    method: 'POST',
+                    headers: this.getHeaders('resolution=merge-duplicates'),
+                    body: JSON.stringify(item)
+                  }).catch(e => console.warn(`[Sync] Falha ao enviar item local para ${table}:`, e));
+                });
+              } else {
+                // Protege itens recém-inseridos localmente que ainda possam estar em trânsito de rede
+                const pendingLocal = currentItems.filter(item => !cloudIds.has(item.id) && this.isLocalAction(item.id));
+                merged = [...pendingLocal, ...rows];
+              }
 
               const prevStr = localStorage.getItem(key) || '[]';
               const newStr = JSON.stringify(merged);
