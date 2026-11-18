@@ -115,6 +115,10 @@ const App = {
       EncomendasModule.renderFinalizados();
     } else if (viewName === 'encomendas') {
       EncomendasModule.render();
+    } else if (viewName === 'financeiro') {
+      if (typeof FinanceiroModule !== 'undefined') {
+        FinanceiroModule.render();
+      }
     } else if (viewName === 'calculadora') {
       if (typeof CalculadoraModule !== 'undefined') {
         CalculadoraModule.renderFilamentoSelect();
@@ -154,8 +158,23 @@ const App = {
     if (elEncAbertas) elEncAbertas.textContent = encAbertas.length;
 
     // 2. Receita e Despesas do Mês
-    const receitaMes = enc.reduce((s, e) => s + (Number(e.valor_pago) || 0), 0);
-    const despMes = desp.reduce((s, d) => s + (Number(d.valor) || 0), 0);
+    const lancamentosFin = StorageService.get('financeiro_lancamentos') || [];
+    let receitaMes = 0;
+    let despMes = 0;
+    if (lancamentosFin.length > 0) {
+      lancamentosFin.forEach(l => {
+        if (l.estornado || l.status === 'estornado') return;
+        const val = Number(l.valor) || 0;
+        if (l.tipo === 'receita' && (l.status === 'recebido' || l.status === 'pago')) {
+          receitaMes += val;
+        } else if (l.tipo === 'despesa' && (l.status === 'pago' || l.status === 'recebido')) {
+          despMes += val;
+        }
+      });
+    } else {
+      receitaMes = enc.reduce((s, e) => s + (Number(e.valor_pago) || 0), 0);
+      despMes = desp.reduce((s, d) => s + (Number(d.valor) || 0), 0);
+    }
     const saldo = receitaMes - despMes;
 
     const elReceita = document.getElementById('dash-kpi-receita');

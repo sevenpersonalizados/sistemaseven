@@ -19,6 +19,7 @@ const STORAGE_KEYS = {
   CALC_3D_HISTORICO: 'seven_calc_3d_historico_v1',
   CALC_LASER_CONFIG: 'seven_calc_laser_config_v1',
   CALC_LASER_HISTORICO: 'seven_calc_laser_historico_v1',
+  FINANCEIRO_LANCAMENTOS: 'seven_financeiro_lancamentos_v1',
   CONFIG: 'seven_config_v1',
   SUPABASE_SETTINGS: 'seven_supabase_config_v1'
 };
@@ -35,7 +36,11 @@ const INITIAL_DATA = {
     chavePix: 'contato@sevenpersonalizados.com.br',
     endereco: 'Rua das Indústrias Criativas, 77 — SP',
     categorias_producao: ['3D', 'Gravação laser', 'Corte laser', 'Corte e Gravação'],
-    categorias_despesa: ['Matéria-Prima', 'Manutenção', 'Custos Fixos', 'Marketing', 'Outros'],
+    categorias_despesa: ['Matéria-Prima', 'Insumos 3D', 'Manutenção Máquinas', 'Custos Fixos (Luz/Água/Aluguel)', 'Embalagens & Envios', 'Marketing & Anúncios', 'Pró-Labore / Sócios', 'Impostos & Taxas', 'Outros'],
+    categorias_receita: ['Venda de Personalizados', 'Gravação Laser', 'Impressão 3D', 'Brindes Corporativos', 'Serviço de Design', 'Outras Receitas'],
+    centros_custo: ['Oficina / Produção Laser', 'Produção 3D', 'Balcão / Loja Física', 'Administrativo & Vendas', 'Geral'],
+    locais_pagamento: ['Banco Inter', 'Nubank', 'Caixa Físico', 'Mercado Pago', 'Cofre'],
+    proprietarios: ['Proprietário 1', 'Proprietário 2'],
     formas_pagamento: ['Pix', 'Cartão de Crédito', 'Cartão de Débito', 'Boleto', 'Dinheiro'],
     cores: [
       'Preto', 'Branco', 'Dourado', 'Prata', 'Vermelho', 'Azul', 'Verde',
@@ -250,6 +255,146 @@ const INITIAL_DATA = {
       valor: 250.00,
       data: new Date(Date.now() - 3600000 * 24).toISOString().split('T')[0],
       forma_pagamento: 'Pix'
+    }
+  ],
+  financeiro_lancamentos: [
+    {
+      id: 'fin-1',
+      tipo: 'receita',
+      descricao: 'Entrada Encomenda #164 (Dr. Roberto Mendes)',
+      valor: 1600.00,
+      categoria: 'Brindes Corporativos',
+      centro_custo: 'Oficina / Produção Laser',
+      data: new Date(Date.now() - 3600000 * 36).toISOString().split('T')[0],
+      forma_pagamento: 'Pix',
+      local_pagamento: 'Banco Inter',
+      status: 'recebido',
+      observacoes: '50% de entrada - Troféus em acrílico e MDF',
+      proprietario: 'Proprietário 1',
+      parcela_atual: 1,
+      total_parcelas: 1,
+      origem: 'encomenda',
+      origem_id: 'enc-1',
+      estornado: false,
+      historico_alteracoes: []
+    },
+    {
+      id: 'fin-2',
+      tipo: 'receita',
+      descricao: 'Quitação Encomenda #876 (Ana Carolina Festas)',
+      valor: 850.00,
+      categoria: 'Impressão 3D',
+      centro_custo: 'Produção 3D',
+      data: new Date(Date.now() - 3600000 * 20).toISOString().split('T')[0],
+      forma_pagamento: 'Cartão de Crédito',
+      local_pagamento: 'Nubank',
+      status: 'recebido',
+      observacoes: '50x Lembrancinhas 3D Ursinho',
+      proprietario: 'Proprietário 2',
+      parcela_atual: 1,
+      total_parcelas: 1,
+      origem: 'encomenda',
+      origem_id: 'enc-2',
+      estornado: false,
+      historico_alteracoes: []
+    },
+    {
+      id: 'fin-3',
+      tipo: 'receita',
+      descricao: 'Restante Encomenda #164 (Dr. Roberto Mendes)',
+      valor: 1600.00,
+      categoria: 'Brindes Corporativos',
+      centro_custo: 'Oficina / Produção Laser',
+      data: new Date(Date.now() + 3600000 * 48).toISOString().split('T')[0],
+      forma_pagamento: 'Pix',
+      local_pagamento: 'Banco Inter',
+      status: 'pendente',
+      observacoes: 'A receber na entrega dos troféus',
+      proprietario: 'Proprietário 1',
+      parcela_atual: 1,
+      total_parcelas: 1,
+      origem: 'encomenda',
+      origem_id: 'enc-1',
+      estornado: false,
+      historico_alteracoes: []
+    },
+    {
+      id: 'fin-4',
+      tipo: 'despesa',
+      descricao: 'Compra de Filamento PLA & Resina',
+      valor: 640.00,
+      categoria: 'Insumos 3D',
+      centro_custo: 'Produção 3D',
+      data: new Date(Date.now() - 3600000 * 72).toISOString().split('T')[0],
+      forma_pagamento: 'Pix',
+      local_pagamento: 'Banco Inter',
+      status: 'pago',
+      observacoes: 'Reposição de estoque PLA Silk e Resina UV',
+      proprietario: 'Proprietário 1',
+      parcela_atual: 1,
+      total_parcelas: 1,
+      origem: 'manual',
+      estornado: false,
+      historico_alteracoes: []
+    },
+    {
+      id: 'fin-5',
+      tipo: 'despesa',
+      descricao: 'Lote de Caixas e Plástico Bolha',
+      valor: 185.00,
+      categoria: 'Embalagens & Envios',
+      centro_custo: 'Administrativo & Vendas',
+      data: new Date(Date.now() - 3600000 * 48).toISOString().split('T')[0],
+      forma_pagamento: 'Cartão de Crédito',
+      local_pagamento: 'Nubank',
+      status: 'pago',
+      observacoes: '100 caixas de envio para correios',
+      proprietario: 'Proprietário 2',
+      parcela_atual: 1,
+      total_parcelas: 1,
+      origem: 'manual',
+      estornado: false,
+      historico_alteracoes: []
+    },
+    {
+      id: 'fin-6',
+      tipo: 'despesa',
+      descricao: 'Manutenção Lente Laser CO2',
+      valor: 250.00,
+      categoria: 'Manutenção Máquinas',
+      centro_custo: 'Oficina / Produção Laser',
+      data: new Date(Date.now() - 3600000 * 24).toISOString().split('T')[0],
+      forma_pagamento: 'Pix',
+      local_pagamento: 'Banco Inter',
+      status: 'pago',
+      observacoes: 'Troca de lente de foco 20mm',
+      proprietario: 'Proprietário 1',
+      parcela_atual: 1,
+      total_parcelas: 1,
+      origem: 'manual',
+      estornado: false,
+      historico_alteracoes: []
+    },
+    {
+      id: 'fin-7',
+      tipo: 'despesa',
+      descricao: 'Conta de Energia Elétrica (Oficina)',
+      valor: 320.00,
+      categoria: 'Custos Fixos (Luz/Água/Aluguel)',
+      centro_custo: 'Geral',
+      data: new Date(Date.now() + 3600000 * 72).toISOString().split('T')[0],
+      forma_pagamento: 'Boleto',
+      local_pagamento: 'Banco Inter',
+      status: 'pendente',
+      observacoes: 'Vencimento da fatura Enel',
+      proprietario: 'Proprietário 1',
+      parcela_atual: 1,
+      total_parcelas: 1,
+      recorrente: true,
+      frequencia_recorrencia: 'mensal',
+      origem: 'manual',
+      estornado: false,
+      historico_alteracoes: []
     }
   ],
   propostas: [
@@ -574,9 +719,10 @@ const StorageService = {
           } else if (table === 'estoque') {
             title = '🧱 Novo Insumo em Estoque!';
             body = `"${newRecord.nome || 'Material'}" cadastrado no estoque.`;
-          } else if (table === 'despesas') {
-            title = '💸 Nova Despesa Lançada!';
-            body = `"${newRecord.descricao || 'Despesa'}" no valor de ${App.formatMoney(newRecord.valor || 0)}.`;
+          } else if (table === 'despesas' || table === 'financeiro_lancamentos') {
+            const isRec = newRecord.tipo === 'receita';
+            title = isRec ? '💰 Nova Receita Registrada!' : '💸 Nova Despesa Lançada!';
+            body = `[${newRecord.proprietario || 'Proprietário'}] ${newRecord.descricao || 'Lançamento'} — ${App.formatMoney(newRecord.valor || 0)}`;
           }
 
           if (typeof NotificationModule !== 'undefined') {
@@ -612,9 +758,9 @@ const StorageService = {
         } else if (table === 'estoque') {
           title = '🧱 Estoque Atualizado!';
           body = `"${newRecord.nome || 'Material'}" agora com ${newRecord.quantidade_atual} ${newRecord.unidade || 'un'}.`;
-        } else if (table === 'despesas') {
-          title = '💸 Despesa Atualizada!';
-          body = `Despesa "${newRecord.descricao || ''}" atualizada.`;
+        } else if (table === 'despesas' || table === 'financeiro_lancamentos') {
+          title = '💼 Financeiro Atualizado!';
+          body = `Lançamento "${newRecord.descricao || ''}" atualizado (${newRecord.status || ''}).`;
         }
 
         if (typeof NotificationModule !== 'undefined') {
@@ -680,7 +826,7 @@ const StorageService = {
     if (!isSilent) {
       this.updateSyncBadge('syncing', 'Sincronizando nuvem...');
     }
-    const tables = ['crm_cards', 'encomendas', 'estoque', 'despesas', 'propostas', 'filamentos', 'calc_3d_historico', 'calc_laser_historico'];
+    const tables = ['crm_cards', 'encomendas', 'estoque', 'despesas', 'propostas', 'filamentos', 'calc_3d_historico', 'calc_laser_historico', 'financeiro_lancamentos'];
 
     try {
       await Promise.all(tables.map(async (table) => {
@@ -1243,6 +1389,159 @@ const StorageService = {
     localStorage.setItem(STORAGE_KEYS.CALC_LASER_HISTORICO, JSON.stringify(list));
     window.dispatchEvent(new CustomEvent('seven_data_updated', { detail: { table: 'calc_laser_historico' } }));
     return list;
+  },
+
+  /* --- CONFIGURAÇÕES DO FINANCEIRO (PROPRIETÁRIOS, CATEGORIAS, CENTROS DE CUSTO, LOCAIS) --- */
+  getProprietarios() {
+    const raw = this.getConfig().proprietarios;
+    if (Array.isArray(raw) && raw.length > 0) return raw;
+    return ['Proprietário 1', 'Proprietário 2'];
+  },
+
+  getActiveProprietario() {
+    const salvo = localStorage.getItem('seven_active_proprietario');
+    if (salvo) return salvo;
+    const lista = this.getProprietarios();
+    return lista[0] || 'Proprietário 1';
+  },
+
+  setActiveProprietario(nome) {
+    if (!nome) return;
+    localStorage.setItem('seven_active_proprietario', nome);
+    window.dispatchEvent(new CustomEvent('seven_proprietario_changed', { detail: { nome } }));
+  },
+
+  addProprietario(nome) {
+    const val = (nome || '').trim();
+    if (!val) return;
+    const cfg = this.getConfig();
+    const lista = [...(this.getProprietarios())];
+    if (!lista.some(p => p.toLowerCase() === val.toLowerCase())) {
+      lista.push(val);
+      this.saveConfig({ ...cfg, proprietarios: lista });
+    }
+  },
+
+  editProprietario(index, novoNome) {
+    const val = (novoNome || '').trim();
+    if (!val) return;
+    const cfg = this.getConfig();
+    const lista = [...(this.getProprietarios())];
+    if (lista[index] !== undefined) {
+      lista[index] = val;
+      this.saveConfig({ ...cfg, proprietarios: lista });
+    }
+  },
+
+  removeProprietario(index) {
+    const cfg = this.getConfig();
+    const lista = [...(this.getProprietarios())];
+    if (lista.length <= 1) {
+      alert('É necessário manter pelo menos um proprietário cadastrado.');
+      return;
+    }
+    lista.splice(index, 1);
+    this.saveConfig({ ...cfg, proprietarios: lista });
+  },
+
+  getCentrosCusto() {
+    const raw = this.getConfig().centros_custo;
+    if (Array.isArray(raw) && raw.length > 0) return raw;
+    return ['Oficina / Produção Laser', 'Produção 3D', 'Balcão / Loja Física', 'Administrativo & Vendas', 'Geral'];
+  },
+
+  addCentroCusto(nome) {
+    const val = (nome || '').trim();
+    if (!val) return;
+    const cfg = this.getConfig();
+    const lista = [...(this.getCentrosCusto())];
+    if (!lista.some(c => c.toLowerCase() === val.toLowerCase())) {
+      lista.push(val);
+      this.saveConfig({ ...cfg, centros_custo: lista });
+    }
+  },
+
+  removeCentroCusto(index) {
+    const cfg = this.getConfig();
+    const lista = [...(this.getCentrosCusto())];
+    if (lista.length <= 1) return;
+    lista.splice(index, 1);
+    this.saveConfig({ ...cfg, centros_custo: lista });
+  },
+
+  getLocaisPagamento() {
+    const raw = this.getConfig().locais_pagamento;
+    if (Array.isArray(raw) && raw.length > 0) return raw;
+    return ['Banco Inter', 'Nubank', 'Caixa Físico', 'Mercado Pago', 'Cofre'];
+  },
+
+  addLocalPagamento(nome) {
+    const val = (nome || '').trim();
+    if (!val) return;
+    const cfg = this.getConfig();
+    const lista = [...(this.getLocaisPagamento())];
+    if (!lista.some(l => l.toLowerCase() === val.toLowerCase())) {
+      lista.push(val);
+      this.saveConfig({ ...cfg, locais_pagamento: lista });
+    }
+  },
+
+  removeLocalPagamento(index) {
+    const cfg = this.getConfig();
+    const lista = [...(this.getLocaisPagamento())];
+    if (lista.length <= 1) return;
+    lista.splice(index, 1);
+    this.saveConfig({ ...cfg, locais_pagamento: lista });
+  },
+
+  getCategoriasReceita() {
+    const raw = this.getConfig().categorias_receita;
+    if (Array.isArray(raw) && raw.length > 0) return raw;
+    return ['Venda de Personalizados', 'Gravação Laser', 'Impressão 3D', 'Brindes Corporativos', 'Serviço de Design', 'Outras Receitas'];
+  },
+
+  addCategoriaReceita(nome) {
+    const val = (nome || '').trim();
+    if (!val) return;
+    const cfg = this.getConfig();
+    const lista = [...(this.getCategoriasReceita())];
+    if (!lista.some(c => c.toLowerCase() === val.toLowerCase())) {
+      lista.push(val);
+      this.saveConfig({ ...cfg, categorias_receita: lista });
+    }
+  },
+
+  removeCategoriaReceita(index) {
+    const cfg = this.getConfig();
+    const lista = [...(this.getCategoriasReceita())];
+    if (lista.length <= 1) return;
+    lista.splice(index, 1);
+    this.saveConfig({ ...cfg, categorias_receita: lista });
+  },
+
+  getCategoriasDespesa() {
+    const raw = this.getConfig().categorias_despesa;
+    if (Array.isArray(raw) && raw.length > 0) return raw;
+    return ['Matéria-Prima', 'Insumos 3D', 'Manutenção Máquinas', 'Custos Fixos (Luz/Água/Aluguel)', 'Embalagens & Envios', 'Marketing & Anúncios', 'Pró-Labore / Sócios', 'Impostos & Taxas', 'Outros'];
+  },
+
+  addCategoriaDespesa(nome) {
+    const val = (nome || '').trim();
+    if (!val) return;
+    const cfg = this.getConfig();
+    const lista = [...(this.getCategoriasDespesa())];
+    if (!lista.some(c => c.toLowerCase() === val.toLowerCase())) {
+      lista.push(val);
+      this.saveConfig({ ...cfg, categorias_despesa: lista });
+    }
+  },
+
+  removeCategoriaDespesa(index) {
+    const cfg = this.getConfig();
+    const lista = [...(this.getCategoriasDespesa())];
+    if (lista.length <= 1) return;
+    lista.splice(index, 1);
+    this.saveConfig({ ...cfg, categorias_despesa: lista });
   }
 };
 
