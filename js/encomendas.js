@@ -295,6 +295,11 @@ const EncomendasModule = {
                 📌 Obs no Item
               </span>
             ` : ''}
+            ${(enc.itens || []).some(i => i.qtd_deduzida_estoque > 0) ? `
+              <span class="badge-cor-tag" style="background: rgba(16, 185, 129, 0.14); color: #34d399; border-color: rgba(16, 185, 129, 0.4);" title="Insumos deduzidos do estoque em tempo real">
+                📦 Estoque Baixado
+              </span>
+            ` : ''}
             ${enc.observacoes ? `
               <span class="badge-cor-tag" style="background: rgba(245, 158, 11, 0.12); color: #fbbf24; border-color: rgba(245, 158, 11, 0.35);" title="Observações Gerais: ${App.escapeHtml(enc.observacoes)}">
                 📝 Obs Geral
@@ -378,6 +383,15 @@ const EncomendasModule = {
   quickUpdateStatus(id, newStatus) {
     const enc = StorageService.get('encomendas').find(e => e.id === id);
     if (!enc) return;
+
+    // Gerencia estorno ou baixa no estoque se o status for alterado para/de Cancelada
+    if (newStatus === 'Cancelada' && enc.status !== 'Cancelada') {
+      this.estornarEstoque(enc);
+      window.dispatchEvent(new CustomEvent('seven_data_updated', { detail: { table: 'estoque' } }));
+    } else if (newStatus !== 'Cancelada' && enc.status === 'Cancelada') {
+      this.deduzirEstoque(enc);
+      window.dispatchEvent(new CustomEvent('seven_data_updated', { detail: { table: 'estoque' } }));
+    }
     
     StorageService.update('encomendas', id, { status: newStatus });
     
@@ -389,6 +403,7 @@ const EncomendasModule = {
     
     this.render();
     this.renderFinalizados();
+    if (typeof EstoqueModule !== 'undefined') EstoqueModule.render();
     App.renderDashboard();
   },
 
@@ -458,7 +473,11 @@ const EncomendasModule = {
         observacao: '',
         quantidade: 1,
         preco_unitario: valorEstimado,
-        subtotal: valorEstimado
+        subtotal: valorEstimado,
+        estoque_id: 'auto',
+        estoque_item_id: null,
+        estoque_item_nome: null,
+        qtd_deduzida_estoque: 0
       }
     ];
     this.renderItensTable();
@@ -500,9 +519,13 @@ const EncomendasModule = {
           observacao: it.observacao || it.obs || '',
           quantidade: Number(it.quantidade) || 1,
           preco_unitario: Number(it.preco_unitario) || 0,
-          subtotal: Number(it.subtotal) || 0
+          subtotal: Number(it.subtotal) || 0,
+          estoque_id: it.estoque_id || (it.estoque_item_id ? it.estoque_item_id : 'auto'),
+          estoque_item_id: it.estoque_item_id || null,
+          estoque_item_nome: it.estoque_item_nome || null,
+          qtd_deduzida_estoque: Number(it.qtd_deduzida_estoque) || 0
         }))
-      : [{ produto_nome: '', cor: '', personalizacao: '', observacao: '', quantidade: 1, preco_unitario: 0, subtotal: 0 }];
+      : [{ produto_nome: '', cor: '', personalizacao: '', observacao: '', quantidade: 1, preco_unitario: 0, subtotal: 0, estoque_id: 'auto', estoque_item_id: null, estoque_item_nome: null, qtd_deduzida_estoque: 0 }];
 
     this.renderItensTable();
     App.openModal('modal-encomenda');
@@ -516,7 +539,11 @@ const EncomendasModule = {
       observacao: '',
       quantidade: 1,
       preco_unitario: 0,
-      subtotal: 0
+      subtotal: 0,
+      estoque_id: 'auto',
+      estoque_item_id: null,
+      estoque_item_nome: null,
+      qtd_deduzida_estoque: 0
     });
     this.renderItensTable();
   },
@@ -537,7 +564,17 @@ const EncomendasModule = {
       if (titleEl) {
         titleEl.textContent = value.trim() || 'Selecione ou digite o produto';
       }
+      this.atualizarBadgeEstoqueItem(index);
+    } else if (field === 'cor') {
+      this.atualizarBadgeEstoqueItem(index);
     }
+  },
+
+  updateItemEstoqueId(index, value) {
+    const item = encomendaItensTemp[index];
+    if (!item) return;
+    item.estoque_id = value;
+    this.atualizarBadgeEstoqueItem(index);
   },
 
   updateItemCalc(index, field, value) {
@@ -556,6 +593,99 @@ const EncomendasModule = {
     const total = encomendaItensTemp.reduce((acc, it) => acc + (Number(it.subtotal) || 0), 0);
     const totalEl = document.getElementById('enc-itens-total-badge');
     if (totalEl) totalEl.textContent = App.formatMoney(total);
+
+    if (field === 'quantidade') {
+      this.atualizarBadgeEstoqueItem(index);
+    }
+  },
+
+  encontrarItemEstoque(produtoNome, cor, estoqueId = null) {
+    const itensEstoque = StorageService.get('estoque') || [];
+    if (estoqueId && estoqueId !== 'auto' && estoqueId !== 'none') {
+      return itensEstoque.find(e => e.id === estoqueId) || null;
+    }
+    if (estoqueId === 'none' || !produtoNome) return null;
+    
+    const nomeNorm = produtoNome.toLowerCase().trim();
+    const corNorm = (cor || '').toLowerCase().trim();
+
+    // 1. Match exato: Nome e Cor
+    if (corNorm) {
+      const matchExato = itensEstoque.find(e => {
+        const eNome = (e.nome || '').toLowerCase().trim();
+        const eCor = (e.cor || '').toLowerCase().trim();
+        return (eNome === nomeNorm || eNome.includes(nomeNorm) || nomeNorm.includes(eNome)) && eCor === corNorm;
+      });
+      if (matchExato) return matchExato;
+    }
+
+    // 2. Match por Nome exato
+    const matchNomeExato = itensEstoque.find(e => (e.nome || '').toLowerCase().trim() === nomeNorm);
+    if (matchNomeExato) return matchNomeExato;
+
+    // 3. Match por inclusão (ex: "Copo" em "Copo Térmico Inox 473ml (Tipo Stanley)")
+    const matchInclusao = itensEstoque.find(e => {
+      const eNome = (e.nome || '').toLowerCase().trim();
+      return eNome.includes(nomeNorm) || nomeNorm.includes(eNome);
+    });
+    if (matchInclusao) return matchInclusao;
+
+    return null;
+  },
+
+  atualizarBadgeEstoqueItem(index) {
+    const item = encomendaItensTemp[index];
+    if (!item) return;
+    const badgeEl = document.getElementById(`enc-item-estoque-badge-${index}`);
+    if (!badgeEl) return;
+
+    const estoqueMatch = this.encontrarItemEstoque(item.produto_nome, item.cor, item.estoque_id);
+    if (!estoqueMatch) {
+      if (item.estoque_id === 'none') {
+        badgeEl.innerHTML = `<span style="font-size: 0.74rem; color: var(--text-muted);">🚫 Baixa desativada para este item</span>`;
+      } else {
+        badgeEl.innerHTML = `<span style="font-size: 0.74rem; color: #fbbf24;">⚠️ Nenhum insumo coincidente (selecione abaixo ou cadastre no Estoque)</span>`;
+      }
+      return;
+    }
+
+    const qtdItem = Number(item.quantidade) || 1;
+    const saldoAtual = Number(estoqueMatch.quantidade_atual) || 0;
+    const qtdJaDeduzida = Number(item.qtd_deduzida_estoque) || 0;
+    const saldoPrevisto = saldoAtual + qtdJaDeduzida - qtdItem;
+    const isNegativo = saldoPrevisto < 0;
+
+    badgeEl.innerHTML = `
+      <span style="font-size: 0.75rem; font-weight: 700; padding: 2px 8px; border-radius: 6px; ${isNegativo ? 'background: rgba(239, 68, 68, 0.2); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.4);' : 'background: rgba(52, 211, 153, 0.15); color: #34d399; border: 1px solid rgba(52, 211, 153, 0.35);'}">
+        Saldo atual: ${saldoAtual} ${estoqueMatch.unidade} ➔ Restará: ${saldoPrevisto} ${estoqueMatch.unidade} ${isNegativo ? '⚠️ Insuficiente!' : '✅'}
+      </span>
+    `;
+  },
+
+  estornarEstoque(enc) {
+    if (!enc || !enc.itens) return;
+    enc.itens.forEach(it => {
+      if (it.estoque_item_id && it.qtd_deduzida_estoque) {
+        const mat = StorageService.get('estoque').find(m => m.id === it.estoque_item_id);
+        if (mat) {
+          const estornado = Number(mat.quantidade_atual) + Number(it.qtd_deduzida_estoque);
+          StorageService.update('estoque', mat.id, { quantidade_atual: estornado });
+        }
+      }
+    });
+  },
+
+  deduzirEstoque(enc) {
+    if (!enc || !enc.itens) return;
+    enc.itens.forEach(it => {
+      if (it.estoque_item_id && it.qtd_deduzida_estoque) {
+        const mat = StorageService.get('estoque').find(m => m.id === it.estoque_item_id);
+        if (mat) {
+          const novoSaldo = Math.max(0, Number(mat.quantidade_atual) - Number(it.qtd_deduzida_estoque));
+          StorageService.update('estoque', mat.id, { quantidade_atual: novoSaldo });
+        }
+      }
+    });
   },
 
   updateItemRow(index, field, value) {
@@ -577,9 +707,10 @@ const EncomendasModule = {
 
     // Atualiza opções do datalist com produtos estabelecidos (apenas nomes!)
     const datalist = document.getElementById('enc-datalist-produtos');
+    const estoqueItens = StorageService.get('estoque') || [];
+
     if (datalist) {
       const prodsEstabelecidos = StorageService.getProdutosEstabelecidos();
-      const estoqueItens = StorageService.get('estoque');
       const opcoesUnicas = new Set();
       let optionsHtml = '';
       prodsEstabelecidos.forEach(p => {
@@ -605,6 +736,13 @@ const EncomendasModule = {
     container.innerHTML = encomendaItensTemp.map((item, idx) => {
       total += (Number(item.subtotal) || 0);
       const corAtual = item.cor || '';
+
+      const estoqueMatch = this.encontrarItemEstoque(item.produto_nome, item.cor, item.estoque_id);
+      const qtdItem = Number(item.quantidade) || 1;
+      const saldoAtual = estoqueMatch ? Number(estoqueMatch.quantidade_atual) || 0 : 0;
+      const qtdJaDeduzida = Number(item.qtd_deduzida_estoque) || 0;
+      const saldoPrevisto = estoqueMatch ? (saldoAtual + qtdJaDeduzida - qtdItem) : 0;
+      const isNegativo = saldoPrevisto < 0;
 
       return `
         <div class="enc-item-card" style="background: rgba(255, 255, 255, 0.025); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 10px; padding: 14px 16px; margin-bottom: 14px; box-shadow: 0 4px 14px rgba(0,0,0,0.25);">
@@ -668,7 +806,7 @@ const EncomendasModule = {
           </div>
 
           <!-- Linha 3: Quantidade, Valor Unitário e Subtotal -->
-          <div class="form-row" style="margin-bottom: 0; align-items: flex-end;">
+          <div class="form-row" style="margin-bottom: 10px; align-items: flex-end;">
             <div class="form-group" style="margin-bottom: 0;">
               <label style="font-size: 0.78rem; font-weight: 600; color: var(--text-primary);">Quantidade</label>
               <input type="number" min="1" class="form-control" style="height: 38px;" 
@@ -682,6 +820,43 @@ const EncomendasModule = {
                      placeholder="0,00"
                      oninput="EncomendasModule.updateItemCalc(${idx}, 'preco_unitario', this.value)">
             </div>
+          </div>
+
+          <!-- Linha 4: Baixa de Material do Estoque em Tempo Real -->
+          <div style="background: rgba(0, 0, 0, 0.28); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 8px; padding: 10px 12px; margin-bottom: 8px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; flex-wrap: wrap; gap: 6px;">
+              <span style="font-size: 0.78rem; font-weight: 700; color: #38bdf8; display: inline-flex; align-items: center; gap: 5px;">
+                📦 Baixa no Estoque (Diminui automaticamente ao salvar):
+              </span>
+              <div id="enc-item-estoque-badge-${idx}">
+                ${estoqueMatch ? `
+                  <span style="font-size: 0.75rem; font-weight: 700; padding: 2px 8px; border-radius: 6px; ${isNegativo ? 'background: rgba(239, 68, 68, 0.2); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.4);' : 'background: rgba(52, 211, 153, 0.15); color: #34d399; border: 1px solid rgba(52, 211, 153, 0.35);'}">
+                    Saldo atual: ${saldoAtual} ${estoqueMatch.unidade} ➔ Restará: ${saldoPrevisto} ${estoqueMatch.unidade} ${isNegativo ? '⚠️ Insuficiente!' : '✅'}
+                  </span>
+                ` : `
+                  <span style="font-size: 0.74rem; color: ${item.estoque_id === 'none' ? 'var(--text-muted)' : '#fbbf24'};">
+                    ${item.estoque_id === 'none' ? '🚫 Baixa desativada' : '⚠️ Nenhum insumo coincidente (selecione abaixo ou cadastre no Estoque)'}
+                  </span>
+                `}
+              </div>
+            </div>
+
+            <select class="form-control" style="height: 36px; font-size: 0.82rem;" 
+                    onchange="EncomendasModule.updateItemEstoqueId(${idx}, this.value)">
+              <option value="auto" ${item.estoque_id === 'auto' || !item.estoque_id ? 'selected' : ''}>
+                ⚡ Automático (Detectar pelo Produto e Cor)
+              </option>
+              <option value="none" ${item.estoque_id === 'none' ? 'selected' : ''}>
+                🚫 Não dar baixa de estoque neste item
+              </option>
+              <optgroup label="Ou vincule manualmente a um insumo do estoque:">
+                ${estoqueItens.map(e => `
+                  <option value="${e.id}" ${item.estoque_id === e.id ? 'selected' : ''}>
+                    ${App.escapeHtml(e.nome)} ${e.cor ? '🎨 ' + App.escapeHtml(e.cor) : ''} (Saldo: ${e.quantidade_atual} ${e.unidade})
+                  </option>
+                `).join('')}
+              </optgroup>
+            </select>
           </div>
 
           <!-- Subtotal do Item -->
@@ -719,6 +894,41 @@ const EncomendasModule = {
 
     const valorTotal = encomendaItensTemp.reduce((acc, it) => acc + (Number(it.subtotal) || 0), 0);
 
+    // 1. Se estiver editando uma encomenda existente que não estava Cancelada, estorna baixas anteriores
+    const encAntiga = id ? StorageService.get('encomendas').find(e => e.id === id) : null;
+    if (encAntiga && encAntiga.status !== 'Cancelada' && encAntiga.itens) {
+      this.estornarEstoque(encAntiga);
+    }
+
+    // 2. Processa as novas baixas no estoque de materiais em tempo real
+    const baixasRealizadas = [];
+    if (status !== 'Cancelada') {
+      encomendaItensTemp.forEach(item => {
+        const mat = this.encontrarItemEstoque(item.produto_nome, item.cor, item.estoque_id);
+        if (mat) {
+          const qtdADeduzir = Number(item.quantidade) || 0;
+          const matAtualizado = StorageService.get('estoque').find(m => m.id === mat.id) || mat;
+          const novoSaldo = Math.max(0, Number(matAtualizado.quantidade_atual) - qtdADeduzir);
+          
+          StorageService.update('estoque', mat.id, { quantidade_atual: novoSaldo });
+          
+          item.estoque_item_id = mat.id;
+          item.estoque_item_nome = mat.nome;
+          item.qtd_deduzida_estoque = qtdADeduzir;
+          
+          baixasRealizadas.push(`${qtdADeduzir}x ${mat.nome} (restam ${novoSaldo} ${mat.unidade})`);
+        } else {
+          item.estoque_item_id = null;
+          item.estoque_item_nome = null;
+          item.qtd_deduzida_estoque = 0;
+        }
+      });
+    } else {
+      encomendaItensTemp.forEach(item => {
+        item.qtd_deduzida_estoque = 0;
+      });
+    }
+
     const payload = {
       cliente_nome: cliente,
       categoria: categoria,
@@ -736,24 +946,42 @@ const EncomendasModule = {
 
     if (id) {
       StorageService.update('encomendas', id, payload);
-      App.toast('Encomenda atualizada!', 'success');
+      let msg = 'Encomenda atualizada!';
+      if (baixasRealizadas.length > 0) {
+        msg += ` 📦 Estoque: ${baixasRealizadas.join(', ')}`;
+      }
+      App.toast(msg, 'success');
     } else {
       StorageService.insert('encomendas', payload);
-      App.toast('Encomenda registrada na Fila de Espera! ⏳', 'success');
+      let msg = 'Encomenda registrada na Fila de Espera! ⏳';
+      if (baixasRealizadas.length > 0) {
+        msg += ` 📦 Estoque: ${baixasRealizadas.join(', ')}`;
+      }
+      App.toast(msg, 'success');
     }
 
     App.closeModal('modal-encomenda');
     this.render();
+    window.dispatchEvent(new CustomEvent('seven_data_updated', { detail: { table: 'estoque' } }));
+    if (typeof EstoqueModule !== 'undefined') EstoqueModule.render();
+    if (typeof App !== 'undefined' && App.renderDashboard) App.renderDashboard();
   },
 
   deleteCurrent() {
     const id = document.getElementById('enc-form-id').value;
     if (!id) return;
     if (confirm('Tem certeza que deseja cancelar e excluir esta encomenda?')) {
+      const enc = StorageService.get('encomendas').find(e => e.id === id);
+      if (enc && enc.status !== 'Cancelada' && enc.itens) {
+        this.estornarEstoque(enc);
+      }
       StorageService.delete('encomendas', id);
-      App.toast('Encomenda excluída.', 'info');
+      App.toast('Encomenda excluída e materiais devolvidos ao estoque.', 'info');
       App.closeModal('modal-encomenda');
       this.render();
+      window.dispatchEvent(new CustomEvent('seven_data_updated', { detail: { table: 'estoque' } }));
+      if (typeof EstoqueModule !== 'undefined') EstoqueModule.render();
+      if (typeof App !== 'undefined' && App.renderDashboard) App.renderDashboard();
     }
   },
   quitarPagamento(id) {
@@ -846,6 +1074,11 @@ const EncomendasModule = {
               ${hasItemObs ? `
                 <span class="badge-cor-tag" style="background: rgba(168, 85, 247, 0.14); color: #c084fc; border-color: rgba(168, 85, 247, 0.4);" title="Há observações nos produtos">
                   📌 Obs no Item
+                </span>
+              ` : ''}
+              ${(enc.itens || []).some(i => i.qtd_deduzida_estoque > 0) ? `
+                <span class="badge-cor-tag" style="background: rgba(16, 185, 129, 0.14); color: #34d399; border-color: rgba(16, 185, 129, 0.4);" title="Insumos deduzidos do estoque em tempo real">
+                  📦 Estoque Baixado
                 </span>
               ` : ''}
               ${enc.observacoes ? `

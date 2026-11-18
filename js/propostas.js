@@ -526,13 +526,38 @@ const PropostasModule = {
       itens: itensEncomenda
     };
 
+    // Dá baixa automática no estoque para os materiais dos itens da encomenda convertida
+    const baixas = [];
+    if (typeof EncomendasModule !== 'undefined' && EncomendasModule.encontrarItemEstoque) {
+      novaEncomenda.itens.forEach(item => {
+        const mat = EncomendasModule.encontrarItemEstoque(item.produto_nome, item.cor);
+        if (mat) {
+          const qtdADeduzir = Number(item.quantidade) || 0;
+          const matAtual = StorageService.get('estoque').find(m => m.id === mat.id) || mat;
+          const novoSaldo = Math.max(0, Number(matAtual.quantidade_atual) - qtdADeduzir);
+          StorageService.update('estoque', mat.id, { quantidade_atual: novoSaldo });
+          item.estoque_item_id = mat.id;
+          item.estoque_item_nome = mat.nome;
+          item.qtd_deduzida_estoque = qtdADeduzir;
+          baixas.push(`${qtdADeduzir}x ${mat.nome} (restam ${novoSaldo} ${mat.unidade})`);
+        }
+      });
+      if (baixas.length > 0) {
+        window.dispatchEvent(new CustomEvent('seven_data_updated', { detail: { table: 'estoque' } }));
+      }
+    }
+
     // 1. Cria a encomenda diretamente na "Fila de Espera"
     StorageService.insert('encomendas', novaEncomenda);
 
     // 2. Remove o orçamento de "propostas" para que ele SAIA DA PÁGINA DE ORÇAMENTOS
     StorageService.delete('propostas', id);
 
-    App.toast('Orçamento aprovado com sucesso! Movido para a Fila de Espera em Encomendas. 🎉', 'success');
+    let toastMsg = 'Orçamento aprovado com sucesso! Movido para a Fila de Espera em Encomendas. 🎉';
+    if (baixas.length > 0) {
+      toastMsg += ` 📦 Estoque: ${baixas.join(', ')}`;
+    }
+    App.toast(toastMsg, 'success');
     App.closeModal('modal-preview-proposta');
     App.closeModal('modal-proposta');
 
