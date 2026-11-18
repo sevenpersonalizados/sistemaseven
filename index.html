@@ -48,7 +48,7 @@
   <meta http-equiv="Expires" content="0">
 
   <!-- Estilos Customizados -->
-  <link rel="stylesheet" href="css/styles.css?v=32">
+  <link rel="stylesheet" href="css/styles.css?v=33">
 </head>
 
 <body>
@@ -278,93 +278,76 @@
             </div>
           </div>
 
-          <!-- CALENDÁRIO DE ENTREGAS & PRAZOS (PAINEL GERAL) -->
-          <div class="themed-panel theme-blue" style="margin-top: 24px;">
-            <div class="themed-header">
-              <div style="display: flex; align-items: center; gap: 14px; flex-wrap: wrap;">
-                <span class="themed-icon-box">📅</span>
-                <div>
-                  <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
-                    <h3 class="themed-title">Calendário de Prazos & Entregas</h3>
-                    <span id="dash-cal-total-mes"
-                      style="font-size: 0.72rem; font-weight: 700; text-transform: uppercase; padding: 3px 10px; border-radius: 999px; background: rgba(0, 168, 243, 0.2); color: #38bdf8; border: 1px solid rgba(0, 168, 243, 0.5);">
-                      0 Entregas no Mês
-                    </span>
-                  </div>
-                  <div class="themed-subtitle">Acompanhe as datas limite de cada encomenda e clique para abrir os detalhes completos</div>
-                </div>
-              </div>
-
-              <!-- Controles do Calendário -->
-              <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
-                <button type="button" class="btn btn-secondary btn-sm" onclick="CalendarModule.prevMonth()" title="Mês anterior">
-                  ◀ Anterior
-                </button>
-                <span id="dash-cal-month-title" style="font-weight: 700; font-size: 0.95rem; color: #ffffff; min-width: 140px; text-align: center;">
-                  Novembro de 2026
-                </span>
-                <button type="button" class="btn btn-secondary btn-sm" onclick="CalendarModule.nextMonth()" title="Próximo mês">
-                  Próximo ▶
-                </button>
-                <button type="button" class="btn btn-primary btn-sm" onclick="CalendarModule.goToToday()" title="Ir para o mês atual">
-                  Hoje
-                </button>
-              </div>
-            </div>
-
-            <!-- Legenda rápida -->
-            <div style="background: rgba(0, 0, 0, 0.25); border-bottom: 1px solid var(--border); padding: 10px 16px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;">
-              <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap; font-size: 0.76rem;">
-                <span style="color: var(--text-muted); font-weight: 600;">Legenda:</span>
-                <span style="display: inline-flex; align-items: center; gap: 4px; color: #fbbf24;">
-                  <span style="width: 8px; height: 8px; border-radius: 50%; background: #f59e0b; display: inline-block;"></span> Fila
-                </span>
-                <span style="display: inline-flex; align-items: center; gap: 4px; color: #38bdf8;">
-                  <span style="width: 8px; height: 8px; border-radius: 50%; background: #00a8f3; display: inline-block;"></span> Em Produção
-                </span>
-                <span style="display: inline-flex; align-items: center; gap: 4px; color: #c084fc;">
-                  <span style="width: 8px; height: 8px; border-radius: 50%; background: #a855f7; display: inline-block;"></span> Pronto
-                </span>
-                <span style="display: inline-flex; align-items: center; gap: 4px; color: #34d399;">
-                  <span style="width: 8px; height: 8px; border-radius: 50%; background: #10b981; display: inline-block;"></span> Entregue
-                </span>
-                <span style="display: inline-flex; align-items: center; gap: 4px; color: #f87171;">
-                  <span style="width: 8px; height: 8px; border-radius: 50%; background: #ef4444; display: inline-block;"></span> Atrasado
-                </span>
-              </div>
-              <div style="font-size: 0.74rem; color: var(--text-muted);">
-                💡 Dica: Clique em qualquer encomenda no calendário para abrir todas as informações
-              </div>
-            </div>
-
-            <!-- Grade do Calendário -->
-            <div id="dash-calendario-container" style="padding: 16px;"></div>
-
-            <!-- Detalhe do Dia Selecionado -->
-            <div id="dash-cal-selected-day-box" style="display: none; border-top: 1px solid var(--border); padding: 14px 18px; background: rgba(0, 0, 0, 0.35);"></div>
-          </div>
-
+          <!-- GRADE PRINCIPAL DO DASHBOARD (CALENDÁRIO COMPACTO + ALERTAS DE INSUMOS LADO A LADO) -->
           <div class="dashboard-grid">
+            <!-- CALENDÁRIO COMPACTO DE ENTREGAS & PRAZOS -->
             <div class="themed-panel theme-blue">
-              <div class="themed-header">
-                <div style="display: flex; align-items: center; gap: 12px;">
-                  <span class="themed-icon-box">📅</span>
+              <div class="themed-header" style="padding: 10px 14px;">
+                <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+                  <span class="themed-icon-box" style="width: 32px; height: 32px; font-size: 1rem;">📅</span>
                   <div>
-                    <h3 class="themed-title">Próximas Entregas de Personalizados</h3>
-                    <div class="themed-subtitle">Cronograma de pedidos para entrega e produção</div>
+                    <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                      <h3 class="themed-title" style="font-size: 0.95rem;">Calendário de Entregas</h3>
+                      <span id="dash-cal-total-mes"
+                        style="font-size: 0.68rem; font-weight: 700; text-transform: uppercase; padding: 2px 8px; border-radius: 999px; background: rgba(0, 168, 243, 0.2); color: #38bdf8; border: 1px solid rgba(0, 168, 243, 0.5);">
+                        0 Entregas
+                      </span>
+                    </div>
                   </div>
                 </div>
-                <button class="btn btn-secondary btn-icon" onclick="App.navigate('encomendas')"
-                  title="Ver todas as encomendas">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M5 12h14" />
-                    <path d="M12 5l7 7-7 7" />
-                  </svg>
+
+                <!-- Controles do Calendário -->
+                <div style="display: flex; align-items: center; gap: 6px;">
+                  <button type="button" class="btn btn-secondary btn-sm" onclick="CalendarModule.prevMonth()" title="Mês anterior" style="padding: 3px 8px; font-size: 0.72rem;">
+                    ◀
+                  </button>
+                  <span id="dash-cal-month-title" style="font-weight: 700; font-size: 0.85rem; color: #ffffff; min-width: 110px; text-align: center;">
+                    Novembro de 2026
+                  </span>
+                  <button type="button" class="btn btn-secondary btn-sm" onclick="CalendarModule.nextMonth()" title="Próximo mês" style="padding: 3px 8px; font-size: 0.72rem;">
+                    ▶
+                  </button>
+                  <button type="button" class="btn btn-primary btn-sm" onclick="CalendarModule.goToToday()" title="Ir para o mês atual" style="padding: 3px 8px; font-size: 0.72rem;">
+                    Hoje
+                  </button>
+                </div>
+              </div>
+
+              <!-- Legenda compacta -->
+              <div style="background: rgba(0, 0, 0, 0.2); border-bottom: 1px solid var(--border); padding: 6px 12px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 6px; font-size: 0.7rem;">
+                <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                  <span style="display: inline-flex; align-items: center; gap: 3px; color: #fbbf24;">
+                    <span style="width: 7px; height: 7px; border-radius: 50%; background: #f59e0b; display: inline-block;"></span> Fila
+                  </span>
+                  <span style="display: inline-flex; align-items: center; gap: 3px; color: #38bdf8;">
+                    <span style="width: 7px; height: 7px; border-radius: 50%; background: #00a8f3; display: inline-block;"></span> Produção
+                  </span>
+                  <span style="display: inline-flex; align-items: center; gap: 3px; color: #c084fc;">
+                    <span style="width: 7px; height: 7px; border-radius: 50%; background: #a855f7; display: inline-block;"></span> Pronto
+                  </span>
+                  <span style="display: inline-flex; align-items: center; gap: 3px; color: #34d399;">
+                    <span style="width: 7px; height: 7px; border-radius: 50%; background: #10b981; display: inline-block;"></span> Entregue
+                  </span>
+                  <span style="display: inline-flex; align-items: center; gap: 3px; color: #f87171;">
+                    <span style="width: 7px; height: 7px; border-radius: 50%; background: #ef4444; display: inline-block;"></span> Atrasado
+                  </span>
+                </div>
+                <button class="btn btn-link" onclick="App.navigate('encomendas')" style="font-size: 0.7rem; padding: 0; color: var(--accent-cyan); text-decoration: none;">
+                  Ver todas →
                 </button>
               </div>
-              <div id="dash-proximas-entregas" style="padding: 12px;"></div>
+
+              <!-- Grade do Calendário -->
+              <div id="dash-calendario-container" style="padding: 10px;"></div>
+
+              <!-- Detalhe do Dia Selecionado -->
+              <div id="dash-cal-selected-day-box" style="display: none; border-top: 1px solid var(--border); padding: 10px 14px; background: rgba(0, 0, 0, 0.35);"></div>
+              
+              <!-- Container invisível para compatibilidade com app.js -->
+              <div id="dash-proximas-entregas" style="display: none;"></div>
             </div>
 
+            <!-- ALERTAS DE INSUMOS (SEGUNDA COLUNA DO GRID) -->
             <div class="themed-panel theme-amber">
               <div class="themed-header">
                 <div style="display: flex; align-items: center; gap: 12px;">
@@ -2001,19 +1984,19 @@
   <!-- CONTAINER DE TOASTS -->
   <div class="toast-container" id="toast-container"></div>
 
-  <!-- SCRIPTS DO SISTEMA (com cache-busting v32) -->
-  <script src="js/notifications.js?v=32"></script>
-  <script src="js/storage.js?v=32"></script>
-  <script src="js/crm.js?v=32"></script>
-  <script src="js/encomendas.js?v=32"></script>
-  <script src="js/estoque.js?v=32"></script>
-  <script src="js/financeiro.js?v=32"></script>
-  <script src="js/propostas.js?v=32"></script>
-  <script src="js/calculadora.js?v=32"></script>
-  <script src="js/calculadora-laser.js?v=32"></script>
-  <script src="js/calendario.js?v=32"></script>
-  <script src="js/configuracoes.js?v=32"></script>
-  <script src="js/app.js?v=32"></script>
+  <!-- SCRIPTS DO SISTEMA (com cache-busting v33) -->
+  <script src="js/notifications.js?v=33"></script>
+  <script src="js/storage.js?v=33"></script>
+  <script src="js/crm.js?v=33"></script>
+  <script src="js/encomendas.js?v=33"></script>
+  <script src="js/estoque.js?v=33"></script>
+  <script src="js/financeiro.js?v=33"></script>
+  <script src="js/propostas.js?v=33"></script>
+  <script src="js/calculadora.js?v=33"></script>
+  <script src="js/calculadora-laser.js?v=33"></script>
+  <script src="js/calendario.js?v=33"></script>
+  <script src="js/configuracoes.js?v=33"></script>
+  <script src="js/app.js?v=33"></script>
 </body>
 
 </html>

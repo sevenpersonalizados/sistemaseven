@@ -150,58 +150,42 @@ const CalendarModule = {
     if (temOrdens) cellClasses.push('has-orders');
     if (temAtrasada) cellClasses.push('has-late-orders');
 
-    let badgeCountHtml = '';
+    let badgeHtml = '';
     if (temOrdens) {
-      badgeCountHtml = `
-        <span class="cal-day-badge-count ${temAtrasada ? 'late' : ''}" title="${ordensNoDia.length} encomenda(s) para entrega">
-          ${ordensNoDia.length} ${ordensNoDia.length === 1 ? 'ped.' : 'ped.'}
-        </span>
-      `;
+      if (ordensNoDia.length === 1) {
+        const e = ordensNoDia[0];
+        const isLate = dateStr < hojeStr && e.status !== 'Entregue';
+        const statusSlug = isLate ? 'atrasado' : this.getStatusSlug(e.status);
+        const icon = this.getStatusIcon(e.status, isLate);
+        const clienteShort = (e.cliente_nome || '').split(' ')[0];
+        badgeHtml = `
+          <div class="cal-mini-pill status-${statusSlug}" 
+               onclick="event.stopPropagation(); EncomendasModule.openEditModal('${e.id}')"
+               title="Clique para abrir: Pedido #${e.id.substring(e.id.length - 5)} - ${App.escapeHtml(e.cliente_nome)}">
+            <span>${icon}</span>
+            <span class="cal-mini-text">${App.escapeHtml(clienteShort)}</span>
+          </div>
+        `;
+      } else {
+        const iconLate = temAtrasada ? '🚨 ' : '🧵 ';
+        badgeHtml = `
+          <div class="cal-mini-pill ${temAtrasada ? 'status-atrasado' : 'status-producao'}" 
+               onclick="CalendarModule.selectDay('${dateStr}')"
+               title="${ordensNoDia.length} encomendas com entrega hoje. Clique para ver a lista.">
+            <span>${iconLate}${ordensNoDia.length} ped.</span>
+          </div>
+        `;
+      }
     }
 
-    let ordensPillsHtml = '';
-    if (temOrdens) {
-      ordensPillsHtml = `
-        <div class="cal-day-orders-list">
-          ${ordensNoDia.slice(0, 3).map(e => {
-            const isLate = dateStr < hojeStr && e.status !== 'Entregue';
-            const statusSlug = isLate ? 'atrasado' : this.getStatusSlug(e.status);
-            const icon = this.getStatusIcon(e.status, isLate);
-            const produtos = (e.itens || []).map(it => it.produto_nome).join(', ') || 'Pedido';
-            const tooltip = `Pedido #${e.id.substring(e.id.length - 5)} - ${e.cliente_nome}\nStatus: ${e.status} ${isLate ? '(ATRASADO)' : ''}\nProdutos: ${produtos}\nValor: ${App.formatMoney(e.valor_total)}\nClique para abrir toda a informação!`;
-
-            return `
-              <div class="cal-order-item status-${statusSlug}" 
-                   onclick="event.stopPropagation(); EncomendasModule.openEditModal('${e.id}')"
-                   title="${App.escapeHtml(tooltip)}">
-                <div style="display: flex; align-items: center; gap: 4px; overflow: hidden; white-space: nowrap;">
-                  <span style="font-size: 0.72rem; flex-shrink: 0;">${icon}</span>
-                  <span class="cal-order-item-text" style="font-weight: 700; text-overflow: ellipsis; overflow: hidden;">
-                    ${App.escapeHtml(e.cliente_nome)}
-                  </span>
-                </div>
-                <div class="cal-order-item-text" style="font-size: 0.67rem; opacity: 0.85; text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">
-                  ${App.escapeHtml(produtos)}
-                </div>
-              </div>
-            `;
-          }).join('')}
-          ${ordensNoDia.length > 3 ? `
-            <div style="font-size: 0.68rem; font-weight: 700; color: #38bdf8; text-align: center; padding: 2px;">
-              +${ordensNoDia.length - 3} mais...
-            </div>
-          ` : ''}
-        </div>
-      `;
-    }
+    const tooltip = temOrdens 
+      ? `${ordensNoDia.length} encomenda(s) para entrega em ${App.formatDate(dateStr)}:\n` + ordensNoDia.map(o => `• #${o.id.substring(o.id.length - 5)} ${o.cliente_nome} (${o.status})`).join('\n') + '\nClique para ver detalhes'
+      : App.formatDate(dateStr);
 
     return `
-      <div class="${cellClasses.join(' ')}" data-date="${dateStr}" onclick="CalendarModule.selectDay('${dateStr}')" title="${temOrdens ? `${ordensNoDia.length} encomenda(s) com entrega para ${App.formatDate(dateStr)} (clique para ver detalhes)` : App.formatDate(dateStr)}">
-        <div class="cal-day-top">
-          <span class="cal-day-number">${dayNum}</span>
-          ${badgeCountHtml}
-        </div>
-        ${ordensPillsHtml}
+      <div class="${cellClasses.join(' ')}" data-date="${dateStr}" onclick="CalendarModule.selectDay('${dateStr}')" title="${App.escapeHtml(tooltip)}">
+        <span class="cal-day-number">${dayNum}</span>
+        ${badgeHtml}
       </div>
     `;
   },
@@ -234,86 +218,54 @@ const CalendarModule = {
     const encomendas = StorageService.get('encomendas') || [];
     const hojeStr = this.formatDateIso(new Date());
     const ordensNoDia = encomendas.filter(e => e.data_entrega_prevista === dateStr && e.status !== 'Cancelada');
-
     const dataFmt = App.formatDate(dateStr);
 
     if (ordensNoDia.length === 0) {
-      box.style.display = 'block';
       box.innerHTML = `
-        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
-          <div style="font-size: 0.88rem; color: var(--text-muted);">
-            📅 <strong>${dataFmt}</strong>: Nenhuma encomenda com prazo limite agendado para este dia.
-          </div>
-          <button type="button" class="btn btn-secondary btn-sm" onclick="EncomendasModule.openNewModal()" style="font-size: 0.78rem;">
-            + Nova Encomenda
+        <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.78rem; color: var(--text-muted);">
+          <span>📅 <strong>${dataFmt}</strong>: Nenhuma entrega agendada.</span>
+          <button type="button" class="btn btn-secondary btn-sm" onclick="EncomendasModule.openNewModal()" style="font-size: 0.72rem; padding: 2px 8px;">
+            + Agendar
           </button>
         </div>
       `;
       return;
     }
 
-    box.style.display = 'block';
     box.innerHTML = `
-      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 8px;">
-        <div style="display: flex; align-items: center; gap: 8px;">
-          <span style="font-size: 1.1rem;">📅</span>
-          <div>
-            <h4 style="margin: 0; color: #ffffff; font-size: 0.95rem; font-weight: 700;">
-              Entregas do Dia: ${dataFmt}
-            </h4>
-            <span style="font-size: 0.74rem; color: var(--text-muted);">
-              ${ordensNoDia.length} encomenda(s) com prazo para esta data. Clique em qualquer card abaixo para abrir todos os detalhes da encomenda:
-            </span>
-          </div>
-        </div>
-        <button type="button" class="btn btn-secondary btn-sm" onclick="document.getElementById('dash-cal-selected-day-box').style.display='none'">
-          ✕ Ocultar
-        </button>
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+        <span style="font-size: 0.8rem; font-weight: 700; color: #ffffff;">
+          📅 Entregas em ${dataFmt} (${ordensNoDia.length}):
+        </span>
+        <span style="font-size: 0.72rem; color: #38bdf8;">Toque para abrir</span>
       </div>
-
-      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 10px;">
+      <div style="display: flex; flex-direction: column; gap: 6px; max-height: 160px; overflow-y: auto;">
         ${ordensNoDia.map(e => {
           const isLate = dateStr < hojeStr && e.status !== 'Entregue';
           const icon = this.getStatusIcon(e.status, isLate);
           const produtos = (e.itens || []).map(it => `${it.quantidade}x ${it.produto_nome}`).join(', ') || 'Pedido Personalizado';
-          const cores = (e.itens || []).map(it => it.cor).filter(Boolean);
+          const statusClass = EncomendasModule.getStatusClass(e.status);
 
           return `
             <div class="dash-row-clickable" 
                  onclick="EncomendasModule.openEditModal('${e.id}')"
-                 title="Clique para abrir toda a informação da encomenda #${e.id.substring(e.id.length - 5)}"
-                 style="background: rgba(255, 255, 255, 0.035); border: 1px solid ${isLate ? 'rgba(239, 68, 68, 0.45)' : 'rgba(255, 255, 255, 0.1)'}; border-radius: 8px; padding: 12px; display: flex; flex-direction: column; gap: 8px; transition: all 0.2s ease;">
-              <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 8px;">
-                <div>
-                  <div style="font-weight: 700; color: #ffffff; font-size: 0.9rem;">
-                    ${icon} ${App.escapeHtml(e.cliente_nome)}
-                  </div>
-                  <div style="font-size: 0.75rem; color: var(--text-muted);">
-                    Pedido #${e.id.substring(e.id.length - 5)} • ${App.escapeHtml(e.telefone || 'Sem fone')}
-                  </div>
+                 title="Clique para abrir toda informação da encomenda #${e.id.substring(e.id.length - 5)}"
+                 style="background: rgba(255, 255, 255, 0.04); border: 1px solid ${isLate ? 'rgba(239, 68, 68, 0.4)' : 'rgba(255, 255, 255, 0.08)'}; border-radius: 6px; padding: 8px 10px; display: flex; justify-content: space-between; align-items: center; gap: 8px;">
+              <div style="flex: 1; min-width: 0;">
+                <div style="font-weight: 700; color: #ffffff; font-size: 0.82rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                  ${icon} ${App.escapeHtml(e.cliente_nome)} <span style="font-size: 0.72rem; color: var(--text-muted); font-weight: normal;">#${e.id.substring(e.id.length - 5)}</span>
                 </div>
-                <span class="status-badge ${EncomendasModule.getStatusClass(e.status)}" style="font-size: 0.75rem;">
+                <div style="font-size: 0.74rem; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                  ${App.escapeHtml(produtos)}
+                </div>
+              </div>
+              <div style="text-align: right; flex-shrink: 0;">
+                <span class="status-badge ${statusClass}" style="font-size: 0.7rem; padding: 2px 6px;">
                   ${isLate ? '🚨 Atrasado' : e.status}
                 </span>
-              </div>
-
-              <div style="font-size: 0.8rem; color: var(--text-secondary); line-height: 1.35;">
-                <strong>Itens:</strong> ${App.escapeHtml(produtos)}
-              </div>
-
-              ${cores.length > 0 ? `
-                <div style="font-size: 0.74rem;">
-                  <span class="badge-cor-tag">🎨 ${App.escapeHtml(cores.join(', '))}</span>
-                </div>
-              ` : ''}
-
-              <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px dashed rgba(255, 255, 255, 0.08); padding-top: 6px; margin-top: 2px;">
-                <span style="font-size: 0.8rem; font-weight: 700; color: #34d399;">
+                <div style="font-size: 0.76rem; font-weight: 700; color: #34d399; margin-top: 2px;">
                   ${App.formatMoney(e.valor_total)}
-                </span>
-                <span style="font-size: 0.75rem; color: #38bdf8; font-weight: 600; text-decoration: underline;">
-                  Abrir Informação Completa ➔
-                </span>
+                </div>
               </div>
             </div>
           `;
