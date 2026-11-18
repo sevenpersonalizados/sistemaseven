@@ -48,7 +48,7 @@
   <meta http-equiv="Expires" content="0">
 
   <!-- Estilos Customizados -->
-  <link rel="stylesheet" href="css/styles.css?v=31">
+  <link rel="stylesheet" href="css/styles.css?v=32">
 </head>
 
 <body>
@@ -276,6 +276,72 @@
                 </svg>
               </div>
             </div>
+          </div>
+
+          <!-- CALENDÁRIO DE ENTREGAS & PRAZOS (PAINEL GERAL) -->
+          <div class="themed-panel theme-blue" style="margin-top: 24px;">
+            <div class="themed-header">
+              <div style="display: flex; align-items: center; gap: 14px; flex-wrap: wrap;">
+                <span class="themed-icon-box">📅</span>
+                <div>
+                  <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+                    <h3 class="themed-title">Calendário de Prazos & Entregas</h3>
+                    <span id="dash-cal-total-mes"
+                      style="font-size: 0.72rem; font-weight: 700; text-transform: uppercase; padding: 3px 10px; border-radius: 999px; background: rgba(0, 168, 243, 0.2); color: #38bdf8; border: 1px solid rgba(0, 168, 243, 0.5);">
+                      0 Entregas no Mês
+                    </span>
+                  </div>
+                  <div class="themed-subtitle">Acompanhe as datas limite de cada encomenda e clique para abrir os detalhes completos</div>
+                </div>
+              </div>
+
+              <!-- Controles do Calendário -->
+              <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                <button type="button" class="btn btn-secondary btn-sm" onclick="CalendarModule.prevMonth()" title="Mês anterior">
+                  ◀ Anterior
+                </button>
+                <span id="dash-cal-month-title" style="font-weight: 700; font-size: 0.95rem; color: #ffffff; min-width: 140px; text-align: center;">
+                  Novembro de 2026
+                </span>
+                <button type="button" class="btn btn-secondary btn-sm" onclick="CalendarModule.nextMonth()" title="Próximo mês">
+                  Próximo ▶
+                </button>
+                <button type="button" class="btn btn-primary btn-sm" onclick="CalendarModule.goToToday()" title="Ir para o mês atual">
+                  Hoje
+                </button>
+              </div>
+            </div>
+
+            <!-- Legenda rápida -->
+            <div style="background: rgba(0, 0, 0, 0.25); border-bottom: 1px solid var(--border); padding: 10px 16px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;">
+              <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap; font-size: 0.76rem;">
+                <span style="color: var(--text-muted); font-weight: 600;">Legenda:</span>
+                <span style="display: inline-flex; align-items: center; gap: 4px; color: #fbbf24;">
+                  <span style="width: 8px; height: 8px; border-radius: 50%; background: #f59e0b; display: inline-block;"></span> Fila
+                </span>
+                <span style="display: inline-flex; align-items: center; gap: 4px; color: #38bdf8;">
+                  <span style="width: 8px; height: 8px; border-radius: 50%; background: #00a8f3; display: inline-block;"></span> Em Produção
+                </span>
+                <span style="display: inline-flex; align-items: center; gap: 4px; color: #c084fc;">
+                  <span style="width: 8px; height: 8px; border-radius: 50%; background: #a855f7; display: inline-block;"></span> Pronto
+                </span>
+                <span style="display: inline-flex; align-items: center; gap: 4px; color: #34d399;">
+                  <span style="width: 8px; height: 8px; border-radius: 50%; background: #10b981; display: inline-block;"></span> Entregue
+                </span>
+                <span style="display: inline-flex; align-items: center; gap: 4px; color: #f87171;">
+                  <span style="width: 8px; height: 8px; border-radius: 50%; background: #ef4444; display: inline-block;"></span> Atrasado
+                </span>
+              </div>
+              <div style="font-size: 0.74rem; color: var(--text-muted);">
+                💡 Dica: Clique em qualquer encomenda no calendário para abrir todas as informações
+              </div>
+            </div>
+
+            <!-- Grade do Calendário -->
+            <div id="dash-calendario-container" style="padding: 16px;"></div>
+
+            <!-- Detalhe do Dia Selecionado -->
+            <div id="dash-cal-selected-day-box" style="display: none; border-top: 1px solid var(--border); padding: 14px 18px; background: rgba(0, 0, 0, 0.35);"></div>
           </div>
 
           <div class="dashboard-grid">
@@ -1935,18 +2001,19 @@
   <!-- CONTAINER DE TOASTS -->
   <div class="toast-container" id="toast-container"></div>
 
-  <!-- SCRIPTS DO SISTEMA (com cache-busting v31) -->
-  <script src="js/notifications.js?v=31"></script>
-  <script src="js/storage.js?v=31"></script>
-  <script src="js/crm.js?v=31"></script>
-  <script src="js/encomendas.js?v=31"></script>
-  <script src="js/estoque.js?v=31"></script>
-  <script src="js/financeiro.js?v=31"></script>
-  <script src="js/propostas.js?v=31"></script>
-  <script src="js/calculadora.js?v=31"></script>
-  <script src="js/calculadora-laser.js?v=31"></script>
-  <script src="js/configuracoes.js?v=31"></script>
-  <script src="js/app.js?v=31"></script>
+  <!-- SCRIPTS DO SISTEMA (com cache-busting v32) -->
+  <script src="js/notifications.js?v=32"></script>
+  <script src="js/storage.js?v=32"></script>
+  <script src="js/crm.js?v=32"></script>
+  <script src="js/encomendas.js?v=32"></script>
+  <script src="js/estoque.js?v=32"></script>
+  <script src="js/financeiro.js?v=32"></script>
+  <script src="js/propostas.js?v=32"></script>
+  <script src="js/calculadora.js?v=32"></script>
+  <script src="js/calculadora-laser.js?v=32"></script>
+  <script src="js/calendario.js?v=32"></script>
+  <script src="js/configuracoes.js?v=32"></script>
+  <script src="js/app.js?v=32"></script>
 </body>
 
 </html>

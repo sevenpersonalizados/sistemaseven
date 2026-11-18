@@ -22,6 +22,9 @@ const App = {
     if (typeof CalculadoraModule !== 'undefined') {
       CalculadoraModule.init();
     }
+    if (typeof CalendarModule !== 'undefined') {
+      CalendarModule.init();
+    }
     if (typeof ConfiguracoesModule !== 'undefined') {
       ConfiguracoesModule.init();
     }
@@ -332,6 +335,11 @@ const App = {
           </div>
         `;
       }
+    }
+
+    // 7. Renderiza o Calendário de Entregas & Prazos
+    if (typeof CalendarModule !== 'undefined') {
+      CalendarModule.render();
     }
   },
 
