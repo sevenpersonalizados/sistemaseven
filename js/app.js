@@ -34,6 +34,7 @@ const App = {
     this.loadConfigView();
 
     window.addEventListener('seven_data_updated', () => {
+      this.updateBadges();
       this.renderDashboard();
       if (this.currentView === 'finalizados') {
         EncomendasModule.renderFinalizados();
@@ -138,6 +139,61 @@ const App = {
         ConfiguracoesModule.render();
       }
     }
+
+    this.updateBadges();
+  },
+
+  updateBadges() {
+    const enc = StorageService.get('encomendas') || [];
+    const est = StorageService.get('estoque') || [];
+    const propostas = StorageService.get('propostas') || [];
+
+    // Orçamentos em aberto (exatamente os mesmos exibidos na página de Orçamentos)
+    const propostasAbertas = propostas.filter(p => !p.status || !p.status.toLowerCase().includes('aprovad'));
+
+    // Encomendas Finalizadas (exatamente as mesmas exibidas na página de Finalizados)
+    const encFinalizadas = enc.filter(e => {
+      return e.status === 'Entregue' || e.status === 'Cancelada' || (e.status === 'Pronto' && e.pagamento_status === 'Pago');
+    });
+
+    // Encomendas Ativas (exatamente as mesmas exibidas na página de Encomendas)
+    const encAbertas = enc.filter(e => {
+      if (e.status === 'Entregue' || e.status === 'Cancelada') return false;
+      const isFin = e.status === 'Pronto' && e.pagamento_status === 'Pago';
+      return !isFin;
+    });
+
+    // Itens em Estoque (com destaque caso haja itens em nível crítico)
+    const estoqueBaixo = est.filter(i => Number(i.quantidade_atual) <= Number(i.estoque_minimo));
+
+    // Atualiza badges do menu lateral e da barra inferior mobile
+    const bProp = document.getElementById('nav-badge-propostas');
+    if (bProp) bProp.textContent = propostasAbertas.length;
+    const bbProp = document.getElementById('bottom-badge-propostas');
+    if (bbProp) {
+      bbProp.textContent = propostasAbertas.length;
+      bbProp.style.display = propostasAbertas.length > 0 ? 'inline-block' : 'none';
+    }
+
+    const bEnc = document.getElementById('nav-badge-encomendas');
+    if (bEnc) bEnc.textContent = encAbertas.length;
+    const bbEnc = document.getElementById('bottom-badge-encomendas');
+    if (bbEnc) {
+      bbEnc.textContent = encAbertas.length;
+      bbEnc.style.display = encAbertas.length > 0 ? 'inline-block' : 'none';
+    }
+
+    const bFin = document.getElementById('nav-badge-finalizados');
+    if (bFin) bFin.textContent = encFinalizadas.length;
+
+    const bEst = document.getElementById('nav-badge-estoque');
+    if (bEst) {
+      bEst.textContent = est.length;
+      bEst.className = estoqueBaixo.length > 0 ? 'badge-counter highlight' : 'badge-counter';
+      bEst.title = estoqueBaixo.length > 0
+        ? `${est.length} itens cadastrados (${estoqueBaixo.length} abaixo do mínimo)`
+        : `${est.length} itens cadastrados no estoque`;
+    }
   },
 
   renderDashboard() {
@@ -192,32 +248,8 @@ const App = {
     }
 
     // 3. Atualiza Badges de alerta no menu lateral e na barra inferior mobile
-    const propostas = StorageService.get('propostas') || [];
-    const bProp = document.getElementById('nav-badge-propostas');
-    if (bProp) bProp.textContent = propostas.length;
-    const bbProp = document.getElementById('bottom-badge-propostas');
-    if (bbProp) {
-      bbProp.textContent = propostas.length;
-      bbProp.style.display = propostas.length > 0 ? 'inline-block' : 'none';
-    }
-
-    const bEnc = document.getElementById('nav-badge-encomendas');
-    if (bEnc) bEnc.textContent = encAbertas.length;
-    const bbEnc = document.getElementById('bottom-badge-encomendas');
-    if (bbEnc) {
-      bbEnc.textContent = encAbertas.length;
-      bbEnc.style.display = encAbertas.length > 0 ? 'inline-block' : 'none';
-    }
-
-    const bFin = document.getElementById('nav-badge-finalizados');
-    if (bFin) bFin.textContent = encFinalizadas.length;
-
+    this.updateBadges();
     const estoqueBaixo = est.filter(i => Number(i.quantidade_atual) <= Number(i.estoque_minimo));
-    const bEst = document.getElementById('nav-badge-estoque');
-    if (bEst) {
-      bEst.textContent = estoqueBaixo.length;
-      bEst.className = estoqueBaixo.length > 0 ? 'badge-counter highlight' : 'badge-counter';
-    }
 
     // 4. Próximas Entregas (Apenas encomendas em Fila ou Em Produção — pedidos 'Pronto' saem daqui)
     const proximas = enc

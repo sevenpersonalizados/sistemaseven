@@ -37,6 +37,9 @@ const EncomendasModule = {
       const somaAtivas = encAtivasAll.reduce((acc, e) => acc + (Number(e.valor_total) || 0), 0);
       headerValEl.textContent = App.formatMoney(somaAtivas);
     }
+    if (typeof App !== 'undefined' && App.updateBadges) {
+      App.updateBadges();
+    }
 
     // Atualiza opções do filtro de categoria caso ainda não preenchido
     const filtroCatEl = document.getElementById('filtro-enc-categoria');
