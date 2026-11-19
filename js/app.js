@@ -364,10 +364,13 @@ const App = {
 
   // Modais
   setupModals() {
+    // Apenas modais somente-leitura fecham ao clicar fora.
+    // Modais de formulário (Orçamento, Encomenda, Financeiro, Estoque, etc.) só fecham ao Cancelar, Salvar ou clicar no X.
+    const readonlyModals = new Set(['modal-preview-proposta', 'modal-detalhes-financeiro']);
     document.querySelectorAll('.modal-overlay').forEach(overlay => {
       overlay.addEventListener('click', (e) => {
-        if (e.target === overlay) {
-          overlay.classList.remove('active');
+        if (e.target === overlay && readonlyModals.has(overlay.id)) {
+          this.closeModal(overlay.id);
         }
       });
     });
