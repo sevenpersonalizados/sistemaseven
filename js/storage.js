@@ -20,6 +20,7 @@ const STORAGE_KEYS = {
   CALC_LASER_CONFIG: 'seven_calc_laser_config_v1',
   CALC_LASER_HISTORICO: 'seven_calc_laser_historico_v1',
   FINANCEIRO_LANCAMENTOS: 'seven_financeiro_lancamentos_v1',
+  FINANCEIRO_AUDITORIA: 'seven_financeiro_auditoria_v1',
   CONFIG: 'seven_config_v1',
   SUPABASE_SETTINGS: 'seven_supabase_config_v1'
 };
@@ -40,7 +41,7 @@ const INITIAL_DATA = {
     categorias_receita: ['Venda de Personalizados', 'Gravação Laser', 'Impressão 3D', 'Brindes Corporativos', 'Serviço de Design', 'Outras Receitas'],
     centros_custo: ['Oficina / Produção Laser', 'Produção 3D', 'Balcão / Loja Física', 'Administrativo & Vendas', 'Geral'],
     locais_pagamento: ['Banco Inter', 'Nubank', 'Caixa Físico', 'Mercado Pago', 'Cofre'],
-    proprietarios: ['Proprietário 1', 'Proprietário 2'],
+    proprietarios: ['Raphael', 'Yanka'],
     formas_pagamento: ['Pix', 'Cartão de Crédito', 'Cartão de Débito', 'Boleto', 'Dinheiro'],
     cores: [
       'Preto', 'Branco', 'Dourado', 'Prata', 'Vermelho', 'Azul', 'Verde',
@@ -407,6 +408,7 @@ const INITIAL_DATA = {
       historico_alteracoes: []
     }
   ],
+  financeiro_auditoria: [],
   propostas: [
     {
       id: 'prop-1',
@@ -836,7 +838,7 @@ const StorageService = {
     if (!isSilent) {
       this.updateSyncBadge('syncing', 'Sincronizando nuvem...');
     }
-    const tables = ['crm_cards', 'encomendas', 'estoque', 'despesas', 'propostas', 'filamentos', 'calc_3d_historico', 'calc_laser_historico', 'financeiro_lancamentos'];
+    const tables = ['crm_cards', 'encomendas', 'estoque', 'despesas', 'propostas', 'filamentos', 'calc_3d_historico', 'calc_laser_historico', 'financeiro_lancamentos', 'financeiro_auditoria'];
 
     try {
       await Promise.all(tables.map(async (table) => {
@@ -1439,20 +1441,40 @@ const StorageService = {
   getProprietarios() {
     const raw = this.getConfig().proprietarios;
     if (Array.isArray(raw) && raw.length > 0) return raw;
-    return ['Proprietário 1', 'Proprietário 2'];
+    return ['Raphael', 'Yanka'];
   },
 
   getActiveProprietario() {
+    if (typeof AuthModule !== 'undefined' && AuthModule.getCurrentUser) {
+      const user = AuthModule.getCurrentUser();
+      if (user && user.nome) return user.nome;
+    }
     const salvo = localStorage.getItem('seven_active_proprietario');
     if (salvo) return salvo;
     const lista = this.getProprietarios();
-    return lista[0] || 'Proprietário 1';
+    return lista[0] || 'Raphael';
   },
 
   setActiveProprietario(nome) {
     if (!nome) return;
     localStorage.setItem('seven_active_proprietario', nome);
     window.dispatchEvent(new CustomEvent('seven_proprietario_changed', { detail: { nome } }));
+  },
+
+  logFinanceiroAuditoria({ acao, lancamento_id = null, descricao = '', valor = 0, detalhes = '' }) {
+    const user = (typeof AuthModule !== 'undefined' && AuthModule.getCurrentUser) ? AuthModule.getCurrentUser() : null;
+    const entry = {
+      id: `aud-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
+      data_hora: new Date().toISOString(),
+      usuario_nome: user?.nome || this.getActiveProprietario() || 'Raphael',
+      usuario_email: user?.email || '',
+      acao: acao || 'Alteração',
+      lancamento_id: lancamento_id || null,
+      descricao: descricao || '',
+      valor: Number(valor) || 0,
+      detalhes: detalhes || ''
+    };
+    return this.insert('financeiro_auditoria', entry);
   },
 
   addProprietario(nome) {

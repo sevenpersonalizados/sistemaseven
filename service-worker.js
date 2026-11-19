@@ -3,13 +3,14 @@
  * Suporte a modo standalone no iPhone (iOS), cache e Notificações Push
  */
 
-const CACHE_NAME = 'seven-cache-v40';
+const CACHE_NAME = 'seven-cache-v41';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
   './css/styles.css',
   './js/notifications.js',
   './js/storage.js',
+  './js/auth.js',
   './js/crm.js',
   './js/encomendas.js',
   './js/estoque.js',

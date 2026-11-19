@@ -48,10 +48,44 @@
   <meta http-equiv="Expires" content="0">
 
   <!-- Estilos Customizados -->
-  <link rel="stylesheet" href="css/styles.css?v=40">
+  <link rel="stylesheet" href="css/styles.css?v=41">
 </head>
 
 <body>
+
+  <!-- TELA DE LOGIN EXECUTIVA (AUTENTICAÇÃO RAPHAEL & YANKA) -->
+  <div id="login-screen-overlay"
+    style="display: none; position: fixed; inset: 0; z-index: 99999; background: radial-gradient(circle at top right, rgba(0, 168, 243, 0.16), transparent 45%), radial-gradient(circle at bottom left, rgba(168, 85, 247, 0.14), transparent 45%), #070b14; align-items: center; justify-content: center; padding: 20px;">
+    <div style="width: 100%; max-width: 420px; background: rgba(15, 23, 42, 0.92); border: 1px solid rgba(56, 189, 248, 0.35); border-radius: 18px; padding: 32px 28px; box-shadow: 0 24px 64px rgba(0, 0, 0, 0.7), 0 0 32px rgba(0, 168, 243, 0.12); backdrop-filter: blur(16px);">
+      <div style="text-align: center; margin-bottom: 24px;">
+        <img src="favicon-192.png?v=3" alt="Seven Personalizados" style="width: 64px; height: 64px; border-radius: 14px; margin-bottom: 12px; box-shadow: 0 6px 20px rgba(0, 168, 243, 0.3);">
+        <h2 style="margin: 0; font-family: var(--font-display); font-size: 1.5rem; font-weight: 800; color: #ffffff;">
+          Seven Personalizados
+        </h2>
+        <p style="margin: 6px 0 0 0; font-size: 0.84rem; color: var(--text-muted);">
+          Acesse com seu e-mail e senha para entrar no sistema
+        </p>
+      </div>
+
+      <form onsubmit="AuthModule.handleLoginSubmit(event)">
+        <div class="form-group" style="margin-bottom: 14px;">
+          <label for="login-email" style="font-size: 0.82rem; font-weight: 600; color: var(--text-secondary);">E-mail</label>
+          <input type="email" id="login-email" class="form-control" placeholder="seu.email@exemplo.com" autocomplete="username" required style="padding: 11px 14px; font-size: 0.92rem;">
+        </div>
+
+        <div class="form-group" style="margin-bottom: 16px;">
+          <label for="login-senha" style="font-size: 0.82rem; font-weight: 600; color: var(--text-secondary);">Senha</label>
+          <input type="password" id="login-senha" class="form-control" placeholder="Digite sua senha" autocomplete="current-password" required style="padding: 11px 14px; font-size: 0.92rem;">
+        </div>
+
+        <div id="login-error-msg" style="display: none; background: rgba(239, 68, 68, 0.14); border: 1px solid rgba(239, 68, 68, 0.45); color: #f87171; border-radius: 8px; padding: 10px 12px; font-size: 0.8rem; margin-bottom: 14px; text-align: center;"></div>
+
+        <button type="submit" id="login-submit-btn" class="btn btn-primary" style="width: 100%; padding: 12px; font-size: 0.95rem; font-weight: 700; justify-content: center;">
+          Entrar no Sistema
+        </button>
+      </form>
+    </div>
+  </div>
 
   <!-- OVERLAY ESCURO PARA QUANDO A GAVETA DO MENU ABRIR NO CELULAR -->
   <div class="sidebar-backdrop" id="sidebar-backdrop" onclick="App.closeSidebar(event)"></div>
@@ -167,11 +201,21 @@
     </ul>
 
     <div class="sidebar-footer">
-      <div class="user-profile">
-        <div class="avatar">SP</div>
-        <div class="user-info">
-          <div class="user-name">Administrador</div>
-          <div class="user-role">Seven Personalizados</div>
+      <div class="user-profile" style="flex-direction: column; align-items: stretch; gap: 10px; width: 100%;">
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <div class="avatar" id="auth-sidebar-user-avatar">R</div>
+          <div class="user-info" style="min-width: 0; flex: 1;">
+            <div class="user-name" id="auth-sidebar-user-name" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Usuário</div>
+            <div class="user-role" id="auth-sidebar-user-email" style="font-size: 0.7rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Seven Personalizados</div>
+          </div>
+        </div>
+        <div style="display: flex; gap: 6px;">
+          <button type="button" class="btn btn-secondary btn-sm" onclick="AuthModule.openChangePasswordModal()" title="Alterar minha senha" style="flex: 1; padding: 5px 8px; font-size: 0.72rem; justify-content: center;">
+            🔑 Senha
+          </button>
+          <button type="button" class="btn btn-secondary btn-sm" onclick="AuthModule.logout()" title="Sair da conta" style="padding: 5px 10px; font-size: 0.72rem; color: #f87171;">
+            🚪 Sair
+          </button>
         </div>
       </div>
     </div>
@@ -577,11 +621,10 @@
             </div>
 
             <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
-              <!-- Seletor do Proprietário Ativo no Dispositivo -->
-              <div style="display: flex; align-items: center; gap: 6px; background: rgba(0, 0, 0, 0.35); padding: 5px 10px; border-radius: 8px; border: 1px solid var(--border);">
-                <span style="font-size: 0.75rem; color: var(--text-muted); font-weight: 600;">Operando como:</span>
-                <select id="fin-active-proprietario" class="form-control" style="width: auto; padding: 3px 8px; font-size: 0.8rem; height: auto;" onchange="FinanceiroModule.onActiveProprietarioChange(this.value)">
-                </select>
+              <!-- Usuário Logado (Auditoria Automática) -->
+              <div style="display: flex; align-items: center; gap: 6px; background: rgba(0, 168, 243, 0.12); padding: 6px 12px; border-radius: 8px; border: 1px solid rgba(56, 189, 248, 0.4);">
+                <span style="font-size: 0.75rem; color: var(--text-muted); font-weight: 600;">Logado como:</span>
+                <span id="fin-active-user-badge" style="font-size: 0.84rem; color: #38bdf8;">👤 <strong>Raphael</strong></span>
               </div>
 
               <!-- Botões de Ação Rápida -->
@@ -763,6 +806,9 @@
               <button type="button" class="fin-filter-tab-btn" data-tab="estornados" onclick="FinanceiroModule.setTab('estornados')">
                 ↩️ Estornadas <span id="fin-tab-badge-estornados" class="badge-pill">0</span>
               </button>
+              <button type="button" class="fin-filter-tab-btn" data-tab="auditoria" onclick="FinanceiroModule.setTab('auditoria')" style="border-color: rgba(168, 85, 247, 0.45); color: #c084fc;">
+                📜 Log de Alterações <span id="fin-tab-badge-auditoria" class="badge-pill">0</span>
+              </button>
             </div>
 
             <!-- Barra de Pesquisa e Filtros Avançados -->
@@ -815,7 +861,7 @@
             </div>
 
             <!-- Tabela de Movimentações -->
-            <div class="table-responsive">
+            <div id="fin-lancamentos-table-wrap" class="table-responsive">
               <table class="modern-table">
                 <thead>
                   <tr>
@@ -832,6 +878,23 @@
                   </tr>
                 </thead>
                 <tbody id="fin-table-body"></tbody>
+              </table>
+            </div>
+
+            <!-- Tabela de Auditoria (Log Completo de Alterações por Usuário) -->
+            <div id="fin-auditoria-table-wrap" class="table-responsive" style="display: none;">
+              <table class="modern-table">
+                <thead>
+                  <tr>
+                    <th>Data / Hora</th>
+                    <th>Usuário</th>
+                    <th>Ação Efetuada</th>
+                    <th>Lançamento / Descrição</th>
+                    <th>Valor</th>
+                    <th>Detalhes da Alteração</th>
+                  </tr>
+                </thead>
+                <tbody id="fin-auditoria-table-body"></tbody>
               </table>
             </div>
           </div>
@@ -2505,22 +2568,59 @@
     </button>
   </nav>
 
+  <!-- MODAL: ALTERAR SENHA DO USUÁRIO -->
+  <div class="modal-overlay" id="modal-alterar-senha">
+    <div class="modal-container" style="max-width: 440px;">
+      <div class="modal-header">
+        <h3 style="display: flex; align-items: center; gap: 8px;">
+          <span>🔑</span> Alterar Minha Senha
+        </h3>
+        <button class="btn-icon"
+          style="background: transparent; border: none; color: var(--text-muted); cursor: pointer;"
+          onclick="App.closeModal('modal-alterar-senha')">✕</button>
+      </div>
+      <div class="modal-body">
+        <div id="alterar-senha-usuario-info" style="font-size: 0.84rem; color: #38bdf8; background: rgba(56, 189, 248, 0.1); border: 1px solid rgba(56, 189, 248, 0.3); border-radius: 8px; padding: 10px 12px; margin-bottom: 16px;"></div>
+
+        <div class="form-group">
+          <label>Senha Atual *</label>
+          <input type="password" id="cfg-senha-atual" class="form-control" placeholder="Digite sua senha atual" autocomplete="current-password">
+        </div>
+
+        <div class="form-group">
+          <label>Nova Senha *</label>
+          <input type="password" id="cfg-senha-nova" class="form-control" placeholder="Mínimo de 4 caracteres" autocomplete="new-password">
+        </div>
+
+        <div class="form-group">
+          <label>Confirmar Nova Senha *</label>
+          <input type="password" id="cfg-senha-confirmar" class="form-control" placeholder="Digite novamente a nova senha" autocomplete="new-password">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="App.closeModal('modal-alterar-senha')">Cancelar</button>
+        <button type="button" class="btn btn-primary" onclick="AuthModule.saveNewPassword()">Salvar Nova Senha</button>
+      </div>
+    </div>
+  </div>
+
   <!-- CONTAINER DE TOASTS -->
   <div class="toast-container" id="toast-container"></div>
 
-  <!-- SCRIPTS DO SISTEMA (com cache-busting v40) -->
-  <script src="js/notifications.js?v=40"></script>
-  <script src="js/storage.js?v=40"></script>
-  <script src="js/crm.js?v=40"></script>
-  <script src="js/encomendas.js?v=40"></script>
-  <script src="js/estoque.js?v=40"></script>
-  <script src="js/financeiro.js?v=40"></script>
-  <script src="js/propostas.js?v=40"></script>
-  <script src="js/calculadora.js?v=40"></script>
-  <script src="js/calculadora-laser.js?v=40"></script>
-  <script src="js/calendario.js?v=40"></script>
-  <script src="js/configuracoes.js?v=40"></script>
-  <script src="js/app.js?v=40"></script>
+  <!-- SCRIPTS DO SISTEMA (com cache-busting v41) -->
+  <script src="js/notifications.js?v=41"></script>
+  <script src="js/storage.js?v=41"></script>
+  <script src="js/auth.js?v=41"></script>
+  <script src="js/crm.js?v=41"></script>
+  <script src="js/encomendas.js?v=41"></script>
+  <script src="js/estoque.js?v=41"></script>
+  <script src="js/financeiro.js?v=41"></script>
+  <script src="js/propostas.js?v=41"></script>
+  <script src="js/calculadora.js?v=41"></script>
+  <script src="js/calculadora-laser.js?v=41"></script>
+  <script src="js/calendario.js?v=41"></script>
+  <script src="js/configuracoes.js?v=41"></script>
+  <script src="js/app.js?v=41"></script>
 </body>
 
 </html>

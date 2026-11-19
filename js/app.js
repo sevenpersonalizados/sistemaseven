@@ -7,6 +7,9 @@ const App = {
   currentView: 'dashboard',
 
   init() {
+    if (typeof AuthModule !== 'undefined') {
+      AuthModule.init();
+    }
     this.setupNavigation();
     this.setupModals();
     this.renderDashboard();

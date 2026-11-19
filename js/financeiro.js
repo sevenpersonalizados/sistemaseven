@@ -46,7 +46,7 @@ const FinanceiroModule = {
     // Reatividade a eventos do sistema
     window.addEventListener('seven_data_updated', (e) => {
       const t = e.detail?.table;
-      if (!t || t === 'financeiro_lancamentos' || t === 'despesas' || t === 'config') {
+      if (!t || t === 'financeiro_lancamentos' || t === 'financeiro_auditoria' || t === 'despesas' || t === 'config') {
         this.render();
       }
     });
@@ -105,22 +105,31 @@ const FinanceiroModule = {
     this.updateProprietarioSelector();
     this.renderIndicadores();
     this.renderContasResumo();
-    this.renderTabelaLancamentos();
+    if (this.activeTab === 'auditoria') {
+      this.renderTabelaAuditoria();
+    } else {
+      this.renderTabelaLancamentos();
+    }
     this.renderChart();
   },
 
   updateProprietarioSelector() {
-    const select = document.getElementById('fin-active-proprietario');
-    if (!select) return;
-
-    const proprietarios = StorageService.getProprietarios();
     const ativo = StorageService.getActiveProprietario();
+    const user = (typeof AuthModule !== 'undefined' && AuthModule.getCurrentUser) ? AuthModule.getCurrentUser() : null;
+    const badgeEl = document.getElementById('fin-active-user-badge');
+    if (badgeEl) {
+      badgeEl.innerHTML = `👤 <strong>${App.escapeHtml(user?.nome || ativo)}</strong>`;
+      badgeEl.title = user?.email ? `Logado como ${user.email}` : '';
+    }
 
-    select.innerHTML = proprietarios.map(p => `
-      <option value="${App.escapeHtml(p)}" ${p === ativo ? 'selected' : ''}>
-        👤 ${App.escapeHtml(p)}
-      </option>
-    `).join('');
+    // Atualiza o filtro de proprietários na barra de filtros
+    const filtroProp = document.getElementById('fin-filtro-proprietario');
+    if (filtroProp) {
+      const proprietarios = StorageService.getProprietarios();
+      const atualVal = this.filtroProprietario || '';
+      filtroProp.innerHTML = `<option value="">Usuário: Todos</option>` +
+        proprietarios.map(p => `<option value="${App.escapeHtml(p)}" ${p === atualVal ? 'selected' : ''}>👤 ${App.escapeHtml(p)}</option>`).join('');
+    }
   },
 
   onActiveProprietarioChange(novoNome) {
@@ -260,12 +269,14 @@ const FinanceiroModule = {
     });
 
     // Atualiza contadores nas abas
+    const logsAuditoria = StorageService.get('financeiro_auditoria') || [];
     this.updateTabBadge('fin-tab-badge-todos', lancamentos.length);
     this.updateTabBadge('fin-tab-badge-receber', `${aReceberCount} • ${App.formatMoney(aReceberValor)}`);
     this.updateTabBadge('fin-tab-badge-pagar', `${aPagarCount} • ${App.formatMoney(aPagarValor)}`);
     this.updateTabBadge('fin-tab-badge-vencidos', `${vencidosCount}`, vencidosCount > 0);
     this.updateTabBadge('fin-tab-badge-efetivados', efetivadosCount);
     this.updateTabBadge('fin-tab-badge-estornados', estornadosCount);
+    this.updateTabBadge('fin-tab-badge-auditoria', logsAuditoria.length);
   },
 
   updateTabBadge(id, text, isAlert = false) {
@@ -288,7 +299,92 @@ const FinanceiroModule = {
         btn.classList.remove('active');
       }
     });
-    this.renderTabelaLancamentos();
+
+    const wrapLanc = document.getElementById('fin-lancamentos-table-wrap');
+    const wrapAud = document.getElementById('fin-auditoria-table-wrap');
+    if (tab === 'auditoria') {
+      if (wrapLanc) wrapLanc.style.display = 'none';
+      if (wrapAud) wrapAud.style.display = 'block';
+      this.renderTabelaAuditoria();
+    } else {
+      if (wrapLanc) wrapLanc.style.display = 'block';
+      if (wrapAud) wrapAud.style.display = 'none';
+      this.renderTabelaLancamentos();
+    }
+  },
+
+  renderTabelaAuditoria() {
+    const tbody = document.getElementById('fin-auditoria-table-body');
+    const countEl = document.getElementById('fin-table-count');
+    if (!tbody) return;
+
+    let logs = [...(StorageService.get('financeiro_auditoria') || [])];
+
+    // Filtra por usuário ou busca se preenchidos
+    if (this.filtroProprietario) {
+      logs = logs.filter(l => (l.usuario_nome || '') === this.filtroProprietario);
+    }
+    if (this.searchQuery) {
+      const q = this.searchQuery.toLowerCase();
+      logs = logs.filter(l =>
+        (l.usuario_nome || '').toLowerCase().includes(q) ||
+        (l.acao || '').toLowerCase().includes(q) ||
+        (l.descricao || '').toLowerCase().includes(q) ||
+        (l.detalhes || '').toLowerCase().includes(q)
+      );
+    }
+
+    logs.sort((a, b) => (b.data_hora || b.created_at || '').localeCompare(a.data_hora || a.created_at || ''));
+
+    if (countEl) {
+      countEl.textContent = `${logs.length} ${logs.length === 1 ? 'registro de alteração' : 'registros de alterações'}`;
+    }
+
+    if (logs.length === 0) {
+      tbody.innerHTML = `
+        <tr>
+          <td colspan="6" style="text-align: center; padding: 36px; color: var(--text-muted);">
+            <div style="font-size: 1.8rem; margin-bottom: 8px;">📜</div>
+            <div>Nenhuma alteração registrada ainda no histórico de auditoria.</div>
+          </td>
+        </tr>
+      `;
+      return;
+    }
+
+    tbody.innerHTML = logs.map(log => {
+      const dt = log.data_hora || log.created_at;
+      const dtFmt = dt ? new Date(dt).toLocaleString('pt-BR') : '—';
+      const acaoLower = (log.acao || '').toLowerCase();
+      let badgeStyle = 'background: rgba(56, 189, 248, 0.16); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.4);';
+      if (acaoLower.includes('cria') || acaoLower.includes('novo')) {
+        badgeStyle = 'background: rgba(16, 185, 129, 0.16); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.4);';
+      } else if (acaoLower.includes('estorno')) {
+        badgeStyle = 'background: rgba(245, 158, 11, 0.2); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.45);';
+      } else if (acaoLower.includes('exclu')) {
+        badgeStyle = 'background: rgba(239, 68, 68, 0.18); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.45);';
+      } else if (acaoLower.includes('baixa') || acaoLower.includes('liquida')) {
+        badgeStyle = 'background: rgba(168, 85, 247, 0.18); color: #c084fc; border: 1px solid rgba(168, 85, 247, 0.45);';
+      }
+
+      return `
+        <tr>
+          <td style="white-space: nowrap; font-size: 0.78rem; color: var(--text-secondary);">${dtFmt}</td>
+          <td>
+            <span style="font-size: 0.76rem; font-weight: 700; color: #38bdf8; background: rgba(56, 189, 248, 0.12); padding: 3px 9px; border-radius: 999px; border: 1px solid rgba(56, 189, 248, 0.35);">
+              👤 ${App.escapeHtml(log.usuario_nome || 'Usuário')}
+            </span>
+            ${log.usuario_email ? `<div style="font-size: 0.68rem; color: var(--text-muted); margin-top: 2px;">${App.escapeHtml(log.usuario_email)}</div>` : ''}
+          </td>
+          <td>
+            <span class="status-badge" style="${badgeStyle}">${App.escapeHtml(log.acao || 'Alteração')}</span>
+          </td>
+          <td style="font-weight: 600; color: #ffffff;">${App.escapeHtml(log.descricao || '—')}</td>
+          <td style="font-weight: 700; white-space: nowrap; color: var(--text-primary);">${log.valor ? App.formatMoney(log.valor) : '—'}</td>
+          <td style="font-size: 0.78rem; color: var(--text-secondary);">${App.escapeHtml(log.detalhes || '—')}</td>
+        </tr>
+      `;
+    }).join('');
   },
 
   // 6. HISTÓRICO DE MOVIMENTAÇÕES & TABELA
@@ -480,7 +576,11 @@ const FinanceiroModule = {
 
   onSearch(query) {
     this.searchQuery = (query || '').trim();
-    this.renderTabelaLancamentos();
+    if (this.activeTab === 'auditoria') {
+      this.renderTabelaAuditoria();
+    } else {
+      this.renderTabelaLancamentos();
+    }
   },
 
   onFiltroTipoChange(val) {
@@ -500,7 +600,11 @@ const FinanceiroModule = {
 
   onFiltroProprietarioChange(val) {
     this.filtroProprietario = val;
-    this.renderTabelaLancamentos();
+    if (this.activeTab === 'auditoria') {
+      this.renderTabelaAuditoria();
+    } else {
+      this.renderTabelaLancamentos();
+    }
   },
 
   onFiltroMesAnoChange(val) {
@@ -919,6 +1023,25 @@ const FinanceiroModule = {
       };
 
       StorageService.update('financeiro_lancamentos', id, updates);
+
+      // Registra alteração detalhada na Auditoria Global do Financeiro
+      const diffs = [];
+      if (existing.descricao !== descricao) diffs.push(`Descrição: "${existing.descricao}" → "${descricao}"`);
+      if (Number(existing.valor) !== Number(valor)) diffs.push(`Valor: ${App.formatMoney(existing.valor)} → ${App.formatMoney(valor)}`);
+      if (existing.status !== status) diffs.push(`Status: ${existing.status} → ${status}`);
+      if (existing.data !== data) diffs.push(`Data: ${App.formatDate(existing.data)} → ${App.formatDate(data)}`);
+      if (existing.categoria !== categoria) diffs.push(`Categoria: ${existing.categoria} → ${categoria}`);
+      if (existing.centro_custo !== centro) diffs.push(`Centro: ${existing.centro_custo} → ${centro}`);
+      if (existing.local_pagamento !== local) diffs.push(`Local: ${existing.local_pagamento} → ${local}`);
+
+      StorageService.logFinanceiroAuditoria({
+        acao: 'Edição',
+        lancamento_id: id,
+        descricao,
+        valor,
+        detalhes: diffs.length > 0 ? diffs.join(' | ') : 'Dados atualizados'
+      });
+
       App.toast('Lançamento financeiro atualizado com sucesso!', 'success');
       App.closeModal('modal-lancamento-financeiro');
       this.render();
@@ -960,13 +1083,21 @@ const FinanceiroModule = {
           estornado: false,
           historico_alteracoes: [{
             data: new Date().toISOString(),
-            responsavel: proprietario,
+            responsavel: StorageService.getActiveProprietario(),
             acao: 'Lançamento parcelado criado'
           }]
         };
 
         StorageService.insert('financeiro_lancamentos', novoItem);
       }
+
+      StorageService.logFinanceiroAuditoria({
+        acao: 'Criação (Parcelado)',
+        lancamento_id: grupoId,
+        descricao: `${descricao} (${numParcelas}x)`,
+        valor,
+        detalhes: `${tipo === 'receita' ? 'Receita' : 'Despesa'} em ${numParcelas}x de ${App.formatMoney(valorParcela)} • ${categoria} • ${local}`
+      });
 
       App.toast(`${numParcelas} parcelas de ${App.formatMoney(valorParcela)} registradas!`, 'success');
       App.closeModal('modal-lancamento-financeiro');
@@ -1018,13 +1149,21 @@ const FinanceiroModule = {
           estornado: false,
           historico_alteracoes: [{
             data: new Date().toISOString(),
-            responsavel: proprietario,
+            responsavel: StorageService.getActiveProprietario(),
             acao: 'Lançamento recorrente criado'
           }]
         };
 
         StorageService.insert('financeiro_lancamentos', novoItem);
       }
+
+      StorageService.logFinanceiroAuditoria({
+        acao: 'Criação (Recorrente)',
+        lancamento_id: grupoRecId,
+        descricao: `${descricao} (${repeticoes}x ${frequencia})`,
+        valor: valor * repeticoes,
+        detalhes: `${repeticoes} lançamentos de ${App.formatMoney(valor)} (${frequencia}) • ${categoria}`
+      });
 
       App.toast(`${repeticoes} repetições registradas com sucesso!`, 'success');
       App.closeModal('modal-lancamento-financeiro');
@@ -1054,12 +1193,19 @@ const FinanceiroModule = {
       estornado: false,
       historico_alteracoes: [{
         data: new Date().toISOString(),
-        responsavel: proprietario,
+        responsavel: StorageService.getActiveProprietario(),
         acao: 'Lançamento registrado'
       }]
     };
 
     StorageService.insert('financeiro_lancamentos', novoItem);
+    StorageService.logFinanceiroAuditoria({
+      acao: tipo === 'receita' ? 'Criação de Receita' : 'Criação de Despesa',
+      lancamento_id: novoItem.id,
+      descricao,
+      valor,
+      detalhes: `Status: ${status} • ${categoria} • ${centro} • ${forma} (${local})`
+    });
     App.toast(`${tipo === 'receita' ? 'Receita' : 'Despesa'} registrada com sucesso!`, 'success');
     App.closeModal('modal-lancamento-financeiro');
     this.render();
@@ -1083,6 +1229,14 @@ const FinanceiroModule = {
     StorageService.update('financeiro_lancamentos', id, {
       status: novoStatus,
       historico_alteracoes: historico
+    });
+
+    StorageService.logFinanceiroAuditoria({
+      acao: 'Baixa / Liquidação',
+      lancamento_id: id,
+      descricao: item.descricao,
+      valor: item.valor,
+      detalhes: `Status alterado: pendente → ${novoStatus}`
     });
 
     App.toast(`Lançamento liquidado como ${novoStatus === 'recebido' ? 'Recebido' : 'Pago'}!`, 'success');
@@ -1188,6 +1342,14 @@ const FinanceiroModule = {
       historico_alteracoes: historico
     });
 
+    StorageService.logFinanceiroAuditoria({
+      acao: 'Estorno',
+      lancamento_id: this.currentEstornoId,
+      descricao: item.descricao,
+      valor: item.valor,
+      detalhes: `Motivo: ${motivo}`
+    });
+
     App.toast('Lançamento estornado e saldo financeiro recalculado.', 'info');
     App.closeModal('modal-estorno-financeiro');
     this.render();
@@ -1206,6 +1368,14 @@ const FinanceiroModule = {
         return;
       }
     }
+
+    StorageService.logFinanceiroAuditoria({
+      acao: 'Exclusão',
+      lancamento_id: id,
+      descricao: item.descricao,
+      valor: item.valor,
+      detalhes: `${item.tipo === 'receita' ? 'Receita' : 'Despesa'} (${item.status}) removida • Data original: ${App.formatDate(item.data)}`
+    });
 
     StorageService.delete('financeiro_lancamentos', id);
     App.toast('Lançamento excluído com sucesso.', 'info');
