@@ -52,7 +52,17 @@ const INITIAL_DATA = {
     ],
     marcas_filamento: [
       'Voolt3D', 'Creality', '3D Fila', 'eSun', 'Sunlu', 'Sethi3D', 'National 3D', 'PrintaLot'
-    ]
+    ],
+    padroes_orcamento_pedido: {
+      orcamento_titulo: 'Orçamento de Produtos Personalizados Exclusivos',
+      orcamento_escopo: 'Fabricação e personalização a laser / 3D de peças conforme especificações do cliente com garantia de acabamento fino.',
+      orcamento_metodo: '1. Envio e aprovação de maquete digital 3D\n2. Fabricação com controle milimétrico de corte e gravação\n3. Limpeza, acabamento artesanal e controle de qualidade\n4. Embalagem reforçada e pronta para entrega',
+      orcamento_prazo: '5 a 7 dias úteis após aprovação da arte final',
+      orcamento_condicoes: '50% de sinal no pedido e 50% na conclusão da produção via Pix.',
+      pedido_dias_entrega: 5,
+      pedido_forma_pagto: 'Pix',
+      pedido_obs: ''
+    }
   },
   crm_cards: [
     {
@@ -1540,6 +1550,29 @@ const StorageService = {
     if (lista.length <= 1) return;
     lista.splice(index, 1);
     this.saveConfig({ ...cfg, categorias_despesa: lista });
+  },
+
+  /* --- PADRÕES DE ORÇAMENTOS & PEDIDOS --- */
+  getPadroesOrcamentoPedido() {
+    const defaults = INITIAL_DATA.config.padroes_orcamento_pedido;
+    const saved = this.getConfig().padroes_orcamento_pedido;
+    if (saved && typeof saved === 'object') {
+      return {
+        ...defaults,
+        ...saved
+      };
+    }
+    return { ...defaults };
+  },
+
+  savePadroesOrcamentoPedido(padroes) {
+    const cfg = this.getConfig();
+    const merged = {
+      ...this.getPadroesOrcamentoPedido(),
+      ...padroes
+    };
+    this.saveConfig({ ...cfg, padroes_orcamento_pedido: merged });
+    return merged;
   }
 };
 

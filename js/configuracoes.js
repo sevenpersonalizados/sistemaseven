@@ -37,9 +37,11 @@ const ConfiguracoesModule = {
     const formasPagto = StorageService.getFormasPagamento();
     const categoriasDesp = StorageService.getCategoriasDespesa();
     const marcasFilamento = StorageService.getMarcasFilamento();
+    const padroes = StorageService.getPadroesOrcamentoPedido();
 
     const tab = this.activeSubtab;
     const showGrupos = (tab === 'todos' || tab === 'grupos');
+    const showOrcamentos = (tab === 'todos' || tab === 'orcamentos');
     const showEmpresa = (tab === 'todos' || tab === 'empresa');
     const showCalc3D = (tab === 'todos' || tab === 'calc3d');
 
@@ -77,6 +79,9 @@ const ConfiguracoesModule = {
         </button>
         <button type="button" class="cfg-subtab-btn ${tab === 'grupos' ? 'active' : ''}" onclick="ConfiguracoesModule.setSubtab('grupos')">
           <span>📂</span> Produtos, Cores & Opções
+        </button>
+        <button type="button" class="cfg-subtab-btn ${tab === 'orcamentos' ? 'active' : ''}" onclick="ConfiguracoesModule.setSubtab('orcamentos')">
+          <span>📄</span> Orçamentos & Pedidos
         </button>
         <button type="button" class="cfg-subtab-btn ${tab === 'empresa' ? 'active' : ''}" onclick="ConfiguracoesModule.setSubtab('empresa')">
           <span>🏢</span> Empresa & Chave Pix
@@ -323,6 +328,91 @@ const ConfiguracoesModule = {
             </div>
 
           </div>
+        </div>
+      </div>
+      ` : ''}
+
+      <!-- ====================================================================
+           1B. SEÇÃO: PADRÕES DE ORÇAMENTOS & PEDIDOS
+           ==================================================================== -->
+      ${showOrcamentos ? `
+      <div class="card" style="margin-bottom: 1.5rem; border-color: rgba(168, 85, 247, 0.35);">
+        <div class="card-header">
+          <div style="display: flex; align-items: center; gap: 12px;">
+            <div style="width: 38px; height: 38px; border-radius: 10px; background: rgba(168, 85, 247, 0.16); color: #c084fc; display: flex; align-items: center; justify-content: center; font-size: 1.25rem;">
+              📄
+            </div>
+            <div>
+              <h3 style="margin: 0; font-size: 1.1rem; color: #ffffff;">Textos & Padrões de Orçamentos e Pedidos</h3>
+              <div style="font-size: 0.78rem; color: var(--text-muted);">
+                Personalize os textos e valores que já vêm preenchidos automaticamente ao criar um Novo Orçamento ou Nova Encomenda
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div style="padding: 24px;">
+          <form onsubmit="event.preventDefault(); ConfiguracoesModule.salvarPadroesOrcamentoPedidoForm();">
+            <!-- BLOCO ORÇAMENTOS -->
+            <div style="font-size: 0.84rem; font-weight: 700; color: #c084fc; text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 12px; display: flex; align-items: center; gap: 6px;">
+              <span>📄</span> Padrões de Novo Orçamento
+            </div>
+
+            <div class="form-group">
+              <label>Título Padrão do Orçamento</label>
+              <input type="text" id="cfg-pad-orc-titulo" class="form-control" value="${App.escapeHtml(padroes.orcamento_titulo || '')}" placeholder="Ex: Orçamento de Produtos Personalizados Exclusivos">
+            </div>
+
+            <div class="form-group">
+              <label>1. Escopo e Solução dos Produtos</label>
+              <textarea id="cfg-pad-orc-escopo" class="form-control" rows="2" placeholder="Descrição padrão do escopo dos produtos...">${App.escapeHtml(padroes.orcamento_escopo || '')}</textarea>
+            </div>
+
+            <div class="form-group">
+              <label>2. Método & Diferenciais de Fabricação</label>
+              <textarea id="cfg-pad-orc-metodo" class="form-control" rows="4" placeholder="Etapas e diferenciais de fabricação...">${App.escapeHtml(padroes.orcamento_metodo || '')}</textarea>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label>Prazo Estimado de Produção</label>
+                <input type="text" id="cfg-pad-orc-prazo" class="form-control" value="${App.escapeHtml(padroes.orcamento_prazo || '')}" placeholder="Ex: 5 a 7 dias úteis após aprovação da arte final">
+              </div>
+              <div class="form-group">
+                <label>Condições de Pagamento</label>
+                <input type="text" id="cfg-pad-orc-condicoes" class="form-control" value="${App.escapeHtml(padroes.orcamento_condicoes || '')}" placeholder="Ex: 50% de sinal no pedido e 50% na conclusão via Pix.">
+              </div>
+            </div>
+
+            <!-- BLOCO PEDIDOS / ENCOMENDAS -->
+            <div style="margin-top: 22px; padding-top: 18px; border-top: 1px solid var(--border); font-size: 0.84rem; font-weight: 700; color: #38bdf8; text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 12px; display: flex; align-items: center; gap: 6px;">
+              <span>📦</span> Padrões de Novo Pedido / Encomenda
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label>Prazo Padrão de Entrega (em dias a partir do pedido)</label>
+                <input type="number" min="0" max="365" id="cfg-pad-ped-dias" class="form-control" value="${padroes.pedido_dias_entrega !== undefined ? padroes.pedido_dias_entrega : 5}">
+              </div>
+              <div class="form-group">
+                <label>Forma de Pagamento Padrão</label>
+                <select id="cfg-pad-ped-forma" class="form-control">
+                  ${formasPagto.map(f => `<option value="${App.escapeHtml(f)}" ${f === (padroes.pedido_forma_pagto || 'Pix') ? 'selected' : ''}>${App.escapeHtml(f)}</option>`).join('')}
+                </select>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label>Observações Padrão do Pedido (opcional)</label>
+              <textarea id="cfg-pad-ped-obs" class="form-control" rows="2" placeholder="Texto opcional que já aparece preenchido em Observações da Nova Encomenda...">${App.escapeHtml(padroes.pedido_obs || '')}</textarea>
+            </div>
+
+            <div style="margin-top: 20px;">
+              <button type="submit" class="btn btn-primary">
+                💾 Salvar Padrões de Orçamentos & Pedidos
+              </button>
+            </div>
+          </form>
         </div>
       </div>
       ` : ''}
@@ -623,6 +713,33 @@ const ConfiguracoesModule = {
         CalculadoraModule.popularOpcoesFormFilamento();
       }
     }
+  },
+
+  salvarPadroesOrcamentoPedidoForm() {
+    const orcamento_titulo = document.getElementById('cfg-pad-orc-titulo')?.value.trim() || '';
+    const orcamento_escopo = document.getElementById('cfg-pad-orc-escopo')?.value.trim() || '';
+    const orcamento_metodo = document.getElementById('cfg-pad-orc-metodo')?.value.trim() || '';
+    const orcamento_prazo = document.getElementById('cfg-pad-orc-prazo')?.value.trim() || '';
+    const orcamento_condicoes = document.getElementById('cfg-pad-orc-condicoes')?.value.trim() || '';
+
+    const diasRaw = parseInt(document.getElementById('cfg-pad-ped-dias')?.value, 10);
+    const pedido_dias_entrega = Number.isFinite(diasRaw) && diasRaw >= 0 ? diasRaw : 5;
+    const pedido_forma_pagto = document.getElementById('cfg-pad-ped-forma')?.value || 'Pix';
+    const pedido_obs = document.getElementById('cfg-pad-ped-obs')?.value.trim() || '';
+
+    StorageService.savePadroesOrcamentoPedido({
+      orcamento_titulo,
+      orcamento_escopo,
+      orcamento_metodo,
+      orcamento_prazo,
+      orcamento_condicoes,
+      pedido_dias_entrega,
+      pedido_forma_pagto,
+      pedido_obs
+    });
+
+    App.toast('Padrões de Orçamentos e Pedidos salvos e sincronizados com a nuvem!', 'success');
+    this.render();
   },
 
   salvarEmpresaForm() {

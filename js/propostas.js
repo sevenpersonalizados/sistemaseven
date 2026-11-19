@@ -171,11 +171,12 @@ const PropostasModule = {
       catSelect.value = cats[0] || '3D';
     }
 
-    document.getElementById('prop-titulo').value = 'Orçamento de Produtos Personalizados Exclusivos';
-    document.getElementById('prop-escopo').value = 'Fabricação e personalização a laser / 3D de peças conforme especificações do cliente com garantia de acabamento fino.';
-    document.getElementById('prop-metodo').value = '1. Envio e aprovação de maquete digital 3D\n2. Fabricação com controle milimétrico de corte e gravação\n3. Limpeza, acabamento artesanal e controle de qualidade\n4. Embalagem reforçada e pronta para entrega';
-    document.getElementById('prop-prazo').value = '5 a 7 dias úteis após aprovação da arte final';
-    document.getElementById('prop-condicoes').value = '50% de sinal no pedido e 50% na conclusão da produção via Pix.';
+    const padroes = StorageService.getPadroesOrcamentoPedido();
+    document.getElementById('prop-titulo').value = padroes.orcamento_titulo || '';
+    document.getElementById('prop-escopo').value = padroes.orcamento_escopo || '';
+    document.getElementById('prop-metodo').value = padroes.orcamento_metodo || '';
+    document.getElementById('prop-prazo').value = padroes.orcamento_prazo || '';
+    document.getElementById('prop-condicoes').value = padroes.orcamento_condicoes || '';
 
     propostaItensTemp = [
       {

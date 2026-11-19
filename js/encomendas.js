@@ -452,16 +452,28 @@ const EncomendasModule = {
     }
 
     document.getElementById('enc-form-data-pedido').value = new Date().toISOString().split('T')[0];
-    
-    // Sugere entrega para 5 dias úteis à frente
-    const dataEntregaDefault = new Date(Date.now() + 5 * 24 * 3600 * 1000).toISOString().split('T')[0];
+
+    const padroes = StorageService.getPadroesOrcamentoPedido();
+    const diasEntrega = parseInt(padroes.pedido_dias_entrega, 10);
+    const dias = Number.isFinite(diasEntrega) && diasEntrega >= 0 ? diasEntrega : 5;
+
+    // Sugere entrega conforme prazo padrão configurado em Configurações
+    const dataEntregaDefault = new Date(Date.now() + dias * 24 * 3600 * 1000).toISOString().split('T')[0];
     document.getElementById('enc-form-data-entrega').value = dataEntregaDefault;
-    
+
+    // Popula formas de pagamento cadastradas dinamicamente
+    const formaPagtoSelect = document.getElementById('enc-form-forma-pagto');
+    if (formaPagtoSelect) {
+      const formas = StorageService.getFormasPagamento();
+      formaPagtoSelect.innerHTML = formas.map(f => `<option value="${App.escapeHtml(f)}">${App.escapeHtml(f)}</option>`).join('');
+      const formaPadrao = padroes.pedido_forma_pagto || formas[0] || 'Pix';
+      formaPagtoSelect.value = formas.includes(formaPadrao) ? formaPadrao : (formas[0] || 'Pix');
+    }
+
     document.getElementById('enc-form-status').value = 'Fila';
     document.getElementById('enc-form-pagto-status').value = 'Pendente';
-    document.getElementById('enc-form-forma-pagto').value = 'Pix';
     document.getElementById('enc-form-valor-pago').value = '0';
-    document.getElementById('enc-form-obs').value = lead?.last_message || '';
+    document.getElementById('enc-form-obs').value = lead?.last_message || padroes.pedido_obs || '';
     document.getElementById('enc-btn-delete').style.display = 'none';
 
     const valorEstimado = parseFloat(lead?.value) || 0;
