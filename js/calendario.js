@@ -229,24 +229,26 @@ const CalendarModule = {
       const fStatus = document.getElementById('filtro-enc-status');
       const fCat = document.getElementById('filtro-enc-categoria');
       const fPagto = document.getElementById('filtro-enc-pagto');
+      const fBusca = document.getElementById('filtro-enc-busca');
       if (fStatus) fStatus.value = '';
       if (fCat) fCat.value = '';
       if (fPagto) fPagto.value = '';
+      if (fBusca) fBusca.value = '';
 
       App.navigate('encomendas');
     }
 
     // Rola até a encomenda e aplica destaque temporário
     setTimeout(() => {
-      const row = document.querySelector(`tr[data-enc-id="${id}"]`);
-      if (row) {
-        row.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        row.style.transition = 'background-color 0.4s ease, box-shadow 0.4s ease';
-        row.style.backgroundColor = 'rgba(0, 168, 243, 0.22)';
-        row.style.boxShadow = 'inset 0 0 0 1.5px rgba(56, 189, 248, 0.75)';
+      const targetEl = document.querySelector(`[data-enc-id="${id}"]`);
+      if (targetEl) {
+        targetEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        targetEl.style.transition = 'background-color 0.4s ease, box-shadow 0.4s ease';
+        targetEl.style.backgroundColor = 'rgba(0, 168, 243, 0.22)';
+        targetEl.style.boxShadow = '0 0 0 2px rgba(56, 189, 248, 0.85), 0 0 22px rgba(0, 168, 243, 0.35)';
         setTimeout(() => {
-          row.style.backgroundColor = '';
-          row.style.boxShadow = '';
+          targetEl.style.backgroundColor = '';
+          targetEl.style.boxShadow = '';
         }, 2500);
       }
     }, 120);

@@ -48,7 +48,7 @@
   <meta http-equiv="Expires" content="0">
 
   <!-- Estilos Customizados -->
-  <link rel="stylesheet" href="css/styles.css?v=38">
+  <link rel="stylesheet" href="css/styles.css?v=39">
 </head>
 
 <body>
@@ -394,11 +394,41 @@
           </div>
         </section>
 
-        <!-- 2. VIEW ENCOMENDAS -->
+        <!-- 2. VIEW ENCOMENDAS (VISUAL EM TÓPICOS IGUAL A ORÇAMENTOS) -->
         <section class="view-section" id="view-encomendas">
-          <div class="crm-toolbar">
-            <div style="display: flex; gap: 12px; flex-wrap: wrap; align-items: center;">
-              <select class="form-control" id="filtro-enc-status" style="width: auto;">
+          <div class="themed-panel theme-blue" style="margin-bottom: 20px;">
+            <div class="themed-header">
+              <div style="display: flex; align-items: center; gap: 14px; flex-wrap: wrap;">
+                <span class="themed-icon-box">📦</span>
+                <div>
+                  <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+                    <h3 class="themed-title">Encomendas & Produção</h3>
+                    <span
+                      style="font-size: 0.72rem; font-weight: 700; text-transform: uppercase; padding: 3px 10px; border-radius: 999px; background: rgba(0, 168, 243, 0.22); color: #38bdf8; border: 1px solid rgba(0, 168, 243, 0.55);">
+                      PRODUÇÃO SEVEN
+                    </span>
+                  </div>
+                  <div class="themed-subtitle">
+                    Acompanhe seus pedidos por etapa em cartões organizados. Clique em qualquer encomenda para ver ou editar os detalhes.
+                  </div>
+                </div>
+              </div>
+              <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+                <span class="themed-chip">
+                  📦 <strong id="enc-header-qtd" style="color: #ffffff;">0</strong> em aberto
+                </span>
+                <span class="themed-chip-highlight" style="border: 1px solid rgba(0, 168, 243, 0.45); color: #38bdf8;">
+                  💰 Total: <strong id="enc-header-valor" style="color: #ffffff; margin-left: 4px;">R$ 0,00</strong>
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <!-- BARRA DE FILTROS E BUSCA RÁPIDA -->
+          <div class="filter-bar"
+            style="margin-bottom: 20px; display: flex; gap: 10px; flex-wrap: wrap; align-items: center; justify-content: space-between;">
+            <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
+              <select class="form-control" id="filtro-enc-status" style="width: auto; font-size: 0.82rem;">
                 <option value="">Produção Ativa (Separadas por Status)</option>
                 <option value="TODOS">Todas as Etapas (Separadas)</option>
                 <option value="Fila">⏳ Apenas Fila de Espera</option>
@@ -409,21 +439,27 @@
                 <option value="Cancelada">❌ Cancelada</option>
               </select>
 
-              <select class="form-control" id="filtro-enc-categoria" style="width: auto;"
+              <select class="form-control" id="filtro-enc-categoria" style="width: auto; font-size: 0.82rem;"
                 onchange="EncomendasModule.render()">
                 <option value="">Todas as Categorias</option>
               </select>
 
-              <select class="form-control" id="filtro-enc-pagto" style="width: auto;">
+              <select class="form-control" id="filtro-enc-pagto" style="width: auto; font-size: 0.82rem;">
                 <option value="">Todos os Pagamentos</option>
                 <option value="Pendente">Pendente</option>
                 <option value="Parcial">Parcial</option>
                 <option value="Pago">Pago</option>
               </select>
             </div>
+
+            <div style="flex: 1; min-width: 220px; max-width: 360px;">
+              <input type="text" id="filtro-enc-busca" class="form-control"
+                style="padding: 7px 12px; font-size: 0.82rem;" placeholder="🔍 Buscar por cliente, produto ou #pedido..."
+                oninput="EncomendasModule.render()">
+            </div>
           </div>
 
-          <!-- Container com as encomendas separadas por status -->
+          <!-- Container com as encomendas separadas por status em formato de tópicos/cards -->
           <div id="encomendas-grupos-container"></div>
         </section>
 
@@ -2429,19 +2465,19 @@
   <!-- CONTAINER DE TOASTS -->
   <div class="toast-container" id="toast-container"></div>
 
-  <!-- SCRIPTS DO SISTEMA (com cache-busting v38) -->
-  <script src="js/notifications.js?v=38"></script>
-  <script src="js/storage.js?v=38"></script>
-  <script src="js/crm.js?v=38"></script>
-  <script src="js/encomendas.js?v=38"></script>
-  <script src="js/estoque.js?v=38"></script>
-  <script src="js/financeiro.js?v=38"></script>
-  <script src="js/propostas.js?v=38"></script>
-  <script src="js/calculadora.js?v=38"></script>
-  <script src="js/calculadora-laser.js?v=38"></script>
-  <script src="js/calendario.js?v=38"></script>
-  <script src="js/configuracoes.js?v=38"></script>
-  <script src="js/app.js?v=38"></script>
+  <!-- SCRIPTS DO SISTEMA (com cache-busting v39) -->
+  <script src="js/notifications.js?v=39"></script>
+  <script src="js/storage.js?v=39"></script>
+  <script src="js/crm.js?v=39"></script>
+  <script src="js/encomendas.js?v=39"></script>
+  <script src="js/estoque.js?v=39"></script>
+  <script src="js/financeiro.js?v=39"></script>
+  <script src="js/propostas.js?v=39"></script>
+  <script src="js/calculadora.js?v=39"></script>
+  <script src="js/calculadora-laser.js?v=39"></script>
+  <script src="js/calendario.js?v=39"></script>
+  <script src="js/configuracoes.js?v=39"></script>
+  <script src="js/app.js?v=39"></script>
 </body>
 
 </html>

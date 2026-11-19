@@ -22,6 +22,21 @@ const EncomendasModule = {
     const filtroStatus = document.getElementById('filtro-enc-status')?.value || '';
     const filtroCat = document.getElementById('filtro-enc-categoria')?.value || '';
     const filtroPagto = document.getElementById('filtro-enc-pagto')?.value || '';
+    const termoBusca = (document.getElementById('filtro-enc-busca')?.value || '').toLowerCase().trim();
+
+    // Atualiza contadores do cabeçalho de Encomendas (ativas em aberto)
+    const encAtivasAll = encomendas.filter(e => {
+      if (e.status === 'Entregue' || e.status === 'Cancelada') return false;
+      if (e.status === 'Pronto' && e.pagamento_status === 'Pago') return false;
+      return true;
+    });
+    const headerQtdEl = document.getElementById('enc-header-qtd');
+    if (headerQtdEl) headerQtdEl.textContent = encAtivasAll.length;
+    const headerValEl = document.getElementById('enc-header-valor');
+    if (headerValEl) {
+      const somaAtivas = encAtivasAll.reduce((acc, e) => acc + (Number(e.valor_total) || 0), 0);
+      headerValEl.textContent = App.formatMoney(somaAtivas);
+    }
 
     // Atualiza opções do filtro de categoria caso ainda não preenchido
     const filtroCatEl = document.getElementById('filtro-enc-categoria');
@@ -156,80 +171,177 @@ const EncomendasModule = {
         ordensGrupo = ordensGrupo.filter(e => (e.categoria || '3D') === filtroCat);
       }
 
+      if (termoBusca) {
+        ordensGrupo = ordensGrupo.filter(e => {
+          const itensStr = (e.itens || []).map(i => `${i.produto_nome || ''} ${i.cor || ''} ${i.personalizacao || ''}`).join(' ').toLowerCase();
+          return (e.cliente_nome || '').toLowerCase().includes(termoBusca) ||
+            (e.telefone || '').toLowerCase().includes(termoBusca) ||
+            (e.id || '').toLowerCase().includes(termoBusca) ||
+            (e.observacoes || '').toLowerCase().includes(termoBusca) ||
+            itensStr.includes(termoBusca);
+        });
+      }
+
       totalGeralEncontrado += ordensGrupo.length;
       const totalValor = ordensGrupo.reduce((acc, it) => acc + (Number(it.valor_total) || 0), 0);
 
       ordensGrupo.sort((a, b) => ((a.data_entrega_prevista || '') > (b.data_entrega_prevista || '') ? 1 : -1));
 
       return `
-        <div class="panel-box" id="grupo-enc-${grupo.key}" style="margin-bottom: 28px; padding: 0; overflow: hidden; border: 1px solid ${grupo.borderColor}; border-left: 6px solid ${grupo.themeColor}; box-shadow: ${grupo.glowShadow}; border-radius: var(--radius-md);">
-          <div class="panel-header" style="background: ${grupo.headerBg}; padding: 16px 22px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid ${grupo.borderColor}; flex-wrap: wrap; gap: 14px;">
-            <div style="display: flex; align-items: center; gap: 14px; flex-wrap: wrap;">
-              <span style="display: inline-flex; align-items: center; justify-content: center; width: 42px; height: 42px; border-radius: 12px; background: rgba(0, 0, 0, 0.4); border: 1px solid ${grupo.borderColor}; font-size: 1.3rem; box-shadow: 0 2px 8px rgba(0,0,0,0.3);">
+        <div class="panel-box" id="grupo-enc-${grupo.key}" style="margin-bottom: 24px; padding: 0; overflow: hidden; border: 1px solid ${grupo.borderColor}; border-left: 6px solid ${grupo.themeColor}; box-shadow: ${grupo.glowShadow}; border-radius: var(--radius-md);">
+          <div class="panel-header" style="background: ${grupo.headerBg}; padding: 14px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid ${grupo.borderColor}; flex-wrap: wrap; gap: 12px;">
+            <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+              <span style="display: inline-flex; align-items: center; justify-content: center; width: 40px; height: 40px; border-radius: 10px; background: rgba(0, 0, 0, 0.4); border: 1px solid ${grupo.borderColor}; font-size: 1.25rem; box-shadow: 0 2px 8px rgba(0,0,0,0.3);">
                 ${grupo.icon}
               </span>
               <div>
                 <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
-                  <h3 style="font-family: var(--font-display); font-size: 1.15rem; font-weight: 700; color: #ffffff; margin: 0; letter-spacing: 0.02em;">
+                  <h3 style="font-family: var(--font-display); font-size: 1.1rem; font-weight: 700; color: #ffffff; margin: 0; letter-spacing: 0.02em;">
                     ${grupo.title}
                   </h3>
-                  <span style="font-size: 0.72rem; font-weight: 700; text-transform: uppercase; padding: 3px 10px; border-radius: 999px; ${grupo.badgeStyle}">
+                  <span style="font-size: 0.70rem; font-weight: 700; text-transform: uppercase; padding: 3px 10px; border-radius: 999px; ${grupo.badgeStyle}">
                     ${grupo.key}
                   </span>
                 </div>
-                <div style="font-size: 0.78rem; color: var(--text-muted); margin-top: 2px;">
+                <div style="font-size: 0.76rem; color: var(--text-muted); margin-top: 2px;">
                   ${grupo.subtitle}
                 </div>
               </div>
             </div>
             <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
-              <span style="font-size: 0.8rem; font-weight: 600; padding: 6px 12px; background: rgba(0, 0, 0, 0.45); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: var(--radius-sm); color: var(--text-secondary);">
+              <span style="font-size: 0.78rem; font-weight: 600; padding: 5px 11px; background: rgba(0, 0, 0, 0.45); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: var(--radius-sm); color: var(--text-secondary);">
                 📦 <strong style="color: #ffffff;">${ordensGrupo.length}</strong> ${ordensGrupo.length === 1 ? 'encomenda' : 'encomendas'}
               </span>
-              <span style="font-size: 0.82rem; font-weight: 700; padding: 6px 14px; background: rgba(0, 0, 0, 0.45); border: 1px solid ${grupo.borderColor}; border-radius: var(--radius-sm); color: ${grupo.titleColor};">
+              <span style="font-size: 0.80rem; font-weight: 700; padding: 5px 12px; background: rgba(0, 0, 0, 0.45); border: 1px solid ${grupo.borderColor}; border-radius: var(--radius-sm); color: ${grupo.titleColor};">
                 💰 ${App.formatMoney(totalValor)}
               </span>
             </div>
           </div>
-          <div class="table-responsive">
-            <table class="modern-table">
-              <thead>
-                <tr>
-                  <th>Pedido</th>
-                  <th>Cliente</th>
-                  <th>Itens & Personalização</th>
-                  <th>Status Produção</th>
-                  <th>Financeiro</th>
-                  <th>Previsão Entrega</th>
-                  <th style="text-align: right;">Ações</th>
-                </tr>
-              </thead>
-              <tbody>
-                ${ordensGrupo.length === 0 ? `
-                  <tr>
-                    <td colspan="7" style="text-align: center; padding: 32px 20px; color: var(--text-muted); font-size: 0.88rem;">
-                      <div style="font-size: 1.4rem; margin-bottom: 6px; opacity: 0.6;">${grupo.icon}</div>
-                      Nenhuma encomenda nesta etapa no momento.
-                    </td>
-                  </tr>
-                ` : ordensGrupo.map(enc => this.renderOrderRow(enc)).join('')}
-              </tbody>
-            </table>
+
+          <div style="padding: 16px;">
+            ${ordensGrupo.length === 0 ? `
+              <div style="text-align: center; padding: 28px 16px; color: var(--text-muted); font-size: 0.88rem;">
+                <div style="font-size: 1.4rem; margin-bottom: 6px; opacity: 0.6;">${grupo.icon}</div>
+                Nenhuma encomenda nesta etapa no momento.
+              </div>
+            ` : `
+              <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(330px, 1fr)); gap: 16px;">
+                ${ordensGrupo.map(enc => this.renderOrderCard(enc, grupo)).join('')}
+              </div>
+            `}
           </div>
         </div>
       `;
     }).join('');
 
-    if (totalGeralEncontrado === 0 && filtroPagto) {
+    if (totalGeralEncontrado === 0 && (filtroPagto || termoBusca || filtroCat)) {
       container.innerHTML = `
         <div class="panel-box" style="text-align: center; padding: 40px; color: var(--text-muted);">
-          Nenhuma encomenda encontrada com o filtro de pagamento selecionado.
+          <div style="font-size: 1.8rem; margin-bottom: 8px;">🔍</div>
+          Nenhuma encomenda encontrada com os filtros selecionados.
         </div>
       `;
       return;
     }
 
     container.innerHTML = htmlGrupos;
+  },
+
+  renderOrderCard(enc, grupo) {
+    const hojeIso = new Date().toISOString().split('T')[0];
+    const isLate = enc.data_entrega_prevista && enc.data_entrega_prevista < hojeIso && enc.status !== 'Entregue' && enc.status !== 'Cancelada';
+    const totalItens = (enc.itens || []).reduce((acc, it) => acc + (Number(it.quantidade) || 0), 0);
+    const coresList = [...new Set((enc.itens || []).filter(i => i.cor).map(i => i.cor))];
+
+    const itensHtml = (enc.itens && enc.itens.length > 0)
+      ? enc.itens.map(i => {
+          const corStr = i.cor ? ` <span style="color: #38bdf8;">[${App.escapeHtml(i.cor)}]</span>` : '';
+          const persStr = i.personalizacao ? ` <span style="color: var(--text-muted);">— ${App.escapeHtml(i.personalizacao)}</span>` : '';
+          const obsStr = i.observacao ? `<div style="font-size: 0.72rem; color: #fbbf24; margin-left: 12px;">Obs: ${App.escapeHtml(i.observacao)}</div>` : '';
+          return `<div style="margin-bottom: 3px;">• <strong>${i.quantidade}x</strong> ${App.escapeHtml(i.produto_nome || 'Item')}${corStr}${persStr}${obsStr}</div>`;
+        }).join('')
+      : `<div style="color: var(--text-muted);">• Item personalizado</div>`;
+
+    const valorTotal = Number(enc.valor_total) || 0;
+    const valorPago = Number(enc.valor_pago) || 0;
+    const faltaPagar = Math.max(0, valorTotal - valorPago);
+
+    const borderColor = isLate ? 'rgba(239, 68, 68, 0.6)' : (grupo?.borderColor || 'rgba(0, 168, 243, 0.4)');
+    const cardShadow = isLate ? '0 4px 18px rgba(239, 68, 68, 0.14)' : '0 4px 16px rgba(0, 0, 0, 0.25)';
+
+    return `
+      <div class="panel-box dash-row-clickable" data-enc-id="${enc.id}"
+           onclick="EncomendasModule.openEditModal('${enc.id}')"
+           title="Clique para abrir detalhes completos da encomenda #${enc.id.substring(enc.id.length - 5)}"
+           style="margin-bottom: 0; display: flex; flex-direction: column; justify-content: space-between; border-color: ${borderColor}; box-shadow: ${cardShadow}; background: rgba(15, 23, 42, 0.65); padding: 16px;">
+        <div>
+          <!-- Topo: #ID, Categoria e Prazo de Entrega -->
+          <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; gap: 8px; flex-wrap: wrap;">
+            <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
+              <span style="font-size: 0.76rem; font-weight: 800; color: #ffffff; background: rgba(255,255,255,0.08); padding: 2px 8px; border-radius: 6px;">
+                #${enc.id.substring(enc.id.length - 5)}
+              </span>
+              ${this.getCategoriaBadge(enc.categoria)}
+            </div>
+            <span style="font-size: 0.74rem; font-weight: 700; padding: 2px 8px; border-radius: 999px; ${isLate ? 'background: rgba(239, 68, 68, 0.22); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.55);' : 'background: rgba(255, 255, 255, 0.05); color: var(--text-secondary); border: 1px solid var(--border);'}">
+              ${isLate ? '🚨 Atrasado:' : '📅 Entrega:'} ${App.formatDate(enc.data_entrega_prevista)}
+            </span>
+          </div>
+
+          <!-- Cliente e Telefone -->
+          <h4 style="font-family: var(--font-display); font-size: 1.05rem; color: var(--text-primary); margin: 4px 0 2px 0;">
+            👤 ${App.escapeHtml(enc.cliente_nome)}
+          </h4>
+          <div style="font-size: 0.78rem; color: var(--text-muted); margin-bottom: 10px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+            <span>📞 ${App.escapeHtml(enc.telefone || 'Sem telefone')}</span>
+            <span>• Pedido em ${App.formatDate(enc.data_pedido)}</span>
+          </div>
+
+          <!-- Caixa de Itens em Tópicos (igual ao visual de Orçamentos) -->
+          <div style="font-size: 0.81rem; color: var(--text-secondary); line-height: 1.45; margin-bottom: 12px; background: rgba(255,255,255,0.025); padding: 10px 12px; border-radius: 8px; border: 1px solid var(--border);">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; gap: 6px; flex-wrap: wrap;">
+              <span style="font-size: 0.68rem; color: var(--text-muted); text-transform: uppercase; font-weight: 700;">
+                Itens do Pedido (${totalItens} ${totalItens === 1 ? 'peça' : 'peças'}):
+              </span>
+              ${coresList.length > 0 ? `
+                <span class="badge-cor-tag" style="font-size: 0.68rem; padding: 1px 7px;" title="Cores: ${coresList.join(', ')}">
+                  🎨 ${App.escapeHtml(coresList.join(', '))}
+                </span>
+              ` : ''}
+            </div>
+            <div style="max-height: 95px; overflow-y: auto;">
+              ${itensHtml}
+            </div>
+            ${enc.observacoes && enc.observacoes.trim() ? `
+              <div style="margin-top: 8px; padding-top: 6px; border-top: 1px dashed rgba(255,255,255,0.08); font-size: 0.74rem; color: #93c5fd;">
+                📄 <strong>Obs:</strong> ${App.escapeHtml(enc.observacoes)}
+              </div>
+            ` : ''}
+          </div>
+        </div>
+
+        <!-- Rodapé: Valor Total + Selects Rápidos + Botão Editar -->
+        <div style="border-top: 1px solid var(--border); padding-top: 12px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;">
+          <div>
+            <div style="font-size: 0.68rem; color: var(--text-muted);">Valor Total</div>
+            <div style="font-size: 1.12rem; font-weight: 800; color: var(--text-primary);">${App.formatMoney(valorTotal)}</div>
+            ${faltaPagar > 0 && enc.pagamento_status !== 'Pago' ? `
+              <div style="font-size: 0.70rem; color: #fbbf24;">Falta: ${App.formatMoney(faltaPagar)}</div>
+            ` : `
+              <div style="font-size: 0.70rem; color: #34d399;">Quitado ✅</div>
+            `}
+          </div>
+
+          <div style="display: flex; gap: 6px; align-items: center; flex-wrap: wrap;" onclick="event.stopPropagation()">
+            ${this.renderStatusSelect(enc.id, enc.status)}
+            ${this.renderPagtoSelect(enc.id, enc.pagamento_status)}
+            <button type="button" class="btn btn-secondary btn-icon" onclick="EncomendasModule.openEditModal('${enc.id}')" style="padding: 6px 9px; font-size: 0.78rem;" title="Editar encomenda">
+              ✏️
+            </button>
+          </div>
+        </div>
+      </div>
+    `;
   },
 
   getCategoriaBadge(categoria) {
