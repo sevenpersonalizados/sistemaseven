@@ -948,6 +948,24 @@ const StorageService = {
         }
       }
 
+      // Busca configurações da calculadora Laser
+      if (!this.isLocalAction('calc_laser_config_main')) {
+        const laserCfgRes = await fetch(`${SUPABASE_CONFIG.url}/rest/v1/calc_laser_config?id=eq.main_laser_calc&select=*`, {
+          headers: this.getHeaders()
+        });
+        if (laserCfgRes.ok) {
+          const laserCfgRows = await laserCfgRes.json();
+          if (Array.isArray(laserCfgRows) && laserCfgRows.length > 0 && !this.isLocalAction('calc_laser_config_main')) {
+            const laserCfgStr = JSON.stringify(laserCfgRows[0]);
+            const curLaserCfgStr = localStorage.getItem(STORAGE_KEYS.CALC_LASER_CONFIG);
+            if (curLaserCfgStr !== laserCfgStr) {
+              localStorage.setItem(STORAGE_KEYS.CALC_LASER_CONFIG, laserCfgStr);
+              window.dispatchEvent(new CustomEvent('seven_data_updated', { detail: { table: 'calc_laser_config' } }));
+            }
+          }
+        }
+      }
+
       this.isCloudConnected = true;
       this.updateSyncBadge('online', 'Tempo Real Ativo ⚡');
     } catch (err) {
@@ -1366,11 +1384,29 @@ const StorageService = {
   saveCalcLaserConfig(cfg) {
     const payload = {
       id: 'main_laser_calc',
-      ...cfg,
+      valor_hora_laser: Number(cfg.valor_hora_laser) || 30.00,
+      margem_padrao: Number(cfg.margem_padrao) || 100,
+      chapas: Array.isArray(cfg.chapas) ? cfg.chapas : [],
       updated_at: new Date().toISOString()
     };
+    this.recordLocalAction('calc_laser_config_main');
     localStorage.setItem(STORAGE_KEYS.CALC_LASER_CONFIG, JSON.stringify(payload));
     window.dispatchEvent(new CustomEvent('seven_data_updated', { detail: { table: 'calc_laser_config' } }));
+
+    // Sincroniza com Supabase
+    fetch(`${SUPABASE_CONFIG.url}/rest/v1/calc_laser_config`, {
+      method: 'POST',
+      headers: this.getHeaders('resolution=merge-duplicates,return=representation'),
+      body: JSON.stringify(payload)
+    })
+      .then(async res => {
+        if (!res.ok) {
+          const errText = await res.text();
+          console.error('[Supabase] Erro ao salvar calc_laser_config:', res.status, errText);
+        }
+      })
+      .catch(err => console.error('[Supabase] Erro de rede ao salvar calc_laser_config:', err));
+
     return payload;
   },
 

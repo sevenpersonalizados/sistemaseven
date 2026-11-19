@@ -48,7 +48,7 @@
   <meta http-equiv="Expires" content="0">
 
   <!-- Estilos Customizados -->
-  <link rel="stylesheet" href="css/styles.css?v=39">
+  <link rel="stylesheet" href="css/styles.css?v=40">
 </head>
 
 <body>
@@ -2205,19 +2205,19 @@
 
   <!-- MODAL: CONFIGURAÇÃO DE CHAPAS & HORA MÁQUINA LASER -->
   <div class="modal-overlay" id="modal-calc-laser-config">
-    <div class="modal-container" style="max-width: 680px;">
+    <div class="modal-container" style="max-width: 780px;">
       <div class="modal-header">
         <h3 style="color: #ffffff; display: flex; align-items: center; gap: 8px;">
-          <span>⚙️</span> Parâmetros da Calculadora Laser
+          <span>⚙️</span> Parâmetros & Cores da Calculadora Laser
         </h3>
         <button class="btn-icon"
           style="background: transparent; border: none; color: var(--text-muted); cursor: pointer;"
           onclick="App.closeModal('modal-calc-laser-config')">✕</button>
       </div>
 
-      <div class="modal-body">
+      <div class="modal-body" style="max-height: 75vh; overflow-y: auto;">
         <!-- Taxa Horária da Máquina Laser -->
-        <div style="background: rgba(6, 182, 212, 0.08); border: 1px solid rgba(6, 182, 212, 0.3); border-radius: var(--radius-sm); padding: 16px; margin-bottom: 20px;">
+        <div style="background: rgba(6, 182, 212, 0.08); border: 1px solid rgba(6, 182, 212, 0.3); border-radius: var(--radius-sm); padding: 16px; margin-bottom: 18px;">
           <div style="font-weight: 700; color: #38bdf8; font-size: 0.95rem; margin-bottom: 4px; display: flex; align-items: center; gap: 6px;">
             <span>⚡</span> Custo da Hora Máquina Laser
           </div>
@@ -2230,6 +2230,48 @@
               <input type="number" step="0.5" id="cfg-laser-hora-val" class="form-control" value="30.00" style="padding-left: 38px; font-size: 1.1rem; font-weight: 700;">
             </div>
             <span style="font-size: 0.88rem; color: #ffffff;">por hora (R$ 0,50 por minuto)</span>
+          </div>
+        </div>
+
+        <!-- ADICIONAR NOVA COR / MATERIAL -->
+        <div id="cfg-laser-add-cor-box" style="background: rgba(16, 185, 129, 0.07); border: 1px solid rgba(16, 185, 129, 0.35); border-radius: var(--radius-sm); padding: 14px 16px; margin-bottom: 20px;">
+          <div style="font-weight: 700; color: #34d399; font-size: 0.92rem; margin-bottom: 10px; display: flex; align-items: center; gap: 6px;">
+            <span>➕</span> Adicionar Nova Cor / Material
+          </div>
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px; align-items: end;">
+            <div>
+              <label style="font-size: 0.74rem; color: var(--text-secondary); display: block; margin-bottom: 4px;">Nome da Cor *</label>
+              <input type="text" id="cfg-laser-nova-cor-nome" class="form-control form-control-sm" placeholder="Ex: Verde, Rosa, Rosé...">
+            </div>
+            <div>
+              <label style="font-size: 0.74rem; color: var(--text-secondary); display: block; margin-bottom: 4px;">Material (rótulo)</label>
+              <input type="text" id="cfg-laser-nova-cor-material" class="form-control form-control-sm" placeholder="Ex: MDF Verde, Acrílico...">
+            </div>
+            <div>
+              <label style="font-size: 0.74rem; color: var(--text-secondary); display: block; margin-bottom: 4px;">Cor Visual</label>
+              <input type="color" id="cfg-laser-nova-cor-hex" class="form-control form-control-sm" value="#22c55e" style="height: 34px; padding: 2px 4px; cursor: pointer;">
+            </div>
+            <div>
+              <label style="font-size: 0.74rem; color: var(--text-secondary); display: block; margin-bottom: 4px;">Espessura (mm)</label>
+              <input type="number" step="0.5" id="cfg-laser-nova-cor-esp" class="form-control form-control-sm" value="3">
+            </div>
+            <div>
+              <label style="font-size: 0.74rem; color: var(--text-secondary); display: block; margin-bottom: 4px;">Largura (m)</label>
+              <input type="number" step="0.01" id="cfg-laser-nova-cor-larg" class="form-control form-control-sm" value="1.20">
+            </div>
+            <div>
+              <label style="font-size: 0.74rem; color: var(--text-secondary); display: block; margin-bottom: 4px;">Comprimento (m)</label>
+              <input type="number" step="0.01" id="cfg-laser-nova-cor-comp" class="form-control form-control-sm" value="1.85">
+            </div>
+            <div>
+              <label style="font-size: 0.74rem; color: var(--text-secondary); display: block; margin-bottom: 4px;">Preço Chapa (R$)</label>
+              <input type="number" step="0.01" id="cfg-laser-nova-cor-preco" class="form-control form-control-sm" value="110.00">
+            </div>
+            <div>
+              <button type="button" class="btn btn-primary btn-sm" onclick="CalculadoraLaserModule.adicionarNovaCor()" style="width: 100%; height: 34px; background: #10b981; border-color: #10b981; font-weight: 700;">
+                + Adicionar
+              </button>
+            </div>
           </div>
         </div>
 
@@ -2252,6 +2294,7 @@
                   <th>Compr. (m)</th>
                   <th>Preço Chapa (R$)</th>
                   <th>Área e Custo m²</th>
+                  <th style="text-align: center;">Ação</th>
                 </tr>
               </thead>
               <tbody id="cfg-laser-chapas-tbody">
@@ -2465,19 +2508,19 @@
   <!-- CONTAINER DE TOASTS -->
   <div class="toast-container" id="toast-container"></div>
 
-  <!-- SCRIPTS DO SISTEMA (com cache-busting v39) -->
-  <script src="js/notifications.js?v=39"></script>
-  <script src="js/storage.js?v=39"></script>
-  <script src="js/crm.js?v=39"></script>
-  <script src="js/encomendas.js?v=39"></script>
-  <script src="js/estoque.js?v=39"></script>
-  <script src="js/financeiro.js?v=39"></script>
-  <script src="js/propostas.js?v=39"></script>
-  <script src="js/calculadora.js?v=39"></script>
-  <script src="js/calculadora-laser.js?v=39"></script>
-  <script src="js/calendario.js?v=39"></script>
-  <script src="js/configuracoes.js?v=39"></script>
-  <script src="js/app.js?v=39"></script>
+  <!-- SCRIPTS DO SISTEMA (com cache-busting v40) -->
+  <script src="js/notifications.js?v=40"></script>
+  <script src="js/storage.js?v=40"></script>
+  <script src="js/crm.js?v=40"></script>
+  <script src="js/encomendas.js?v=40"></script>
+  <script src="js/estoque.js?v=40"></script>
+  <script src="js/financeiro.js?v=40"></script>
+  <script src="js/propostas.js?v=40"></script>
+  <script src="js/calculadora.js?v=40"></script>
+  <script src="js/calculadora-laser.js?v=40"></script>
+  <script src="js/calendario.js?v=40"></script>
+  <script src="js/configuracoes.js?v=40"></script>
+  <script src="js/app.js?v=40"></script>
 </body>
 
 </html>

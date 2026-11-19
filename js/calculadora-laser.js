@@ -19,6 +19,7 @@ const CalculadoraLaserModule = {
       const table = e.detail?.table;
       if (!table || table === 'calc_laser_config' || table === 'calc_laser_historico') {
         this.carregarParametrosConfig();
+        this.renderCorChips();
         this.calcular();
         this.renderHistorico();
       }
@@ -81,18 +82,31 @@ const CalculadoraLaserModule = {
     const cfg = this.getConfig();
     const chapas = cfg.chapas || [];
 
+    // Garante que a cor ativa exista na lista
+    if (chapas.length > 0 && !chapas.some(ch => ch.id === this.corAtivaId)) {
+      this.corAtivaId = chapas[0].id;
+    }
+
     container.innerHTML = chapas.map(ch => {
       const isActive = ch.id === this.corAtivaId;
       return `
         <button type="button" class="laser-color-chip ${isActive ? 'active' : ''}" 
           onclick="CalculadoraLaserModule.setCor('${ch.id}')"
-          title="${ch.nome} — Chapa: ${ch.largura_m}m x ${ch.comprimento_m}m (${App.formatMoney(ch.preco_chapa)})">
+          title="${App.escapeHtml(ch.nome)} — Chapa: ${ch.largura_m}m x ${ch.comprimento_m}m (${App.formatMoney(ch.preco_chapa)})">
           <span class="laser-color-dot" style="background-color: ${ch.cor_hex};"></span>
-          <span>${ch.cor}</span>
+          <span>${App.escapeHtml(ch.cor)}</span>
           <span style="font-size: 0.72rem; opacity: 0.75;">${ch.espessura_mm}mm</span>
         </button>
       `;
-    }).join('');
+    }).join('') + `
+      <button type="button" class="laser-color-chip" 
+        onclick="CalculadoraLaserModule.abrirModalNovaCor()"
+        title="Adicionar nova cor ou material de chapa para cálculo"
+        style="border-style: dashed; border-color: rgba(16, 185, 129, 0.55); color: #34d399; background: rgba(16, 185, 129, 0.08);">
+        <span style="font-weight: 800;">+</span>
+        <span>Nova Cor</span>
+      </button>
+    `;
   },
 
   setCor(corId) {
@@ -644,41 +658,158 @@ const CalculadoraLaserModule = {
     const horaInput = document.getElementById('cfg-laser-hora-val');
     if (horaInput) horaInput.value = cfg.valor_hora_laser || 30.00;
 
+    this.renderConfigChapasTable();
+    App.openModal('modal-calc-laser-config');
+  },
+
+  abrirModalNovaCor() {
+    this.abrirModalConfig();
+    setTimeout(() => {
+      const box = document.getElementById('cfg-laser-add-cor-box');
+      if (box) box.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      const inputNome = document.getElementById('cfg-laser-nova-cor-nome');
+      if (inputNome) inputNome.focus();
+    }, 120);
+  },
+
+  renderConfigChapasTable() {
+    const cfg = this.getConfig();
     const tbody = document.getElementById('cfg-laser-chapas-tbody');
-    if (tbody) {
-      tbody.innerHTML = (cfg.chapas || []).map((ch, idx) => {
-        const area = ch.largura_m * ch.comprimento_m;
-        const custoM2 = area > 0 ? (ch.preco_chapa / area) : 0;
-        return `
-          <tr data-chapa-id="${ch.id}">
-            <td>
-              <div style="display: flex; align-items: center; gap: 8px;">
-                <span class="laser-color-dot" style="background-color: ${ch.cor_hex};"></span>
-                <strong>${ch.nome}</strong>
+    if (!tbody) return;
+
+    const chapas = cfg.chapas || [];
+    tbody.innerHTML = chapas.map(ch => {
+      const area = (Number(ch.largura_m) || 0) * (Number(ch.comprimento_m) || 0);
+      const custoM2 = area > 0 ? ((Number(ch.preco_chapa) || 0) / area) : 0;
+      return `
+        <tr data-chapa-id="${App.escapeHtml(ch.id)}">
+          <td>
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <input type="color" class="cfg-chapa-hex" value="${ch.cor_hex || '#38bdf8'}" title="Alterar cor visual" style="width: 24px; height: 24px; padding: 0; border: none; background: transparent; cursor: pointer;">
+              <div>
+                <strong>${App.escapeHtml(ch.nome)}</strong>
+                <div style="font-size: 0.7rem; color: var(--text-muted);">${App.escapeHtml(ch.cor)}</div>
               </div>
-            </td>
-            <td>
-              <input type="number" step="0.5" class="form-control form-control-sm cfg-chapa-esp" value="${ch.espessura_mm}" style="width: 70px;">
-            </td>
-            <td>
-              <input type="number" step="0.01" class="form-control form-control-sm cfg-chapa-larg" value="${ch.largura_m}" style="width: 80px;" oninput="CalculadoraLaserModule.atualizarPreviewConfigRow(this)">
-            </td>
-            <td>
-              <input type="number" step="0.01" class="form-control form-control-sm cfg-chapa-comp" value="${ch.comprimento_m}" style="width: 80px;" oninput="CalculadoraLaserModule.atualizarPreviewConfigRow(this)">
-            </td>
-            <td>
-              <input type="number" step="0.01" class="form-control form-control-sm cfg-chapa-preco" value="${ch.preco_chapa}" style="width: 90px;" oninput="CalculadoraLaserModule.atualizarPreviewConfigRow(this)">
-            </td>
-            <td class="cfg-chapa-res" style="font-size: 0.82rem; font-weight: 700; color: #a5b4fc;">
-              ${area.toFixed(4)} m² <br>
-              <span style="color: #34d399;">${App.formatMoney(custoM2)}/m²</span>
-            </td>
-          </tr>
-        `;
-      }).join('');
+            </div>
+          </td>
+          <td>
+            <input type="number" step="0.5" class="form-control form-control-sm cfg-chapa-esp" value="${ch.espessura_mm}" style="width: 68px;">
+          </td>
+          <td>
+            <input type="number" step="0.01" class="form-control form-control-sm cfg-chapa-larg" value="${ch.largura_m}" style="width: 78px;" oninput="CalculadoraLaserModule.atualizarPreviewConfigRow(this)">
+          </td>
+          <td>
+            <input type="number" step="0.01" class="form-control form-control-sm cfg-chapa-comp" value="${ch.comprimento_m}" style="width: 78px;" oninput="CalculadoraLaserModule.atualizarPreviewConfigRow(this)">
+          </td>
+          <td>
+            <input type="number" step="0.01" class="form-control form-control-sm cfg-chapa-preco" value="${ch.preco_chapa}" style="width: 88px;" oninput="CalculadoraLaserModule.atualizarPreviewConfigRow(this)">
+          </td>
+          <td class="cfg-chapa-res" style="font-size: 0.80rem; font-weight: 700; color: #a5b4fc; white-space: nowrap;">
+            ${area.toFixed(4)} m² <br>
+            <span style="color: #34d399;">${App.formatMoney(custoM2)}/m²</span>
+          </td>
+          <td style="text-align: center;">
+            ${chapas.length > 1 ? `
+              <button type="button" class="btn btn-secondary btn-icon" onclick="CalculadoraLaserModule.removerCor('${App.escapeHtml(ch.id)}')" title="Remover esta cor" style="padding: 4px 7px; color: #f87171;">
+                🗑️
+              </button>
+            ` : '—'}
+          </td>
+        </tr>
+      `;
+    }).join('');
+  },
+
+  adicionarNovaCor() {
+    const corNomeEl = document.getElementById('cfg-laser-nova-cor-nome');
+    const matNomeEl = document.getElementById('cfg-laser-nova-cor-material');
+    const hexEl = document.getElementById('cfg-laser-nova-cor-hex');
+    const espEl = document.getElementById('cfg-laser-nova-cor-esp');
+    const largEl = document.getElementById('cfg-laser-nova-cor-larg');
+    const compEl = document.getElementById('cfg-laser-nova-cor-comp');
+    const precoEl = document.getElementById('cfg-laser-nova-cor-preco');
+
+    const cor = (corNomeEl?.value || '').trim();
+    if (!cor) {
+      App.toast('Informe o nome da nova cor (ex: Verde, Rosa, Acrílico Cristal).', 'error');
+      if (corNomeEl) corNomeEl.focus();
+      return;
     }
 
-    App.openModal('modal-calc-laser-config');
+    const nomeMaterial = (matNomeEl?.value || '').trim() || `MDF ${cor}`;
+    const corHex = hexEl?.value || '#22c55e';
+    const esp = parseFloat(espEl?.value) || 3;
+    const larg = parseFloat(largEl?.value) || 1.20;
+    const comp = parseFloat(compEl?.value) || 1.85;
+    const preco = parseFloat(precoEl?.value) || 110.00;
+
+    const currentCfg = this.getConfig();
+    const chapas = [...(currentCfg.chapas || [])];
+
+    // Gera ID único e seguro a partir do nome
+    const baseId = cor.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '') || 'cor';
+    let novoId = baseId;
+    let contador = 2;
+    while (chapas.some(c => c.id === novoId)) {
+      novoId = `${baseId}_${contador++}`;
+    }
+
+    const novaChapa = {
+      id: novoId,
+      nome: nomeMaterial,
+      cor: cor,
+      espessura_mm: esp,
+      largura_m: larg,
+      comprimento_m: comp,
+      preco_chapa: preco,
+      cor_hex: corHex,
+      bg_badge: 'rgba(56, 189, 248, 0.18)',
+      text_color: '#f8fafc'
+    };
+
+    chapas.push(novaChapa);
+
+    StorageService.saveCalcLaserConfig({
+      ...currentCfg,
+      chapas
+    });
+
+    // Limpa campos do formulário de nova cor
+    if (corNomeEl) corNomeEl.value = '';
+    if (matNomeEl) matNomeEl.value = '';
+
+    // Seleciona automaticamente a nova cor adicionada
+    this.corAtivaId = novoId;
+    this.renderConfigChapasTable();
+    this.render();
+    App.toast(`Cor "${cor}" adicionada à Calculadora Laser! 🎨`, 'success');
+  },
+
+  removerCor(corId) {
+    const currentCfg = this.getConfig();
+    const chapas = [...(currentCfg.chapas || [])];
+    if (chapas.length <= 1) {
+      App.toast('É necessário manter pelo menos uma cor cadastrada.', 'error');
+      return;
+    }
+
+    const alvo = chapas.find(c => c.id === corId);
+    if (!alvo) return;
+    if (!confirm(`Remover a cor "${alvo.nome}" da Calculadora Laser?`)) return;
+
+    const restantes = chapas.filter(c => c.id !== corId);
+    if (this.corAtivaId === corId) {
+      this.corAtivaId = restantes[0].id;
+    }
+
+    StorageService.saveCalcLaserConfig({
+      ...currentCfg,
+      chapas: restantes
+    });
+
+    this.renderConfigChapasTable();
+    this.render();
+    App.toast(`Cor "${alvo.nome}" removida.`, 'info');
   },
 
   atualizarPreviewConfigRow(inputEl) {
@@ -709,6 +840,7 @@ const CalculadoraLaserModule = {
       const tr = Array.from(rows).find(r => r.getAttribute('data-chapa-id') === ch.id);
       if (!tr) return ch;
 
+      const hex = tr.querySelector('.cfg-chapa-hex')?.value || ch.cor_hex;
       const esp = parseFloat(tr.querySelector('.cfg-chapa-esp')?.value) || ch.espessura_mm;
       const larg = parseFloat(tr.querySelector('.cfg-chapa-larg')?.value) || ch.largura_m;
       const comp = parseFloat(tr.querySelector('.cfg-chapa-comp')?.value) || ch.comprimento_m;
@@ -716,6 +848,7 @@ const CalculadoraLaserModule = {
 
       return {
         ...ch,
+        cor_hex: hex,
         espessura_mm: esp,
         largura_m: larg,
         comprimento_m: comp,
