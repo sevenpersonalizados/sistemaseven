@@ -900,36 +900,40 @@ const StorageService = {
       }));
 
       // Busca configurações da empresa
-      const cfgRes = await fetch(`${SUPABASE_CONFIG.url}/rest/v1/config?id=eq.main&select=*`, {
-        headers: this.getHeaders()
-      });
-      if (cfgRes.ok) {
-        const cfgRows = await cfgRes.json();
-        if (Array.isArray(cfgRows) && cfgRows.length > 0) {
-          const cfgStr = JSON.stringify(cfgRows[0]);
-          const curCfgStr = localStorage.getItem(STORAGE_KEYS.CONFIG);
-          if (curCfgStr !== cfgStr) {
-            localStorage.setItem(STORAGE_KEYS.CONFIG, cfgStr);
-            window.dispatchEvent(new CustomEvent('seven_data_updated', { detail: { table: 'config' } }));
-            if (typeof App !== 'undefined' && App.loadConfigView) {
-              App.loadConfigView();
+      if (!this.isLocalAction('config_main')) {
+        const cfgRes = await fetch(`${SUPABASE_CONFIG.url}/rest/v1/config?id=eq.main&select=*`, {
+          headers: this.getHeaders()
+        });
+        if (cfgRes.ok) {
+          const cfgRows = await cfgRes.json();
+          if (Array.isArray(cfgRows) && cfgRows.length > 0 && !this.isLocalAction('config_main')) {
+            const cfgStr = JSON.stringify(cfgRows[0]);
+            const curCfgStr = localStorage.getItem(STORAGE_KEYS.CONFIG);
+            if (curCfgStr !== cfgStr) {
+              localStorage.setItem(STORAGE_KEYS.CONFIG, cfgStr);
+              window.dispatchEvent(new CustomEvent('seven_data_updated', { detail: { table: 'config' } }));
+              if (typeof App !== 'undefined' && App.loadConfigView) {
+                App.loadConfigView();
+              }
             }
           }
         }
       }
 
       // Busca configurações da calculadora 3D
-      const calcCfgRes = await fetch(`${SUPABASE_CONFIG.url}/rest/v1/calc_3d_config?id=eq.main_3d_calc&select=*`, {
-        headers: this.getHeaders()
-      });
-      if (calcCfgRes.ok) {
-        const calcCfgRows = await calcCfgRes.json();
-        if (Array.isArray(calcCfgRows) && calcCfgRows.length > 0) {
-          const calcCfgStr = JSON.stringify(calcCfgRows[0]);
-          const curCalcCfgStr = localStorage.getItem(STORAGE_KEYS.CALC_3D_CONFIG);
-          if (curCalcCfgStr !== calcCfgStr) {
-            localStorage.setItem(STORAGE_KEYS.CALC_3D_CONFIG, calcCfgStr);
-            window.dispatchEvent(new CustomEvent('seven_data_updated', { detail: { table: 'calc_3d_config' } }));
+      if (!this.isLocalAction('calc_3d_config_main')) {
+        const calcCfgRes = await fetch(`${SUPABASE_CONFIG.url}/rest/v1/calc_3d_config?id=eq.main_3d_calc&select=*`, {
+          headers: this.getHeaders()
+        });
+        if (calcCfgRes.ok) {
+          const calcCfgRows = await calcCfgRes.json();
+          if (Array.isArray(calcCfgRows) && calcCfgRows.length > 0 && !this.isLocalAction('calc_3d_config_main')) {
+            const calcCfgStr = JSON.stringify(calcCfgRows[0]);
+            const curCalcCfgStr = localStorage.getItem(STORAGE_KEYS.CALC_3D_CONFIG);
+            if (curCalcCfgStr !== calcCfgStr) {
+              localStorage.setItem(STORAGE_KEYS.CALC_3D_CONFIG, calcCfgStr);
+              window.dispatchEvent(new CustomEvent('seven_data_updated', { detail: { table: 'calc_3d_config' } }));
+            }
           }
         }
       }
@@ -1127,29 +1131,6 @@ const StorageService = {
     this.saveConfig({ ...cfg, categorias_producao: lista });
   },
 
-  getCategoriasDespesa() {
-    return this.getConfig().categorias_despesa || ['Matéria-Prima', 'Manutenção', 'Custos Fixos', 'Marketing', 'Outros'];
-  },
-
-  addCategoriaDespesa(nome) {
-    const val = (nome || '').trim();
-    if (!val) return;
-    const cfg = this.getConfig();
-    const lista = [...(cfg.categorias_despesa || [])];
-    if (!lista.some(c => c.toLowerCase() === val.toLowerCase())) {
-      lista.push(val);
-      this.saveConfig({ ...cfg, categorias_despesa: lista });
-    }
-  },
-
-  removeCategoriaDespesa(index) {
-    const cfg = this.getConfig();
-    const lista = [...(cfg.categorias_despesa || [])];
-    if (lista.length <= 1) return;
-    lista.splice(index, 1);
-    this.saveConfig({ ...cfg, categorias_despesa: lista });
-  },
-
   getFormasPagamento() {
     return this.getConfig().formas_pagamento || ['Pix', 'Cartão de Crédito', 'Cartão de Débito', 'Boleto', 'Dinheiro'];
   },
@@ -1302,6 +1283,7 @@ const StorageService = {
       ...newConfig,
       updated_at: new Date().toISOString()
     };
+    this.recordLocalAction('config_main');
     localStorage.setItem(STORAGE_KEYS.CONFIG, JSON.stringify(payload));
     window.dispatchEvent(new CustomEvent('seven_data_updated', { detail: { table: 'config' } }));
 
@@ -1311,11 +1293,19 @@ const StorageService = {
       headers: this.getHeaders('resolution=merge-duplicates,return=representation'),
       body: JSON.stringify(payload)
     })
-      .then(res => {
-        if (res.ok) this.updateSyncBadge('online', 'Supabase Cloud Ativo');
-        else this.updateSyncBadge('offline', 'Erro ao salvar');
+      .then(async res => {
+        if (res.ok) {
+          this.updateSyncBadge('online', 'Tempo Real Ativo ⚡');
+        } else {
+          const errText = await res.text();
+          console.error('[Supabase] Erro ao salvar config:', res.status, errText);
+          this.updateSyncBadge('offline', 'Erro ao salvar');
+        }
       })
-      .catch(() => this.updateSyncBadge('offline', 'Modo Offline'));
+      .catch(err => {
+        console.error('[Supabase] Erro de rede ao salvar config:', err);
+        this.updateSyncBadge('offline', 'Modo Offline');
+      });
   },
 
   getCalc3DConfig() {
@@ -1333,6 +1323,7 @@ const StorageService = {
       ...cfg,
       updated_at: new Date().toISOString()
     };
+    this.recordLocalAction('calc_3d_config_main');
     localStorage.setItem(STORAGE_KEYS.CALC_3D_CONFIG, JSON.stringify(payload));
     window.dispatchEvent(new CustomEvent('seven_data_updated', { detail: { table: 'calc_3d_config' } }));
 
@@ -1341,7 +1332,14 @@ const StorageService = {
       method: 'POST',
       headers: this.getHeaders('resolution=merge-duplicates,return=representation'),
       body: JSON.stringify(payload)
-    }).catch(err => console.error('[Supabase] Erro ao salvar calc_3d_config:', err));
+    })
+      .then(async res => {
+        if (!res.ok) {
+          const errText = await res.text();
+          console.error('[Supabase] Erro ao salvar calc_3d_config:', res.status, errText);
+        }
+      })
+      .catch(err => console.error('[Supabase] Erro ao salvar calc_3d_config:', err));
 
     return payload;
   },
