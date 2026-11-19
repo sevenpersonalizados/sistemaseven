@@ -267,7 +267,7 @@ const EncomendasModule = {
     const hasItemObs = (enc.itens || []).some(i => i.observacao && i.observacao.trim());
 
     return `
-      <tr class="dash-row-clickable" onclick="EncomendasModule.openEditModal('${enc.id}')" title="Clique para abrir detalhes da encomenda #${enc.id.substring(enc.id.length - 5)}">
+      <tr class="dash-row-clickable" data-enc-id="${enc.id}" onclick="EncomendasModule.openEditModal('${enc.id}')" title="Clique para abrir detalhes da encomenda #${enc.id.substring(enc.id.length - 5)}">
         <td>
           <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 4px; flex-wrap: wrap;">
             <strong>#${enc.id.substring(enc.id.length - 5)}</strong>
@@ -1048,7 +1048,7 @@ const EncomendasModule = {
       const hasItemObs = (enc.itens || []).some(i => i.observacao && i.observacao.trim());
 
       return `
-        <tr class="dash-row-clickable" onclick="EncomendasModule.openEditModal('${enc.id}')" title="Clique para abrir detalhes da encomenda #${enc.id.substring(enc.id.length - 5)}">
+        <tr class="dash-row-clickable" data-enc-id="${enc.id}" onclick="EncomendasModule.openEditModal('${enc.id}')" title="Clique para abrir detalhes da encomenda #${enc.id.substring(enc.id.length - 5)}">
           <td>
             <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 4px; flex-wrap: wrap;">
               <strong>#${enc.id.substring(enc.id.length - 5)}</strong>

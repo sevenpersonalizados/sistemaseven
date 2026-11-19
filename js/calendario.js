@@ -160,8 +160,8 @@ const CalendarModule = {
         const clienteShort = (e.cliente_nome || '').split(' ')[0];
         badgeHtml = `
           <div class="cal-mini-pill status-${statusSlug}" 
-               onclick="event.stopPropagation(); EncomendasModule.openEditModal('${e.id}')"
-               title="Clique para abrir: Pedido #${e.id.substring(e.id.length - 5)} - ${App.escapeHtml(e.cliente_nome)}">
+               onclick="event.stopPropagation(); CalendarModule.openEncomenda('${e.id}')"
+               title="Ir para a encomenda #${e.id.substring(e.id.length - 5)} - ${App.escapeHtml(e.cliente_nome)}">
             <span>${icon}</span>
             <span class="cal-mini-text">${App.escapeHtml(clienteShort)}</span>
           </div>
@@ -211,9 +211,52 @@ const CalendarModule = {
     }
   },
 
+  openEncomenda(id) {
+    const encomendas = StorageService.get('encomendas') || [];
+    const enc = encomendas.find(e => e.id === id);
+
+    // Determina se a encomenda está em Finalizados ou em Encomendas ativas
+    const isFinalizada = enc && (
+      enc.status === 'Entregue' ||
+      enc.status === 'Cancelada' ||
+      (enc.status === 'Pronto' && enc.pagamento_status === 'Pago')
+    );
+
+    if (isFinalizada) {
+      App.navigate('finalizados');
+    } else {
+      // Limpa filtros restritivos para garantir que a encomenda apareça visível
+      const fStatus = document.getElementById('filtro-enc-status');
+      const fCat = document.getElementById('filtro-enc-categoria');
+      const fPagto = document.getElementById('filtro-enc-pagto');
+      if (fStatus) fStatus.value = '';
+      if (fCat) fCat.value = '';
+      if (fPagto) fPagto.value = '';
+
+      App.navigate('encomendas');
+    }
+
+    // Rola até a encomenda e aplica destaque temporário
+    setTimeout(() => {
+      const row = document.querySelector(`tr[data-enc-id="${id}"]`);
+      if (row) {
+        row.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        row.style.transition = 'background-color 0.4s ease, box-shadow 0.4s ease';
+        row.style.backgroundColor = 'rgba(0, 168, 243, 0.22)';
+        row.style.boxShadow = 'inset 0 0 0 1.5px rgba(56, 189, 248, 0.75)';
+        setTimeout(() => {
+          row.style.backgroundColor = '';
+          row.style.boxShadow = '';
+        }, 2500);
+      }
+    }, 120);
+  },
+
   renderSelectedDayDetails(dateStr) {
     const box = document.getElementById('dash-cal-selected-day-box');
     if (!box) return;
+
+    box.style.display = 'block';
 
     const encomendas = StorageService.get('encomendas') || [];
     const hojeStr = this.formatDateIso(new Date());
@@ -237,7 +280,7 @@ const CalendarModule = {
         <span style="font-size: 0.8rem; font-weight: 700; color: #ffffff;">
           📅 Entregas em ${dataFmt} (${ordensNoDia.length}):
         </span>
-        <span style="font-size: 0.72rem; color: #38bdf8;">Toque para abrir</span>
+        <span style="font-size: 0.72rem; color: #38bdf8;">Toque para ir às encomendas</span>
       </div>
       <div style="display: flex; flex-direction: column; gap: 6px; max-height: 160px; overflow-y: auto;">
         ${ordensNoDia.map(e => {
@@ -248,8 +291,8 @@ const CalendarModule = {
 
           return `
             <div class="dash-row-clickable" 
-                 onclick="EncomendasModule.openEditModal('${e.id}')"
-                 title="Clique para abrir toda informação da encomenda #${e.id.substring(e.id.length - 5)}"
+                 onclick="CalendarModule.openEncomenda('${e.id}')"
+                 title="Ir para a encomenda #${e.id.substring(e.id.length - 5)}"
                  style="background: rgba(255, 255, 255, 0.04); border: 1px solid ${isLate ? 'rgba(239, 68, 68, 0.4)' : 'rgba(255, 255, 255, 0.08)'}; border-radius: 6px; padding: 8px 10px; display: flex; justify-content: space-between; align-items: center; gap: 8px;">
               <div style="flex: 1; min-width: 0;">
                 <div style="font-weight: 700; color: #ffffff; font-size: 0.82rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
