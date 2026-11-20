@@ -48,7 +48,7 @@
   <meta http-equiv="Expires" content="0">
 
   <!-- Estilos Customizados -->
-  <link rel="stylesheet" href="css/styles.css?v=43">
+  <link rel="stylesheet" href="css/styles.css?v=44">
 </head>
 
 <body>
@@ -1636,8 +1636,11 @@
                   <input type="text" id="rot-form-item" class="form-control form-control-sm" placeholder="Ex: Garrafa 1200, Copo Cuia...">
                 </div>
                 <div>
-                  <label style="font-size: 0.74rem; color: var(--text-secondary); display: block; margin-bottom: 4px;">Parâmetro GRBL</label>
-                  <input type="text" id="rot-form-parametro" class="form-control form-control-sm" placeholder="Ex: $101=132" style="font-family: monospace; font-weight: 700;">
+                  <label style="font-size: 0.74rem; color: var(--text-secondary); display: block; margin-bottom: 4px;">Parâmetro GRBL ($101=)</label>
+                  <div style="display: flex; align-items: center; background: rgba(15, 23, 42, 0.85); border: 1px solid var(--border); border-radius: var(--radius-sm); overflow: hidden;">
+                    <span style="padding: 6px 8px; background: rgba(56, 189, 248, 0.14); color: #38bdf8; font-family: 'JetBrains Mono', monospace; font-size: 0.82rem; font-weight: 800; border-right: 1px solid var(--border); user-select: none;">$101=</span>
+                    <input type="text" id="rot-form-parametro" class="form-control form-control-sm" placeholder="Ex: 132 ou 103.5" style="border: none; border-radius: 0; font-family: 'JetBrains Mono', monospace; font-weight: 700; background: transparent;">
+                  </div>
                 </div>
                 <div>
                   <label style="font-size: 0.74rem; color: var(--text-secondary); display: block; margin-bottom: 4px;">Diâmetro (cm)</label>
@@ -2709,20 +2712,20 @@
   <!-- CONTAINER DE TOASTS -->
   <div class="toast-container" id="toast-container"></div>
 
-  <!-- SCRIPTS DO SISTEMA (com cache-busting v43) -->
-  <script src="js/notifications.js?v=43"></script>
-  <script src="js/storage.js?v=43"></script>
-  <script src="js/auth.js?v=43"></script>
-  <script src="js/crm.js?v=43"></script>
-  <script src="js/encomendas.js?v=43"></script>
-  <script src="js/estoque.js?v=43"></script>
-  <script src="js/financeiro.js?v=43"></script>
-  <script src="js/propostas.js?v=43"></script>
-  <script src="js/calculadora.js?v=43"></script>
-  <script src="js/calculadora-laser.js?v=43"></script>
-  <script src="js/calendario.js?v=43"></script>
-  <script src="js/configuracoes.js?v=43"></script>
-  <script src="js/app.js?v=43"></script>
+  <!-- SCRIPTS DO SISTEMA (com cache-busting v44) -->
+  <script src="js/notifications.js?v=44"></script>
+  <script src="js/storage.js?v=44"></script>
+  <script src="js/auth.js?v=44"></script>
+  <script src="js/crm.js?v=44"></script>
+  <script src="js/encomendas.js?v=44"></script>
+  <script src="js/estoque.js?v=44"></script>
+  <script src="js/financeiro.js?v=44"></script>
+  <script src="js/propostas.js?v=44"></script>
+  <script src="js/calculadora.js?v=44"></script>
+  <script src="js/calculadora-laser.js?v=44"></script>
+  <script src="js/calendario.js?v=44"></script>
+  <script src="js/configuracoes.js?v=44"></script>
+  <script src="js/app.js?v=44"></script>
 </body>
 
 </html>

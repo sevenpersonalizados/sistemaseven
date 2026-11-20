@@ -1011,10 +1011,24 @@ const CalculadoraLaserModule = {
     }
   },
 
+  normalizarParametroGrbl(valor) {
+    const raw = String(valor || '').trim().replace(',', '.');
+    if (!raw) return '';
+    // Remove prefixo $101= se já digitado/colado, para nunca duplicar
+    const somenteValor = raw.replace(/^\$101\s*=\s*/i, '').trim();
+    if (!somenteValor) return '';
+    return `$101=${somenteValor}`;
+  },
+
+  extrairValorParametroGrbl(parametro) {
+    return String(parametro || '').trim().replace(/^\$101\s*=\s*/i, '').trim();
+  },
+
   salvarParametroRotativo() {
     const id = (document.getElementById('rot-form-id')?.value || '').trim();
     const item = (document.getElementById('rot-form-item')?.value || '').trim();
-    const parametro = (document.getElementById('rot-form-parametro')?.value || '').trim();
+    const parametroRaw = (document.getElementById('rot-form-parametro')?.value || '').trim();
+    const parametro = this.normalizarParametroGrbl(parametroRaw);
     const diametro_cm = (document.getElementById('rot-form-diametro')?.value || '').trim();
     const circunferencia_cm = (document.getElementById('rot-form-circunferencia')?.value || '').trim();
     const obs = (document.getElementById('rot-form-obs')?.value || '').trim();
@@ -1060,7 +1074,7 @@ const CalculadoraLaserModule = {
 
     document.getElementById('rot-form-id').value = p.id;
     document.getElementById('rot-form-item').value = p.item || '';
-    document.getElementById('rot-form-parametro').value = p.parametro || '';
+    document.getElementById('rot-form-parametro').value = this.extrairValorParametroGrbl(p.parametro);
     document.getElementById('rot-form-diametro').value = p.diametro_cm || '';
     document.getElementById('rot-form-circunferencia').value = p.circunferencia_cm || '';
     document.getElementById('rot-form-obs').value = p.obs || '';
