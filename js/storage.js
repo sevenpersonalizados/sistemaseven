@@ -1389,6 +1389,9 @@ const StorageService = {
       valor_hora_laser: Number(cfg.valor_hora_laser) || 30.00,
       margem_padrao: Number(cfg.margem_padrao) || 100,
       chapas: Array.isArray(cfg.chapas) ? cfg.chapas : [],
+      parametros_rotativo: Array.isArray(cfg.parametros_rotativo)
+        ? cfg.parametros_rotativo
+        : this.getParametrosLaserRotativo(),
       updated_at: new Date().toISOString()
     };
     this.recordLocalAction('calc_laser_config_main');
@@ -1410,6 +1413,38 @@ const StorageService = {
       .catch(err => console.error('[Supabase] Erro de rede ao salvar calc_laser_config:', err));
 
     return payload;
+  },
+
+  getDefaultParametrosLaserRotativo() {
+    return [
+      { id: 'rot-padrao', item: 'PADRÃO', parametro: '$101=80', diametro_cm: '', circunferencia_cm: '', obs: 'Configuração normal da mesa (sem rotativo)', destaque: true },
+      { id: 'rot-1', item: 'Garrafa ACBCSJ', parametro: '$101=101', diametro_cm: '7', circunferencia_cm: '23', obs: '', destaque: false },
+      { id: 'rot-2', item: 'COPO CUIA', parametro: '$101=103.5', diametro_cm: '8.8', circunferencia_cm: '28', obs: '', destaque: false },
+      { id: 'rot-3', item: 'Garrafa 1200', parametro: '$101=132', diametro_cm: '9.1', circunferencia_cm: '28.5', obs: '', destaque: false },
+      { id: 'rot-4', item: 'GARRAFA 800', parametro: '$101=133', diametro_cm: '7.9', circunferencia_cm: '24.8', obs: '', destaque: false },
+      { id: 'rot-5', item: 'Copo Stanley com abridor', parametro: '$101=132', diametro_cm: '9', circunferencia_cm: '28.5', obs: '', destaque: false },
+      { id: 'rot-6', item: 'Garrafa Schmit 1500', parametro: '$101=136', diametro_cm: '9.5', circunferencia_cm: '30.1', obs: '', destaque: false },
+      { id: 'rot-7', item: 'Garrafa MOR', parametro: '$101=103', diametro_cm: '7.5', circunferencia_cm: '23.5', obs: '', destaque: false },
+      { id: 'rot-8', item: 'Garrafa Leo', parametro: '$101=104', diametro_cm: '6.7', circunferencia_cm: '20.9', obs: '', destaque: false },
+      { id: 'rot-9', item: 'Garrafa 1 L', parametro: '$101=132', diametro_cm: '9.1', circunferencia_cm: '28.5', obs: '', destaque: false },
+      { id: 'rot-10', item: 'Copo tipo Stanley Seven', parametro: '', diametro_cm: '', circunferencia_cm: '27.8', obs: '', destaque: false }
+    ];
+  },
+
+  getParametrosLaserRotativo() {
+    const cfg = this.getCalcLaserConfig();
+    if (Array.isArray(cfg.parametros_rotativo) && cfg.parametros_rotativo.length > 0) {
+      return cfg.parametros_rotativo;
+    }
+    return this.getDefaultParametrosLaserRotativo();
+  },
+
+  saveParametrosLaserRotativo(lista) {
+    const cfg = this.getCalcLaserConfig();
+    return this.saveCalcLaserConfig({
+      ...cfg,
+      parametros_rotativo: lista
+    });
   },
 
   getCalcLaserHistorico() {

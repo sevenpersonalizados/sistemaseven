@@ -48,7 +48,7 @@
   <meta http-equiv="Expires" content="0">
 
   <!-- Estilos Customizados -->
-  <link rel="stylesheet" href="css/styles.css?v=42">
+  <link rel="stylesheet" href="css/styles.css?v=43">
 </head>
 
 <body>
@@ -1590,6 +1590,108 @@
               </table>
             </div>
           </div>
+
+          <!-- TABELA DE PARÂMETROS LASER (EIXO ROTATIVO / GRBL $101 / DIÂMETRO & CIRCUNFERÊNCIA) -->
+          <div class="themed-panel theme-amber" style="margin-top: 24px;">
+            <div class="themed-header" style="flex-wrap: wrap; gap: 12px;">
+              <div style="display: flex; align-items: center; gap: 14px; flex-wrap: wrap;">
+                <span class="themed-icon-box" style="font-size: 1.35rem;">🎯</span>
+                <div>
+                  <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+                    <h3 class="themed-title">Tabela de Parâmetros Laser (Rotativo & GRBL)</h3>
+                    <span style="font-size: 0.72rem; font-weight: 700; text-transform: uppercase; padding: 3px 10px; border-radius: 999px; background: rgba(245, 158, 11, 0.22); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.55);">
+                      COPOS & GARRAFAS
+                    </span>
+                  </div>
+                  <div class="themed-subtitle">
+                    Salve comandos GRBL (<code>$101</code>), diâmetro, circunferência e notas de gravação com cópia em 1 clique
+                  </div>
+                </div>
+              </div>
+              <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                <span class="themed-chip">
+                  📋 <strong id="calc-laser-rot-count" style="color: #ffffff;">0</strong> itens
+                </span>
+                <button type="button" class="btn btn-secondary btn-sm" onclick="CalculadoraLaserModule.copiarParametroGrbl('$101=80')" title="Copiar comando padrão da mesa">
+                  📋 Copiar Padrão ($101=80)
+                </button>
+              </div>
+            </div>
+
+            <!-- Formulário Rápido para Inserir / Editar Parâmetro -->
+            <div style="padding: 16px 20px; background: rgba(0, 0, 0, 0.22); border-bottom: 1px solid var(--border);">
+              <input type="hidden" id="rot-form-id">
+              <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; flex-wrap: wrap; gap: 8px;">
+                <span id="rot-form-title" style="font-size: 0.84rem; font-weight: 700; color: #fbbf24;">
+                  ➕ Adicionar Novo Parâmetro
+                </span>
+                <span style="font-size: 0.72rem; color: var(--text-muted);">
+                  💡 Dica: Ao digitar o Diâmetro ou a Circunferência, o outro campo é calculado automaticamente (π = 3,1416)
+                </span>
+              </div>
+
+              <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; align-items: end;">
+                <div>
+                  <label style="font-size: 0.74rem; color: var(--text-secondary); display: block; margin-bottom: 4px;">Item / Produto *</label>
+                  <input type="text" id="rot-form-item" class="form-control form-control-sm" placeholder="Ex: Garrafa 1200, Copo Cuia...">
+                </div>
+                <div>
+                  <label style="font-size: 0.74rem; color: var(--text-secondary); display: block; margin-bottom: 4px;">Parâmetro GRBL</label>
+                  <input type="text" id="rot-form-parametro" class="form-control form-control-sm" placeholder="Ex: $101=132" style="font-family: monospace; font-weight: 700;">
+                </div>
+                <div>
+                  <label style="font-size: 0.74rem; color: var(--text-secondary); display: block; margin-bottom: 4px;">Diâmetro (cm)</label>
+                  <input type="number" step="0.1" id="rot-form-diametro" class="form-control form-control-sm" placeholder="Ex: 9.1" oninput="CalculadoraLaserModule.onDiametroInput(this.value)">
+                </div>
+                <div>
+                  <label style="font-size: 0.74rem; color: var(--text-secondary); display: block; margin-bottom: 4px;">Circunferência (cm)</label>
+                  <input type="number" step="0.1" id="rot-form-circunferencia" class="form-control form-control-sm" placeholder="Ex: 28.5" oninput="CalculadoraLaserModule.onCircunferenciaInput(this.value)">
+                </div>
+                <div>
+                  <label style="font-size: 0.74rem; color: var(--text-secondary); display: block; margin-bottom: 4px;">Potência / Vel. / Obs</label>
+                  <input type="text" id="rot-form-obs" class="form-control form-control-sm" placeholder="Ex: 30% • 3000 mm/min">
+                </div>
+                <div style="display: flex; gap: 6px; align-items: center;">
+                  <button type="button" id="rot-btn-salvar" class="btn btn-primary btn-sm" onclick="CalculadoraLaserModule.salvarParametroRotativo()" style="flex: 1; height: 34px; background: #f59e0b; border-color: #f59e0b; color: #0b1120; font-weight: 800;">
+                    + Salvar
+                  </button>
+                  <button type="button" id="rot-btn-cancelar" class="btn btn-secondary btn-sm" onclick="CalculadoraLaserModule.cancelarEdicaoParametro()" style="display: none; height: 34px;">
+                    Cancelar
+                  </button>
+                </div>
+              </div>
+
+              <div style="margin-top: 10px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+                <label style="display: inline-flex; align-items: center; gap: 6px; font-size: 0.76rem; color: var(--text-secondary); cursor: pointer; margin: 0;">
+                  <input type="checkbox" id="rot-form-destaque" style="width: 15px; height: 15px;">
+                  <span>⭐ Destacar linha em laranja (ex: PADRÃO)</span>
+                </label>
+
+                <div style="min-width: 220px; max-width: 320px; flex: 1;">
+                  <input type="text" id="rot-busca-input" class="form-control form-control-sm" placeholder="🔍 Filtrar item ou comando ($101)..." oninput="CalculadoraLaserModule.renderParametrosRotativo(this.value)">
+                </div>
+              </div>
+            </div>
+
+            <!-- Tabela de Parâmetros -->
+            <div class="table-responsive">
+              <table class="modern-table">
+                <thead>
+                  <tr>
+                    <th>Item</th>
+                    <th>Parâmetro (GRBL)</th>
+                    <th style="text-align: center;">Diâmetro (cm)</th>
+                    <th style="text-align: center;">Circunferência (cm)</th>
+                    <th>Potência / Vel. / Obs</th>
+                    <th style="text-align: right;">Ações</th>
+                  </tr>
+                </thead>
+                <tbody id="calc-laser-rotativo-tbody">
+                  <!-- Renderizado dinamicamente via CalculadoraLaserModule.renderParametrosRotativo() -->
+                </tbody>
+              </table>
+            </div>
+          </div>
         </section>
 
       </div>
@@ -2607,20 +2709,20 @@
   <!-- CONTAINER DE TOASTS -->
   <div class="toast-container" id="toast-container"></div>
 
-  <!-- SCRIPTS DO SISTEMA (com cache-busting v42) -->
-  <script src="js/notifications.js?v=42"></script>
-  <script src="js/storage.js?v=42"></script>
-  <script src="js/auth.js?v=42"></script>
-  <script src="js/crm.js?v=42"></script>
-  <script src="js/encomendas.js?v=42"></script>
-  <script src="js/estoque.js?v=42"></script>
-  <script src="js/financeiro.js?v=42"></script>
-  <script src="js/propostas.js?v=42"></script>
-  <script src="js/calculadora.js?v=42"></script>
-  <script src="js/calculadora-laser.js?v=42"></script>
-  <script src="js/calendario.js?v=42"></script>
-  <script src="js/configuracoes.js?v=42"></script>
-  <script src="js/app.js?v=42"></script>
+  <!-- SCRIPTS DO SISTEMA (com cache-busting v43) -->
+  <script src="js/notifications.js?v=43"></script>
+  <script src="js/storage.js?v=43"></script>
+  <script src="js/auth.js?v=43"></script>
+  <script src="js/crm.js?v=43"></script>
+  <script src="js/encomendas.js?v=43"></script>
+  <script src="js/estoque.js?v=43"></script>
+  <script src="js/financeiro.js?v=43"></script>
+  <script src="js/propostas.js?v=43"></script>
+  <script src="js/calculadora.js?v=43"></script>
+  <script src="js/calculadora-laser.js?v=43"></script>
+  <script src="js/calendario.js?v=43"></script>
+  <script src="js/configuracoes.js?v=43"></script>
+  <script src="js/app.js?v=43"></script>
 </body>
 
 </html>

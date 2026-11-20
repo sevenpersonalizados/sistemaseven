@@ -14,6 +14,7 @@ const CalculadoraLaserModule = {
     this.attachEvents();
     this.calcular();
     this.renderHistorico();
+    this.renderParametrosRotativo();
 
     window.addEventListener('seven_data_updated', (e) => {
       const table = e.detail?.table;
@@ -22,6 +23,7 @@ const CalculadoraLaserModule = {
         this.renderCorChips();
         this.calcular();
         this.renderHistorico();
+        this.renderParametrosRotativo();
       }
     });
   },
@@ -56,6 +58,7 @@ const CalculadoraLaserModule = {
     this.renderCorChips();
     this.calcular();
     this.renderHistorico();
+    this.renderParametrosRotativo();
   },
 
   getConfig() {
@@ -890,6 +893,236 @@ const CalculadoraLaserModule = {
     App.closeModal('modal-calc-laser-config');
     App.toast('Padrões restaurados com sucesso!', 'success');
     this.render();
+  },
+
+  // =========================================================================
+  // TABELA DE PARÂMETROS LASER (EIXO ROTATIVO / GRBL $101 / DIÂMETRO & CIRC.)
+  // =========================================================================
+  renderParametrosRotativo(buscaFiltro) {
+    const tbody = document.getElementById('calc-laser-rotativo-tbody');
+    if (!tbody) return;
+
+    const termo = (buscaFiltro !== undefined
+      ? buscaFiltro
+      : (document.getElementById('rot-busca-input')?.value || '')
+    ).toLowerCase().trim();
+
+    let lista = StorageService.getParametrosLaserRotativo() || [];
+
+    const countEl = document.getElementById('calc-laser-rot-count');
+    if (countEl) countEl.textContent = lista.length;
+
+    if (termo) {
+      lista = lista.filter(p =>
+        (p.item || '').toLowerCase().includes(termo) ||
+        (p.parametro || '').toLowerCase().includes(termo) ||
+        (p.obs || '').toLowerCase().includes(termo)
+      );
+    }
+
+    // Mantém itens em destaque (PADRÃO) sempre no topo
+    const ordenada = [...lista].sort((a, b) => {
+      if (a.destaque && !b.destaque) return -1;
+      if (!a.destaque && b.destaque) return 1;
+      return 0;
+    });
+
+    if (ordenada.length === 0) {
+      tbody.innerHTML = `
+        <tr>
+          <td colspan="6" style="text-align: center; padding: 28px; color: var(--text-muted);">
+            Nenhum parâmetro encontrado para "${App.escapeHtml(termo)}".
+          </td>
+        </tr>
+      `;
+      return;
+    }
+
+    const fmtNum = (val) => {
+      if (val === '' || val === null || val === undefined) return '<span style="color: var(--text-muted); opacity: 0.5;">—</span>';
+      const n = parseFloat(String(val).replace(',', '.'));
+      if (isNaN(n)) return App.escapeHtml(String(val));
+      return `${n.toString().replace('.', ',')} cm`;
+    };
+
+    tbody.innerHTML = ordenada.map(p => {
+      const isDestaque = !!p.destaque;
+      const rowStyle = isDestaque
+        ? 'background: linear-gradient(90deg, rgba(245, 158, 11, 0.22) 0%, rgba(245, 158, 11, 0.08) 100%); border-left: 4px solid #f59e0b;'
+        : '';
+
+      const paramHtml = p.parametro && p.parametro.trim()
+        ? `
+          <div style="display: inline-flex; align-items: center; gap: 6px;">
+            <code style="font-family: 'JetBrains Mono', monospace; font-size: 0.86rem; font-weight: 800; padding: 4px 10px; border-radius: 6px; ${isDestaque ? 'background: rgba(245, 158, 11, 0.3); color: #fde68a; border: 1px solid rgba(245, 158, 11, 0.6);' : 'background: rgba(56, 189, 248, 0.14); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.4);'}">
+              ${App.escapeHtml(p.parametro)}
+            </code>
+            <button type="button" class="btn btn-secondary btn-icon" onclick="CalculadoraLaserModule.copiarParametroGrbl('${App.escapeHtml(p.parametro)}')" title="Copiar comando GRBL" style="padding: 3px 7px; font-size: 0.72rem;">
+              📋
+            </button>
+          </div>
+        `
+        : '<span style="color: var(--text-muted); font-size: 0.78rem; font-style: italic;">Não definido</span>';
+
+      return `
+        <tr style="${rowStyle}">
+          <td>
+            <div style="display: flex; align-items: center; gap: 8px;">
+              ${isDestaque ? '<span style="font-size: 0.9rem;">⭐</span>' : ''}
+              <strong style="color: ${isDestaque ? '#fde68a' : '#ffffff'}; font-size: 0.9rem;">
+                ${App.escapeHtml(p.item)}
+              </strong>
+            </div>
+          </td>
+          <td>${paramHtml}</td>
+          <td style="text-align: center; font-weight: 600; color: var(--text-primary);">${fmtNum(p.diametro_cm)}</td>
+          <td style="text-align: center; font-weight: 600; color: #34d399;">${fmtNum(p.circunferencia_cm)}</td>
+          <td style="font-size: 0.78rem; color: var(--text-secondary);">${p.obs ? App.escapeHtml(p.obs) : '<span style="opacity: 0.4;">—</span>'}</td>
+          <td style="text-align: right; white-space: nowrap;">
+            <div style="display: inline-flex; gap: 5px;">
+              <button type="button" class="btn btn-secondary btn-icon" onclick="CalculadoraLaserModule.editarParametroRotativo('${App.escapeHtml(p.id)}')" title="Editar parâmetro" style="padding: 4px 8px;">
+                ✏️
+              </button>
+              <button type="button" class="btn btn-secondary btn-icon" onclick="CalculadoraLaserModule.excluirParametroRotativo('${App.escapeHtml(p.id)}')" title="Excluir parâmetro" style="padding: 4px 8px; color: #f87171;">
+                🗑️
+              </button>
+            </div>
+          </td>
+        </tr>
+      `;
+    }).join('');
+  },
+
+  onDiametroInput(val) {
+    const num = parseFloat(String(val).replace(',', '.'));
+    const circEl = document.getElementById('rot-form-circunferencia');
+    if (!circEl) return;
+    if (!isNaN(num) && num > 0) {
+      circEl.value = (num * Math.PI).toFixed(1);
+    }
+  },
+
+  onCircunferenciaInput(val) {
+    const num = parseFloat(String(val).replace(',', '.'));
+    const diamEl = document.getElementById('rot-form-diametro');
+    if (!diamEl) return;
+    if (!isNaN(num) && num > 0) {
+      diamEl.value = (num / Math.PI).toFixed(1);
+    }
+  },
+
+  salvarParametroRotativo() {
+    const id = (document.getElementById('rot-form-id')?.value || '').trim();
+    const item = (document.getElementById('rot-form-item')?.value || '').trim();
+    const parametro = (document.getElementById('rot-form-parametro')?.value || '').trim();
+    const diametro_cm = (document.getElementById('rot-form-diametro')?.value || '').trim();
+    const circunferencia_cm = (document.getElementById('rot-form-circunferencia')?.value || '').trim();
+    const obs = (document.getElementById('rot-form-obs')?.value || '').trim();
+    const destaque = !!document.getElementById('rot-form-destaque')?.checked;
+
+    if (!item) {
+      App.toast('Informe o nome do Item / Produto (ex: Garrafa 1200, Copo Cuia).', 'error');
+      document.getElementById('rot-form-item')?.focus();
+      return;
+    }
+
+    const lista = [...StorageService.getParametrosLaserRotativo()];
+
+    if (id) {
+      const idx = lista.findIndex(p => p.id === id);
+      if (idx !== -1) {
+        lista[idx] = { ...lista[idx], item, parametro, diametro_cm, circunferencia_cm, obs, destaque };
+      }
+      StorageService.saveParametrosLaserRotativo(lista);
+      App.toast(`Parâmetro "${item}" atualizado! 🎯`, 'success');
+    } else {
+      lista.push({
+        id: `rot-${Date.now()}`,
+        item,
+        parametro,
+        diametro_cm,
+        circunferencia_cm,
+        obs,
+        destaque
+      });
+      StorageService.saveParametrosLaserRotativo(lista);
+      App.toast(`Parâmetro "${item}" adicionado à tabela! 🎯`, 'success');
+    }
+
+    this.cancelarEdicaoParametro();
+    this.renderParametrosRotativo();
+  },
+
+  editarParametroRotativo(id) {
+    const lista = StorageService.getParametrosLaserRotativo();
+    const p = lista.find(x => x.id === id);
+    if (!p) return;
+
+    document.getElementById('rot-form-id').value = p.id;
+    document.getElementById('rot-form-item').value = p.item || '';
+    document.getElementById('rot-form-parametro').value = p.parametro || '';
+    document.getElementById('rot-form-diametro').value = p.diametro_cm || '';
+    document.getElementById('rot-form-circunferencia').value = p.circunferencia_cm || '';
+    document.getElementById('rot-form-obs').value = p.obs || '';
+    const chk = document.getElementById('rot-form-destaque');
+    if (chk) chk.checked = !!p.destaque;
+
+    const titleEl = document.getElementById('rot-form-title');
+    if (titleEl) titleEl.textContent = `✏️ Editando: ${p.item}`;
+    const btnSalvar = document.getElementById('rot-btn-salvar');
+    if (btnSalvar) btnSalvar.textContent = '💾 Atualizar';
+    const btnCancelar = document.getElementById('rot-btn-cancelar');
+    if (btnCancelar) btnCancelar.style.display = 'inline-flex';
+
+    document.getElementById('rot-form-item')?.focus();
+  },
+
+  cancelarEdicaoParametro() {
+    const ids = ['rot-form-id', 'rot-form-item', 'rot-form-parametro', 'rot-form-diametro', 'rot-form-circunferencia', 'rot-form-obs'];
+    ids.forEach(fid => {
+      const el = document.getElementById(fid);
+      if (el) el.value = '';
+    });
+    const chk = document.getElementById('rot-form-destaque');
+    if (chk) chk.checked = false;
+
+    const titleEl = document.getElementById('rot-form-title');
+    if (titleEl) titleEl.textContent = '➕ Adicionar Novo Parâmetro';
+    const btnSalvar = document.getElementById('rot-btn-salvar');
+    if (btnSalvar) btnSalvar.textContent = '+ Salvar';
+    const btnCancelar = document.getElementById('rot-btn-cancelar');
+    if (btnCancelar) btnCancelar.style.display = 'none';
+  },
+
+  excluirParametroRotativo(id) {
+    const lista = StorageService.getParametrosLaserRotativo();
+    const alvo = lista.find(x => x.id === id);
+    if (!alvo) return;
+    if (!confirm(`Remover o parâmetro "${alvo.item}" da tabela?`)) return;
+
+    const novaLista = lista.filter(x => x.id !== id);
+    StorageService.saveParametrosLaserRotativo(novaLista);
+    App.toast(`Parâmetro "${alvo.item}" removido.`, 'info');
+    this.renderParametrosRotativo();
+  },
+
+  copiarParametroGrbl(parametro) {
+    if (!parametro) return;
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(parametro).then(() => {
+        App.toast(`Comando "${parametro}" copiado! Cole no console da Laser. 📋`, 'success');
+      }).catch(() => {
+        App.toast(`Comando: ${parametro}`, 'info');
+      });
+    } else {
+      const tmp = document.createElement('textarea');
+      tmp.value = parametro;
+      document.body.appendChild(tmp);
+      tmp.select();
+      document.execCommand('copy');
+      document.body.removeChild(tmp);
+      App.toast(`Comando "${parametro}" copiado! 📋`, 'success');
+    }
   }
 };
 
