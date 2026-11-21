@@ -482,20 +482,19 @@ const PropostasModule = {
       itens: JSON.parse(JSON.stringify(propostaItensTemp))
     };
 
-    let idOrcamento = idExistente;
-    if (idExistente) {
-      StorageService.update('propostas', idExistente, payload);
-    } else {
-      payload.criada_em = new Date().toISOString();
-      const novo = StorageService.insert('propostas', payload);
-      idOrcamento = novo.id;
-    }
-
     App.closeModal('modal-proposta');
 
     if (aprovarDireto === true) {
-      this.aprovarProposta(idOrcamento);
+      // Vai direto para a Fila de Espera em Encomendas SEM inserir em "propostas"
+      // (Se estava editando um orçamento já salvo, remove o antigo de "propostas")
+      this.converterParaEncomenda(payload, idExistente || null);
     } else {
+      if (idExistente) {
+        StorageService.update('propostas', idExistente, payload);
+      } else {
+        payload.criada_em = new Date().toISOString();
+        StorageService.insert('propostas', payload);
+      }
       App.toast('Orçamento salvo com sucesso! Permanece na aba Orçamentos até ser aprovado.', 'success');
       this.renderList();
     }
@@ -504,7 +503,10 @@ const PropostasModule = {
   aprovarProposta(id) {
     const p = StorageService.get('propostas').find(item => item.id === id);
     if (!p) return;
+    this.converterParaEncomenda(p, id);
+  },
 
+  converterParaEncomenda(p, idPropostaParaExcluir = null) {
     // Calcula prazo padrão de entrega (7 dias à frente)
     const dataEntregaDefault = new Date(Date.now() + 7 * 24 * 3600 * 1000).toISOString().split('T')[0];
 
@@ -570,10 +572,12 @@ const PropostasModule = {
     // 1. Cria a encomenda diretamente na "Fila de Espera"
     StorageService.insert('encomendas', novaEncomenda);
 
-    // 2. Remove o orçamento de "propostas" para que ele SAIA DA PÁGINA DE ORÇAMENTOS
-    StorageService.delete('propostas', id);
+    // 2. Se veio de um orçamento já salvo em "propostas", remove-o para não ficar duplicado em Orçamentos
+    if (idPropostaParaExcluir) {
+      StorageService.delete('propostas', idPropostaParaExcluir);
+    }
 
-    let toastMsg = 'Orçamento aprovado com sucesso! Movido para a Fila de Espera em Encomendas. 🎉';
+    let toastMsg = 'Pedido salvo diretamente na Fila de Espera em Encomendas! 🎉';
     if (baixas.length > 0) {
       toastMsg += ` 📦 Estoque: ${baixas.join(', ')}`;
     }
@@ -581,7 +585,7 @@ const PropostasModule = {
     App.closeModal('modal-preview-proposta');
     App.closeModal('modal-proposta');
 
-    // Atualiza imediatamente a lista da tela de Orçamentos (o orçamento aprovado sumiu daqui!)
+    // Atualiza imediatamente a lista da tela de Orçamentos
     this.renderList();
 
     // Redireciona imediatamente para a tela de Encomendas & Produção na subaba "Fila de Espera"
