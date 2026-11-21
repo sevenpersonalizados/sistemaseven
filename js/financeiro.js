@@ -716,10 +716,6 @@ const FinanceiroModule = {
     }
 
     let metaTags = '';
-    if (isEncomenda) {
-      const stLabel = item.encomenda_status ? ` • ${App.escapeHtml(item.encomenda_status)}` : '';
-      metaTags += `<span style="font-size: 0.68rem; font-weight: 700; background: rgba(16, 185, 129, 0.16); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.4); padding: 1px 6px; border-radius: 4px; margin-left: 6px;">🛍️ Encomenda${stLabel}</span>`;
-    }
     if (item.total_parcelas && item.total_parcelas > 1) {
       metaTags += `<span style="font-size: 0.68rem; font-weight: 700; background: rgba(56, 189, 248, 0.18); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.4); padding: 1px 6px; border-radius: 4px; margin-left: 6px;">Parcela ${item.parcela_atual}/${item.total_parcelas}</span>`;
     }
