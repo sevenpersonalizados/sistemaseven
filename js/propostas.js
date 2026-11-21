@@ -834,6 +834,7 @@ const PropostasModule = {
       valor_total: Number(p.investimento) || 0,
       valor_pago: 0,
       observacoes: '',
+      responsavel: StorageService.getActiveProprietario(),
       foto_anexo: p.foto_anexo || null,
       foto_nome: p.foto_nome || null,
       itens: itensEncomenda

@@ -115,13 +115,17 @@ const FinanceiroModule = {
         : (catLower.includes('laser') || catLower.includes('gravação') ? 'Gravação Laser' : 'Venda de Personalizados');
       const centroCusto = catLower.includes('3d') ? 'Produção 3D' : 'Oficina / Produção Laser';
 
+      const responsavelReal = (enc.responsavel && enc.responsavel !== 'Sistema')
+        ? enc.responsavel
+        : StorageService.getActiveProprietario();
+
       const base = {
         tipo: 'receita',
         categoria: categoriaFin,
         centro_custo: centroCusto,
         forma_pagamento: enc.forma_pagamento || 'Pix',
         local_pagamento: 'Encomendas',
-        proprietario: 'Sistema',
+        proprietario: responsavelReal,
         observacoes: itensResumo || 'Pedido de Personalizados',
         estornado: false,
         origem: 'encomenda',
@@ -578,7 +582,7 @@ const FinanceiroModule = {
         </td>
         <td>
           <span style="font-size: 0.72rem; font-weight: 700; color: #38bdf8; background: rgba(56, 189, 248, 0.12); padding: 2px 7px; border-radius: 999px; border: 1px solid rgba(56, 189, 248, 0.3);">
-            👤 ${App.escapeHtml(item.proprietario || 'Proprietário')}
+            👤 ${App.escapeHtml((item.proprietario && item.proprietario !== 'Sistema') ? item.proprietario : StorageService.getActiveProprietario())}
           </span>
         </td>
         <td>${statusHtml}</td>
@@ -831,7 +835,7 @@ const FinanceiroModule = {
             </td>
             <td>
               <span style="font-size: 0.72rem; font-weight: 700; color: #38bdf8; background: rgba(56, 189, 248, 0.12); padding: 2px 7px; border-radius: 999px; border: 1px solid rgba(56, 189, 248, 0.3);">
-                👤 ${App.escapeHtml(first.proprietario || 'Proprietário')}
+                👤 ${App.escapeHtml((first.proprietario && first.proprietario !== 'Sistema') ? first.proprietario : StorageService.getActiveProprietario())}
               </span>
             </td>
             <td>${statusGroupHtml}</td>
@@ -1147,9 +1151,14 @@ const FinanceiroModule = {
     this.populateModalSelects();
     this.updateCartaoPreview();
 
-    // Seleciona proprietário ativo por padrão
+    // Responsável é sempre o usuário logado no sistema
     const selProp = document.getElementById('fin-form-proprietario');
-    if (selProp) selProp.value = StorageService.getActiveProprietario();
+    if (selProp) {
+      const usuarioLogado = StorageService.getActiveProprietario();
+      selProp.innerHTML = `<option value="${App.escapeHtml(usuarioLogado)}" selected>👤 ${App.escapeHtml(usuarioLogado)} (Logado)</option>`;
+      selProp.value = usuarioLogado;
+      selProp.disabled = true;
+    }
 
     App.openModal('modal-lancamento-financeiro');
   },
@@ -1340,7 +1349,7 @@ const FinanceiroModule = {
     const forma = document.getElementById('fin-form-forma').value;
     const local = document.getElementById('fin-form-local').value;
     const status = document.getElementById('fin-form-status').value;
-    const proprietario = document.getElementById('fin-form-proprietario').value || StorageService.getActiveProprietario();
+    const proprietario = StorageService.getActiveProprietario();
     const observacoes = document.getElementById('fin-form-observacoes').value.trim();
 
     if (!descricao) {

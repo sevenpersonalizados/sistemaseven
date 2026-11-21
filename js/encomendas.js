@@ -1453,6 +1453,9 @@ const EncomendasModule = {
       valor_total: valorTotal,
       valor_pago: valorPago,
       observacoes: obs,
+      responsavel: (encAntiga && encAntiga.responsavel && encAntiga.responsavel !== 'Sistema')
+        ? encAntiga.responsavel
+        : StorageService.getActiveProprietario(),
       foto_anexo: encomendaFotoTemp.dataUrl || null,
       foto_nome: encomendaFotoTemp.nome || null,
       itens: encomendaItensTemp
