@@ -48,7 +48,7 @@
   <meta http-equiv="Expires" content="0">
 
   <!-- Estilos Customizados -->
-  <link rel="stylesheet" href="css/styles.css?v=94">
+  <link rel="stylesheet" href="css/styles.css?v=95">
 </head>
 
 <body>
@@ -793,16 +793,6 @@
                   <div class="themed-subtitle">Contas a pagar, contas a receber, histórico consolidado e estornos</div>
                 </div>
               </div>
-
-              <!-- Botões de Novo Lançamento -->
-              <div style="display: flex; gap: 8px;">
-                <button type="button" class="btn btn-primary btn-sm" onclick="FinanceiroModule.openNewLancamentoModal('receita')" style="background: #10b981; border-color: #10b981; font-size: 0.78rem; font-weight: 700;">
-                  + Receita
-                </button>
-                <button type="button" class="btn btn-primary btn-sm" onclick="FinanceiroModule.openNewLancamentoModal('despesa')" style="background: #ef4444; border-color: #ef4444; font-size: 0.78rem; font-weight: 700;">
-                  + Despesa
-                </button>
-              </div>
             </div>
 
             <!-- Abas Rápidas de Contas a Pagar e Receber na Mesma Tela -->
@@ -898,8 +888,13 @@
                     <strong style="color: #ffffff; font-size: 0.95rem;">Receitas</strong>
                     <span id="fin-receitas-count" style="font-size: 0.72rem; font-weight: 700; padding: 2px 8px; border-radius: 999px; background: rgba(16, 185, 129, 0.18); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.4);">0</span>
                   </div>
-                  <div style="font-size: 0.85rem; color: var(--text-secondary);">
-                    Total: <strong id="fin-receitas-total" style="color: #34d399; font-size: 0.96rem;">R$ 0,00</strong>
+                  <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+                    <div style="font-size: 0.85rem; color: var(--text-secondary);">
+                      Total: <strong id="fin-receitas-total" style="color: #34d399; font-size: 0.96rem;">R$ 0,00</strong>
+                    </div>
+                    <button type="button" class="btn btn-primary btn-sm" onclick="FinanceiroModule.openNewLancamentoModal('receita')" style="background: #10b981; border-color: #10b981; font-size: 0.78rem; font-weight: 700; padding: 5px 12px;">
+                      + Receita
+                    </button>
                   </div>
                 </div>
                 <div class="table-responsive">
@@ -931,8 +926,13 @@
                     <span id="fin-despesas-count" style="font-size: 0.72rem; font-weight: 700; padding: 2px 8px; border-radius: 999px; background: rgba(239, 68, 68, 0.18); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.4);">0</span>
                     <span style="font-size: 0.72rem; color: var(--text-muted);">(Despesas parceladas agrupadas — clique para ver cada parcela)</span>
                   </div>
-                  <div style="font-size: 0.85rem; color: var(--text-secondary);">
-                    Total: <strong id="fin-despesas-total" style="color: #f87171; font-size: 0.96rem;">R$ 0,00</strong>
+                  <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+                    <div style="font-size: 0.85rem; color: var(--text-secondary);">
+                      Total: <strong id="fin-despesas-total" style="color: #f87171; font-size: 0.96rem;">R$ 0,00</strong>
+                    </div>
+                    <button type="button" class="btn btn-primary btn-sm" onclick="FinanceiroModule.openNewLancamentoModal('despesa')" style="background: #ef4444; border-color: #ef4444; font-size: 0.78rem; font-weight: 700; padding: 5px 12px;">
+                      + Despesa
+                    </button>
                   </div>
                 </div>
                 <div class="table-responsive">
@@ -3214,20 +3214,20 @@
   <!-- CONTAINER DE TOASTS -->
   <div class="toast-container" id="toast-container"></div>
 
-  <!-- SCRIPTS DO SISTEMA (com cache-busting v94) -->
-  <script src="js/notifications.js?v=94"></script>
-  <script src="js/storage.js?v=94"></script>
-  <script src="js/auth.js?v=94"></script>
-  <script src="js/crm.js?v=94"></script>
-  <script src="js/encomendas.js?v=94"></script>
-  <script src="js/estoque.js?v=94"></script>
-  <script src="js/financeiro.js?v=94"></script>
-  <script src="js/propostas.js?v=94"></script>
-  <script src="js/calculadora.js?v=94"></script>
-  <script src="js/calculadora-laser.js?v=94"></script>
-  <script src="js/calendario.js?v=94"></script>
-  <script src="js/configuracoes.js?v=94"></script>
-  <script src="js/app.js?v=94"></script>
+  <!-- SCRIPTS DO SISTEMA (com cache-busting v95) -->
+  <script src="js/notifications.js?v=95"></script>
+  <script src="js/storage.js?v=95"></script>
+  <script src="js/auth.js?v=95"></script>
+  <script src="js/crm.js?v=95"></script>
+  <script src="js/encomendas.js?v=95"></script>
+  <script src="js/estoque.js?v=95"></script>
+  <script src="js/financeiro.js?v=95"></script>
+  <script src="js/propostas.js?v=95"></script>
+  <script src="js/calculadora.js?v=95"></script>
+  <script src="js/calculadora-laser.js?v=95"></script>
+  <script src="js/calendario.js?v=95"></script>
+  <script src="js/configuracoes.js?v=95"></script>
+  <script src="js/app.js?v=95"></script>
 </body>
 
 </html>
