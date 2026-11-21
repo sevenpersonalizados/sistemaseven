@@ -253,9 +253,12 @@ const FinanceiroModule = {
     let receitasEfetivadasTotal = 0;
     let despesasEfetivadasTotal = 0;
 
-    // Indicadores do Mês Atual
+    // Indicadores do Mês Vigente
+    const mesesNomes = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
+    const mesVigenteLabel = `${mesesNomes[hoje.getMonth()]}/${hoje.getFullYear()}`;
     let receitasMes = 0;
-    let despesasMes = 0;
+    let despesasMesPagas = 0;
+    let despesasMesPendentes = 0;
 
     // Contas a Pagar e Contas a Receber (Pendentes)
     let valoresAPagar = 0;
@@ -285,9 +288,10 @@ const FinanceiroModule = {
         // Despesa
         if (isPago) {
           despesasEfetivadasTotal += val;
-          if (isNoMes) despesasMes += val;
+          if (isNoMes) despesasMesPagas += val;
         } else if (isPendente) {
           valoresAPagar += val;
+          if (isNoMes) despesasMesPendentes += val;
           if (isVencido) {
             contasVencidas += val;
             contasVencidasCount++;
@@ -297,25 +301,45 @@ const FinanceiroModule = {
     });
 
     saldoDisponivel = receitasEfetivadasTotal - despesasEfetivadasTotal;
-    const resultadoMes = receitasMes - despesasMes;
+    const saldoProjetado = saldoDisponivel - valoresAPagar;
+    const lucroRealizado = receitasEfetivadasTotal - despesasEfetivadasTotal;
 
     // Atualiza elementos no DOM
     const elSaldo = document.getElementById('fin-kpi-saldo');
-    const elRecMes = document.getElementById('fin-kpi-receitas-mes');
-    const elDespMes = document.getElementById('fin-kpi-despesas-mes');
-    const elResMes = document.getElementById('fin-kpi-resultado-mes');
     const elPagar = document.getElementById('fin-kpi-a-pagar');
+    const elProjetado = document.getElementById('fin-kpi-saldo-projetado');
     const elReceber = document.getElementById('fin-kpi-a-receber');
+    const elDespMes = document.getElementById('fin-kpi-despesas-mes');
+    const elDespMesSub = document.getElementById('fin-kpi-despesas-mes-sub');
+    const elMesLabel = document.getElementById('fin-kpi-mes-vigente-label');
+    const elLucro = document.getElementById('fin-kpi-lucro');
+    const elLucroSub = document.getElementById('fin-kpi-lucro-sub');
 
     if (elSaldo) {
       elSaldo.textContent = App.formatMoney(saldoDisponivel);
       elSaldo.style.color = saldoDisponivel >= 0 ? '#10b981' : '#ef4444';
     }
-    if (elRecMes) elRecMes.textContent = App.formatMoney(receitasMes);
-    if (elDespMes) elDespMes.textContent = App.formatMoney(despesasMes);
-    if (elResMes) {
-      elResMes.textContent = (resultadoMes >= 0 ? '+ ' : '') + App.formatMoney(resultadoMes);
-      elResMes.style.color = resultadoMes >= 0 ? '#34d399' : '#f87171';
+    if (elProjetado) {
+      elProjetado.textContent = App.formatMoney(saldoProjetado);
+      elProjetado.style.color = saldoProjetado >= 0 ? '#34d399' : '#f87171';
+    }
+    if (elMesLabel) {
+      elMesLabel.textContent = mesVigenteLabel;
+    }
+    if (elDespMes) {
+      elDespMes.textContent = App.formatMoney(despesasMesPagas);
+    }
+    if (elDespMesSub) {
+      elDespMesSub.textContent = despesasMesPendentes > 0
+        ? `Pagas no mês • + ${App.formatMoney(despesasMesPendentes)} pendente(s) em ${mesesNomes[hoje.getMonth()]}`
+        : `Saídas pagas em ${mesVigenteLabel}`;
+    }
+    if (elLucro) {
+      elLucro.textContent = (lucroRealizado >= 0 ? '+ ' : '') + App.formatMoney(lucroRealizado);
+      elLucro.style.color = lucroRealizado >= 0 ? '#34d399' : '#f87171';
+    }
+    if (elLucroSub) {
+      elLucroSub.textContent = `Receitas: ${App.formatMoney(receitasEfetivadasTotal)} • Despesas: ${App.formatMoney(despesasEfetivadasTotal)}`;
     }
     if (elPagar) {
       elPagar.textContent = App.formatMoney(valoresAPagar);
