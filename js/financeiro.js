@@ -263,6 +263,7 @@ const FinanceiroModule = {
     let receitasMes = 0;
     let despesasMesPagas = 0;
     let despesasMesPendentes = 0;
+    let lucroEncomendasRecebidas = 0;
 
     // Contas a Pagar e Contas a Receber (Pendentes)
     let valoresAPagar = 0;
@@ -285,6 +286,9 @@ const FinanceiroModule = {
         if (isPago) {
           receitasEfetivadasTotal += val;
           if (isNoMes) receitasMes += val;
+          if (l.origem === 'encomenda') {
+            lucroEncomendasRecebidas += val;
+          }
         } else if (isPendente) {
           valoresAReceber += val;
         }
@@ -306,7 +310,7 @@ const FinanceiroModule = {
 
     saldoDisponivel = receitasEfetivadasTotal - despesasEfetivadasTotal;
     const saldoProjetado = saldoDisponivel - valoresAPagar;
-    const lucroRealizado = receitasEfetivadasTotal - despesasEfetivadasTotal;
+    const lucroRealizado = lucroEncomendasRecebidas;
 
     // Atualiza elementos no DOM
     const elSaldo = document.getElementById('fin-kpi-saldo');
@@ -339,11 +343,13 @@ const FinanceiroModule = {
         : `Saídas pagas em ${mesVigenteLabel}`;
     }
     if (elLucro) {
-      elLucro.textContent = (lucroRealizado >= 0 ? '+ ' : '') + App.formatMoney(lucroRealizado);
-      elLucro.style.color = lucroRealizado >= 0 ? '#34d399' : '#f87171';
+      elLucro.textContent = App.formatMoney(lucroRealizado);
+      elLucro.style.color = lucroRealizado > 0 ? '#34d399' : '#94a3b8';
     }
     if (elLucroSub) {
-      elLucroSub.textContent = `Receitas: ${App.formatMoney(receitasEfetivadasTotal)} • Despesas: ${App.formatMoney(despesasEfetivadasTotal)}`;
+      elLucroSub.textContent = valoresAReceber > 0
+        ? `Recebido de encomendas • + ${App.formatMoney(valoresAReceber)} a receber`
+        : 'Recebido de encomendas pagas';
     }
     if (elPagar) {
       elPagar.textContent = App.formatMoney(valoresAPagar);
