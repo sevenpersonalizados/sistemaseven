@@ -38,9 +38,6 @@ const FinanceiroModule = {
     this.chartAno = hoje.getFullYear();
     this.chartMes = hoje.getMonth() + 1;
 
-    // Migração transparente caso o usuário já tenha despesas antigas mas ainda não tenha financeiro_lancamentos
-    this.checkMigrateLegacyDespesas();
-
     this.render();
 
     // Reatividade a eventos do sistema
