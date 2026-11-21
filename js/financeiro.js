@@ -956,8 +956,25 @@ const FinanceiroModule = {
     const boxRecorrente = document.getElementById('fin-box-recorrente');
     if (boxRecorrente) boxRecorrente.style.display = 'none';
 
+    // Reseta campos de Compra no Cartão de Crédito (1ª parcela sugerida para o próximo mês)
+    const chkCartao = document.getElementById('fin-form-chk-cartao');
+    if (chkCartao) chkCartao.checked = false;
+    const boxCartao = document.getElementById('fin-box-cartao');
+    if (boxCartao) boxCartao.style.display = 'none';
+    const ccEstab = document.getElementById('fin-cc-estabelecimento');
+    if (ccEstab) ccEstab.value = '';
+    const ccParcelas = document.getElementById('fin-cc-parcelas');
+    if (ccParcelas) ccParcelas.value = '1';
+    const proxMes = new Date();
+    proxMes.setMonth(proxMes.getMonth() + 1);
+    const ccMes = document.getElementById('fin-cc-mes-inicio');
+    const ccAno = document.getElementById('fin-cc-ano-inicio');
+    if (ccMes) ccMes.value = String(proxMes.getMonth() + 1);
+    if (ccAno) ccAno.value = String(proxMes.getFullYear());
+
     this.setModalTipo(tipo);
     this.populateModalSelects();
+    this.updateCartaoPreview();
 
     // Seleciona proprietário ativo por padrão
     const selProp = document.getElementById('fin-form-proprietario');
@@ -1000,6 +1017,69 @@ const FinanceiroModule = {
           <option value="pendente">⏳ Pendente (A Pagar)</option>
         `;
       }
+    }
+
+    // Exibe o bloco de Compra no Cartão de Crédito somente em Despesas (e novos lançamentos)
+    const ccWrapper = document.getElementById('fin-cc-wrapper');
+    if (ccWrapper) {
+      ccWrapper.style.display = (tipo === 'despesa' && !this.currentEditId) ? 'block' : 'none';
+      if (tipo !== 'despesa') {
+        const chkCartao = document.getElementById('fin-form-chk-cartao');
+        const boxCartao = document.getElementById('fin-box-cartao');
+        if (chkCartao) chkCartao.checked = false;
+        if (boxCartao) boxCartao.style.display = 'none';
+      }
+    }
+  },
+
+  onFormaPagtoModalChange(forma) {
+    const tipo = document.getElementById('fin-form-tipo')?.value;
+    if (tipo !== 'despesa' || this.currentEditId) return;
+    const isCredito = (forma || '').toLowerCase().includes('crédito') || (forma || '').toLowerCase().includes('credito');
+    const chkCartao = document.getElementById('fin-form-chk-cartao');
+    if (chkCartao && isCredito && !chkCartao.checked) {
+      chkCartao.checked = true;
+      this.toggleCartaoCredito(true);
+    }
+  },
+
+  toggleCartaoCredito(checked) {
+    const box = document.getElementById('fin-box-cartao');
+    if (box) box.style.display = checked ? 'block' : 'none';
+    if (checked) {
+      // Seleciona automaticamente Cartão de Crédito na forma de pagamento e Pendente como status padrão
+      const selForma = document.getElementById('fin-form-forma');
+      if (selForma) {
+        const optCredito = Array.from(selForma.options).find(o => o.value.toLowerCase().includes('crédito') || o.value.toLowerCase().includes('credito'));
+        if (optCredito) selForma.value = optCredito.value;
+      }
+      const selStatus = document.getElementById('fin-form-status');
+      if (selStatus) selStatus.value = 'pendente';
+
+      // Desmarca parcelamento genérico para evitar conflito
+      const chkParc = document.getElementById('fin-form-chk-parcelar');
+      const boxParc = document.getElementById('fin-box-parcelar');
+      if (chkParc) chkParc.checked = false;
+      if (boxParc) boxParc.style.display = 'none';
+    }
+    this.updateCartaoPreview();
+  },
+
+  updateCartaoPreview() {
+    const hint = document.getElementById('fin-cc-fatura-hint');
+    if (!hint) return;
+    const mesesNomes = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
+    const mes = parseInt(document.getElementById('fin-cc-mes-inicio')?.value, 10) || (new Date().getMonth() + 1);
+    const ano = parseInt(document.getElementById('fin-cc-ano-inicio')?.value, 10) || new Date().getFullYear();
+    const parcelas = parseInt(document.getElementById('fin-cc-parcelas')?.value, 10) || 1;
+    const valor = parseFloat(document.getElementById('fin-form-valor')?.value) || 0;
+    const mesNome = mesesNomes[Math.max(0, Math.min(11, mes - 1))];
+
+    if (valor > 0) {
+      const valorParc = valor / parcelas;
+      hint.textContent = `💡 Compra vinculada à fatura de ${mesNome}/${ano} (vencimento dia 15) — ${parcelas}x de ${App.formatMoney(valorParc)}.`;
+    } else {
+      hint.textContent = `💡 Compra vinculada à fatura de ${mesNome}/${ano} (vencimento dia 15).`;
     }
   },
 
@@ -1058,6 +1138,7 @@ const FinanceiroModule = {
   },
 
   updateCalculoParcelas() {
+    this.updateCartaoPreview();
     const valor = parseFloat(document.getElementById('fin-form-valor').value) || 0;
     const numParcelas = parseInt(document.getElementById('fin-form-num-parcelas').value, 10) || 2;
     const info = document.getElementById('fin-parcelas-calc-info');
@@ -1159,6 +1240,76 @@ const FinanceiroModule = {
       });
 
       App.toast('Lançamento financeiro atualizado com sucesso!', 'success');
+      App.closeModal('modal-lancamento-financeiro');
+      this.render();
+      return;
+    }
+
+    // Caso de COMPRA NO CARTÃO DE CRÉDITO (encaminha cada parcela para a despesa do mês correspondente)
+    const isCartaoCredito = tipo === 'despesa' && document.getElementById('fin-form-chk-cartao')?.checked;
+    if (isCartaoCredito) {
+      const estabelecimento = document.getElementById('fin-cc-estabelecimento')?.value.trim() || '';
+      const cartao = document.getElementById('fin-cc-cartao')?.value || 'Cartão de Crédito';
+      const numParcelas = Math.max(1, parseInt(document.getElementById('fin-cc-parcelas')?.value, 10) || 1);
+      const mesInicio = parseInt(document.getElementById('fin-cc-mes-inicio')?.value, 10) || (new Date().getMonth() + 1);
+      const anoInicio = parseInt(document.getElementById('fin-cc-ano-inicio')?.value, 10) || new Date().getFullYear();
+      const grupoId = 'cc-' + Date.now();
+      const valorBaseParcela = Math.floor((valor / numParcelas) * 100) / 100;
+      const diferencaCentavos = Number((valor - (valorBaseParcela * numParcelas)).toFixed(2));
+      const mesesNomes = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+
+      for (let p = 1; p <= numParcelas; p++) {
+        const dataFatura = new Date(anoInicio, (mesInicio - 1) + (p - 1), 15);
+        const dataFaturaIso = this.formatIsoDate(dataFatura);
+        const valorParc = p === numParcelas ? Number((valorBaseParcela + diferencaCentavos).toFixed(2)) : valorBaseParcela;
+        const mesLabel = `${mesesNomes[dataFatura.getMonth()]}/${dataFatura.getFullYear()}`;
+        const descBase = estabelecimento ? `${descricao} (${estabelecimento})` : descricao;
+        const descFinal = numParcelas > 1 ? `${descBase} (${p}/${numParcelas})` : descBase;
+        const obsPartes = [
+          `💳 ${cartao}`,
+          estabelecimento ? `Loja: ${estabelecimento}` : '',
+          `Compra em ${App.formatDate(data)}`,
+          `Fatura ${mesLabel}`,
+          observacoes
+        ].filter(Boolean).join(' • ');
+
+        const novoItem = {
+          id: `fin-${Date.now()}-${p}`,
+          tipo: 'despesa',
+          descricao: descFinal,
+          valor: valorParc,
+          categoria,
+          centro_custo: centro,
+          data: dataFaturaIso,
+          forma_pagamento: 'Cartão de Crédito',
+          local_pagamento: cartao,
+          status: (p === 1 && status === 'pago') ? 'pago' : 'pendente',
+          observacoes: obsPartes,
+          proprietario,
+          parcela_atual: p,
+          total_parcelas: numParcelas,
+          id_grupo_parcela: grupoId,
+          origem: 'manual',
+          estornado: false,
+          historico_alteracoes: [{
+            data: new Date().toISOString(),
+            responsavel: StorageService.getActiveProprietario(),
+            acao: `Compra no Cartão ${cartao} (${p}/${numParcelas})`
+          }]
+        };
+
+        StorageService.insert('financeiro_lancamentos', novoItem);
+      }
+
+      StorageService.logFinanceiroAuditoria({
+        acao: 'Compra Cartão de Crédito',
+        lancamento_id: grupoId,
+        descricao: `${descricao}${estabelecimento ? ' — ' + estabelecimento : ''} (${numParcelas}x)`,
+        valor,
+        detalhes: `Cartão ${cartao} • ${numParcelas}x de ${App.formatMoney(valor / numParcelas)} • 1ª fatura ${mesesNomes[mesInicio - 1]}/${anoInicio}`
+      });
+
+      App.toast(`💳 Compra no ${cartao} registrada em ${numParcelas}x de ${App.formatMoney(valor / numParcelas)}!`, 'success');
       App.closeModal('modal-lancamento-financeiro');
       this.render();
       return;

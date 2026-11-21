@@ -48,7 +48,7 @@
   <meta http-equiv="Expires" content="0">
 
   <!-- Estilos Customizados -->
-  <link rel="stylesheet" href="css/styles.css?v=75">
+  <link rel="stylesheet" href="css/styles.css?v=76">
 </head>
 
 <body>
@@ -1982,11 +1982,98 @@
         <div class="form-row">
           <div class="form-group">
             <label>Forma de Pagamento</label>
-            <select id="fin-form-forma" class="form-control"></select>
+            <select id="fin-form-forma" class="form-control" onchange="FinanceiroModule.onFormaPagtoModalChange(this.value)"></select>
           </div>
           <div class="form-group">
             <label>Local / Conta Bancária</label>
             <select id="fin-form-local" class="form-control"></select>
+          </div>
+        </div>
+
+        <!-- COMPRA NO CARTÃO DE CRÉDITO (DESPESAS — MESMO PADRÃO DO SISTEMA RAPHAEL NILSEN) -->
+        <div id="fin-cc-wrapper" style="display: none; background: rgba(59, 130, 246, 0.06); border: 1px solid rgba(59, 130, 246, 0.35); border-radius: 10px; padding: 14px; margin-bottom: 14px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; flex-wrap: wrap; gap: 8px;">
+            <label style="display: inline-flex; align-items: center; gap: 8px; margin: 0; cursor: pointer; font-size: 0.88rem; font-weight: 700; color: #ffffff;">
+              <input type="checkbox" id="fin-form-chk-cartao" onchange="FinanceiroModule.toggleCartaoCredito(this.checked)" style="width: 17px; height: 17px;">
+              <span>💳 Compra no Cartão de Crédito (Parcelamento por Fatura)</span>
+            </label>
+          </div>
+
+          <div id="fin-box-cartao" style="display: none; padding-top: 10px; border-top: 1px solid rgba(255, 255, 255, 0.08);">
+            <div class="form-row">
+              <div class="form-group">
+                <label>Onde Comprou (Estabelecimento)</label>
+                <input type="text" id="fin-cc-estabelecimento" class="form-control" placeholder="Ex: Amazon, Magazine Luiza, Mercado Livre...">
+              </div>
+              <div class="form-group">
+                <label>Cartão Utilizado</label>
+                <select id="fin-cc-cartao" class="form-control" onchange="FinanceiroModule.updateCartaoPreview()">
+                  <option value="Mastercard">Mastercard</option>
+                  <option value="Visa">Visa</option>
+                  <option value="Nubank">Nubank</option>
+                  <option value="Banco Inter">Banco Inter</option>
+                  <option value="Elo">Elo</option>
+                  <option value="Amex">Amex</option>
+                  <option value="Outro Cartão">Outro Cartão</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label>Quantidade de Vezes (Parcelamento)</label>
+                <select id="fin-cc-parcelas" class="form-control" onchange="FinanceiroModule.updateCartaoPreview()">
+                  <option value="1">1x (À vista na fatura)</option>
+                  <option value="2">2x</option>
+                  <option value="3">3x</option>
+                  <option value="4">4x</option>
+                  <option value="5">5x</option>
+                  <option value="6">6x</option>
+                  <option value="7">7x</option>
+                  <option value="8">8x</option>
+                  <option value="9">9x</option>
+                  <option value="10">10x</option>
+                  <option value="11">11x</option>
+                  <option value="12">12x</option>
+                  <option value="15">15x</option>
+                  <option value="18">18x</option>
+                  <option value="24">24x</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>Início da Cobrança (1ª Parcela)</label>
+                <div style="display: grid; grid-template-columns: 1.4fr 1fr; gap: 8px;">
+                  <select id="fin-cc-mes-inicio" class="form-control" onchange="FinanceiroModule.updateCartaoPreview()">
+                    <option value="1">Janeiro</option>
+                    <option value="2">Fevereiro</option>
+                    <option value="3">Março</option>
+                    <option value="4">Abril</option>
+                    <option value="5">Maio</option>
+                    <option value="6">Junho</option>
+                    <option value="7">Julho</option>
+                    <option value="8">Agosto</option>
+                    <option value="9">Setembro</option>
+                    <option value="10">Outubro</option>
+                    <option value="11">Novembro</option>
+                    <option value="12">Dezembro</option>
+                  </select>
+                  <select id="fin-cc-ano-inicio" class="form-control" onchange="FinanceiroModule.updateCartaoPreview()">
+                    <option value="2025">2025</option>
+                    <option value="2026" selected>2026</option>
+                    <option value="2027">2027</option>
+                    <option value="2028">2028</option>
+                    <option value="2029">2029</option>
+                  </select>
+                </div>
+                <div id="fin-cc-fatura-hint" style="font-size: 0.74rem; color: #38bdf8; margin-top: 5px; line-height: 1.35;">
+                  💡 Compra vinculada à fatura selecionada (vencimento dia 15).
+                </div>
+              </div>
+            </div>
+
+            <div style="background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 8px; padding: 10px 12px; font-size: 0.76rem; color: var(--text-secondary); line-height: 1.45;">
+              💡 <strong style="color: #ffffff;">Regra Automática:</strong> O valor de cada parcela será encaminhado diretamente para as despesas do mês correspondente!
+            </div>
           </div>
         </div>
 
@@ -2825,20 +2912,20 @@
   <!-- CONTAINER DE TOASTS -->
   <div class="toast-container" id="toast-container"></div>
 
-  <!-- SCRIPTS DO SISTEMA (com cache-busting v75) -->
-  <script src="js/notifications.js?v=75"></script>
-  <script src="js/storage.js?v=75"></script>
-  <script src="js/auth.js?v=75"></script>
-  <script src="js/crm.js?v=75"></script>
-  <script src="js/encomendas.js?v=75"></script>
-  <script src="js/estoque.js?v=75"></script>
-  <script src="js/financeiro.js?v=75"></script>
-  <script src="js/propostas.js?v=75"></script>
-  <script src="js/calculadora.js?v=75"></script>
-  <script src="js/calculadora-laser.js?v=75"></script>
-  <script src="js/calendario.js?v=75"></script>
-  <script src="js/configuracoes.js?v=75"></script>
-  <script src="js/app.js?v=75"></script>
+  <!-- SCRIPTS DO SISTEMA (com cache-busting v76) -->
+  <script src="js/notifications.js?v=76"></script>
+  <script src="js/storage.js?v=76"></script>
+  <script src="js/auth.js?v=76"></script>
+  <script src="js/crm.js?v=76"></script>
+  <script src="js/encomendas.js?v=76"></script>
+  <script src="js/estoque.js?v=76"></script>
+  <script src="js/financeiro.js?v=76"></script>
+  <script src="js/propostas.js?v=76"></script>
+  <script src="js/calculadora.js?v=76"></script>
+  <script src="js/calculadora-laser.js?v=76"></script>
+  <script src="js/calendario.js?v=76"></script>
+  <script src="js/configuracoes.js?v=76"></script>
+  <script src="js/app.js?v=76"></script>
 </body>
 
 </html>
