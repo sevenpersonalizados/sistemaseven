@@ -80,11 +80,57 @@ const PropostasModule = {
     filtradas.sort((a, b) => ((b.criada_em || '') > (a.criada_em || '') ? 1 : -1));
 
     container.innerHTML = filtradas.map(p => {
-      const itensResumo = (p.itens && p.itens.length > 0)
-        ? p.itens.map(i => `${i.quantidade}x ${i.produto_nome}${i.cor ? ` (${i.cor})` : ''}`).join(', ')
-        : (p.escopo || 'Itens personalizados');
+      const itensList = (p.itens && p.itens.length > 0) ? p.itens : [];
+      const multiItens = itensList.length > 1;
+      const hasItemPhotos = itensList.some(i => i.foto_anexo);
+      const coresList = [...new Set(itensList.filter(i => i.cor).map(i => i.cor))];
 
-      const coresList = [...new Set((p.itens || []).filter(i => i.cor).map(i => i.cor))];
+      const itensHtml = itensList.length > 0
+        ? itensList.map((i, idx) => {
+            const corStr = i.cor ? ` <span style="color: #38bdf8;">[${App.escapeHtml(i.cor)}]</span>` : '';
+            const thumbHtml = i.foto_anexo
+              ? `
+                <div onclick="event.stopPropagation(); App.openOrderItemPhoto('propostas', '${p.id}', ${idx})" title="Foto de ${App.escapeHtml(i.produto_nome || 'Item')} — Clique para ampliar e baixar"
+                     style="flex-shrink: 0; position: relative; cursor: pointer;">
+                  <img src="${i.foto_anexo}" alt="Anexo Item ${idx + 1}" style="width: 44px; height: 44px; object-fit: cover; border-radius: 7px; border: 1.5px solid rgba(56, 189, 248, 0.6); box-shadow: 0 2px 8px rgba(0,0,0,0.35); display: block;">
+                  <span style="position: absolute; right: -4px; bottom: -4px; background: #0f172a; border: 1px solid rgba(56,189,248,0.65); border-radius: 999px; font-size: 0.56rem; padding: 1px 3px;">🔍</span>
+                </div>
+              `
+              : '';
+            const descParts = [];
+            if (i.personalizacao && i.personalizacao.trim()) {
+              descParts.push(`<div style="font-size: 0.77rem; color: #e2e8f0; margin-top: 3px; white-space: pre-line; line-height: 1.4;">${App.escapeHtml(i.personalizacao.trim())}</div>`);
+            }
+            if (i.observacao && i.observacao.trim()) {
+              descParts.push(`<div style="font-size: 0.73rem; color: #fbbf24; margin-top: 2px;">Obs: ${App.escapeHtml(i.observacao.trim())}</div>`);
+            }
+
+            if (multiItens) {
+              return `
+                <div style="display: flex; justify-content: space-between; align-items: center; gap: 10px; background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(148, 163, 184, 0.22); border-radius: 8px; padding: 9px 11px;">
+                  <div style="flex: 1; min-width: 0;">
+                    <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
+                      <span style="font-size: 0.64rem; font-weight: 800; color: #38bdf8; background: rgba(56, 189, 248, 0.14); border: 1px solid rgba(56, 189, 248, 0.35); border-radius: 999px; padding: 1px 6px;">#${idx + 1}</span>
+                      <span><strong>${i.quantidade}x</strong> ${App.escapeHtml(i.produto_nome || 'Item')}${corStr}</span>
+                    </div>
+                    ${descParts.join('')}
+                  </div>
+                  ${thumbHtml}
+                </div>
+              `;
+            }
+
+            return `
+              <div style="display: flex; justify-content: space-between; align-items: center; gap: 10px;">
+                <div style="flex: 1; min-width: 0;">
+                  <div>• <strong>${i.quantidade}x</strong> ${App.escapeHtml(i.produto_nome || 'Item')}${corStr}</div>
+                  ${descParts.join('')}
+                </div>
+                ${thumbHtml}
+              </div>
+            `;
+          }).join('')
+        : `<div style="color: var(--text-muted);">${App.escapeHtml(p.escopo || 'Itens personalizados')}</div>`;
 
       return `
         <div class="panel-box" style="margin-bottom: 0; display: flex; flex-direction: column; justify-content: space-between; border-color: rgba(245, 158, 11, 0.45); box-shadow: 0 4px 18px rgba(245, 158, 11, 0.08);">
@@ -112,38 +158,17 @@ const PropostasModule = {
                   👤 Cliente: ${App.escapeHtml(p.cliente)} ${p.telefone ? `<span style="color: var(--text-muted); font-size: 0.78rem;">(${App.escapeHtml(p.telefone)})</span>` : ''}
                 </div>
               </div>
-              ${(() => {
-                const fotosItens = (p.itens || [])
-                  .map((it, i) => ({ src: it.foto_anexo, idx: i, nome: it.produto_nome || `Item ${i + 1}` }))
-                  .filter(f => f.src);
-                if (fotosItens.length > 0) {
-                  return `
-                    <div style="display: flex; gap: 6px; flex-wrap: wrap; flex-shrink: 0; margin-top: 4px;">
-                      ${fotosItens.map(f => `
-                        <div onclick="event.stopPropagation(); App.openOrderItemPhoto('propostas', '${p.id}', ${f.idx})" title="Foto de ${App.escapeHtml(f.nome)} — Clique para ampliar e baixar"
-                             style="position: relative; cursor: pointer;">
-                          <img src="${f.src}" alt="${App.escapeHtml(f.nome)}" style="width: 44px; height: 44px; object-fit: cover; border-radius: 8px; border: 1.5px solid rgba(56, 189, 248, 0.55); box-shadow: 0 2px 8px rgba(0,0,0,0.35); display: block;">
-                          <span style="position: absolute; right: -4px; bottom: -4px; background: #0f172a; border: 1px solid rgba(56,189,248,0.6); border-radius: 999px; font-size: 0.58rem; padding: 1px 3px;">🔍</span>
-                        </div>
-                      `).join('')}
-                    </div>
-                  `;
-                }
-                if (p.foto_anexo) {
-                  return `
-                    <div onclick="event.stopPropagation(); App.openOrderPhoto('propostas', '${p.id}')" title="Clique para ver a foto em tela cheia e baixar"
-                         style="flex-shrink: 0; position: relative; cursor: pointer; margin-top: 4px;">
-                      <img src="${p.foto_anexo}" alt="Anexo" style="width: 48px; height: 48px; object-fit: cover; border-radius: 8px; border: 1.5px solid rgba(56, 189, 248, 0.55); box-shadow: 0 2px 8px rgba(0,0,0,0.35); display: block;">
-                      <span style="position: absolute; right: -4px; bottom: -4px; background: #0f172a; border: 1px solid rgba(56,189,248,0.6); border-radius: 999px; font-size: 0.62rem; padding: 1px 4px;">🔍</span>
-                    </div>
-                  `;
-                }
-                return '';
-              })()}
+              ${(p.foto_anexo && !hasItemPhotos) ? `
+                <div onclick="event.stopPropagation(); App.openOrderPhoto('propostas', '${p.id}')" title="Clique para ver a foto em tela cheia e baixar"
+                     style="flex-shrink: 0; position: relative; cursor: pointer; margin-top: 4px;">
+                  <img src="${p.foto_anexo}" alt="Anexo" style="width: 48px; height: 48px; object-fit: cover; border-radius: 8px; border: 1.5px solid rgba(56, 189, 248, 0.55); box-shadow: 0 2px 8px rgba(0,0,0,0.35); display: block;">
+                  <span style="position: absolute; right: -4px; bottom: -4px; background: #0f172a; border: 1px solid rgba(56,189,248,0.6); border-radius: 999px; font-size: 0.62rem; padding: 1px 4px;">🔍</span>
+                </div>
+              ` : ''}
             </div>
 
-            <div style="font-size: 0.82rem; color: var(--text-secondary); line-height: 1.5; margin-bottom: 14px; background: rgba(255,255,255,0.02); padding: 8px 10px; border-radius: 6px; border: 1px solid var(--border);">
-              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; gap: 6px; flex-wrap: wrap;">
+            <div style="font-size: 0.82rem; color: var(--text-secondary); line-height: 1.45; margin-bottom: 14px; background: rgba(255,255,255,0.02); padding: 10px 12px; border-radius: 8px; border: 1px solid var(--border);">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; gap: 6px; flex-wrap: wrap;">
                 <span style="font-size: 0.70rem; color: var(--text-muted); text-transform: uppercase; font-weight: 700;">Itens Orçados:</span>
                 ${coresList.length > 0 ? `
                   <span class="badge-cor-tag" style="font-size: 0.70rem; padding: 1px 7px;" title="Cores: ${coresList.join(', ')}">
@@ -151,8 +176,8 @@ const PropostasModule = {
                   </span>
                 ` : ''}
               </div>
-              <div style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 2px;" title="${App.escapeHtml(itensResumo)}">
-                ${App.escapeHtml(itensResumo)}
+              <div style="max-height: 240px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px;">
+                ${itensHtml}
               </div>
             </div>
           </div>

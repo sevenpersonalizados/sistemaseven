@@ -257,15 +257,19 @@ const EncomendasModule = {
     const totalItens = (enc.itens || []).reduce((acc, it) => acc + (Number(it.quantidade) || 0), 0);
     const coresList = [...new Set((enc.itens || []).filter(i => i.cor).map(i => i.cor))];
 
-    const itensHtml = (enc.itens && enc.itens.length > 0)
-      ? enc.itens.map((i, idx) => {
+    const itensList = (enc.itens && enc.itens.length > 0) ? enc.itens : [];
+    const multiItens = itensList.length > 1;
+    const hasItemPhotos = itensList.some(i => i.foto_anexo);
+
+    const itensHtml = itensList.length > 0
+      ? itensList.map((i, idx) => {
           const corStr = i.cor ? ` <span style="color: #38bdf8;">[${App.escapeHtml(i.cor)}]</span>` : '';
           const thumbHtml = i.foto_anexo
             ? `
               <div onclick="event.stopPropagation(); App.openOrderItemPhoto('encomendas', '${enc.id}', ${idx})" title="Foto de ${App.escapeHtml(i.produto_nome || 'Item')} — Clique para tela cheia e download"
                    style="flex-shrink: 0; position: relative; cursor: pointer;">
-                <img src="${i.foto_anexo}" alt="Anexo" style="width: 38px; height: 38px; object-fit: cover; border-radius: 6px; border: 1.5px solid rgba(56, 189, 248, 0.55); display: block;">
-                <span style="position: absolute; right: -4px; bottom: -4px; background: #0f172a; border: 1px solid rgba(56,189,248,0.65); border-radius: 999px; font-size: 0.54rem; padding: 0 3px;">🔍</span>
+                <img src="${i.foto_anexo}" alt="Anexo Item ${idx + 1}" style="width: 44px; height: 44px; object-fit: cover; border-radius: 7px; border: 1.5px solid rgba(56, 189, 248, 0.6); box-shadow: 0 2px 8px rgba(0,0,0,0.35); display: block;">
+                <span style="position: absolute; right: -4px; bottom: -4px; background: #0f172a; border: 1px solid rgba(56,189,248,0.65); border-radius: 999px; font-size: 0.56rem; padding: 1px 3px;">🔍</span>
               </div>
             `
             : '';
@@ -276,8 +280,24 @@ const EncomendasModule = {
           if (i.observacao && i.observacao.trim()) {
             descParts.push(`<div style="font-size: 0.74rem; color: #fbbf24; margin-top: 2px;">Obs: ${App.escapeHtml(i.observacao.trim())}</div>`);
           }
+
+          if (multiItens) {
+            return `
+              <div style="display: flex; justify-content: space-between; align-items: center; gap: 10px; background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(148, 163, 184, 0.22); border-radius: 8px; padding: 9px 11px;">
+                <div style="flex: 1; min-width: 0;">
+                  <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
+                    <span style="font-size: 0.64rem; font-weight: 800; color: #38bdf8; background: rgba(56, 189, 248, 0.14); border: 1px solid rgba(56, 189, 248, 0.35); border-radius: 999px; padding: 1px 6px;">#${idx + 1}</span>
+                    <span><strong>${i.quantidade}x</strong> ${App.escapeHtml(i.produto_nome || 'Item')}${corStr}</span>
+                  </div>
+                  ${descParts.join('')}
+                </div>
+                ${thumbHtml}
+              </div>
+            `;
+          }
+
           return `
-            <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; margin-bottom: 8px; padding-bottom: 6px; border-bottom: 1px dashed rgba(255,255,255,0.06);">
+            <div style="display: flex; justify-content: space-between; align-items: center; gap: 10px;">
               <div style="flex: 1; min-width: 0;">
                 <div>• <strong>${i.quantidade}x</strong> ${App.escapeHtml(i.produto_nome || 'Item')}${corStr}</div>
                 ${descParts.join('')}
@@ -331,7 +351,7 @@ const EncomendasModule = {
                 <span>• Pedido em ${App.formatDate(enc.data_pedido)}</span>
               </div>
             </div>
-            ${enc.foto_anexo ? `
+            ${(enc.foto_anexo && !hasItemPhotos) ? `
               <div onclick="event.stopPropagation(); App.openOrderPhoto('encomendas', '${enc.id}')" title="Clique para ampliar a foto em tela cheia e fazer download"
                    style="flex-shrink: 0; position: relative; cursor: pointer; margin-top: 2px;">
                 <img src="${enc.foto_anexo}" alt="Anexo do pedido"
@@ -341,9 +361,9 @@ const EncomendasModule = {
             ` : ''}
           </div>
 
-          <!-- Caixa de Itens em Tópicos (igual ao visual de Orçamentos) -->
+          <!-- Caixa de Itens em Tópicos (separados em retângulos quando há mais de 1 item) -->
           <div style="font-size: 0.81rem; color: var(--text-secondary); line-height: 1.45; margin-bottom: 12px; background: rgba(255,255,255,0.025); padding: 10px 12px; border-radius: 8px; border: 1px solid var(--border);">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; gap: 6px; flex-wrap: wrap;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; gap: 6px; flex-wrap: wrap;">
               <span style="font-size: 0.68rem; color: var(--text-muted); text-transform: uppercase; font-weight: 700;">
                 Itens do Pedido (${totalItens} ${totalItens === 1 ? 'peça' : 'peças'}):
               </span>
@@ -353,7 +373,7 @@ const EncomendasModule = {
                 </span>
               ` : ''}
             </div>
-            <div style="max-height: 150px; overflow-y: auto;">
+            <div style="max-height: 240px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px;">
               ${itensHtml}
             </div>
             ${obsParaExibir ? `
