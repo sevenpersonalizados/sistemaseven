@@ -228,8 +228,10 @@ const App = {
     const elEncAbertas = document.getElementById('dash-kpi-enc-abertas');
     if (elEncAbertas) elEncAbertas.textContent = encAbertas.length;
 
-    // 2. Receita e Despesas do Mês
-    const lancamentosFin = StorageService.get('financeiro_lancamentos') || [];
+    // 2. Receita e Despesas (interligado com Lançamentos Financeiros + Encomendas)
+    const lancamentosFin = (typeof FinanceiroModule !== 'undefined' && FinanceiroModule.getLancamentos)
+      ? FinanceiroModule.getLancamentos()
+      : (StorageService.get('financeiro_lancamentos') || []);
     let receitaMes = 0;
     let despMes = 0;
     if (lancamentosFin.length > 0) {

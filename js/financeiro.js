@@ -40,10 +40,10 @@ const FinanceiroModule = {
 
     this.render();
 
-    // Reatividade a eventos do sistema
+    // Reatividade a eventos do sistema (inclui Encomendas interligadas em tempo real)
     window.addEventListener('seven_data_updated', (e) => {
       const t = e.detail?.table;
-      if (!t || t === 'financeiro_lancamentos' || t === 'financeiro_auditoria' || t === 'despesas' || t === 'config') {
+      if (!t || t === 'financeiro_lancamentos' || t === 'financeiro_auditoria' || t === 'despesas' || t === 'config' || t === 'encomendas') {
         this.render();
       }
     });
@@ -81,8 +81,109 @@ const FinanceiroModule = {
     }
   },
 
-  getLancamentos() {
+  getLancamentosManuais() {
     return StorageService.get('financeiro_lancamentos') || [];
+  },
+
+  getLancamentosEncomendas() {
+    const encomendas = StorageService.get('encomendas') || [];
+    const hojeIso = this.formatIsoDate(new Date());
+    const result = [];
+
+    encomendas.forEach(enc => {
+      if (!enc || enc.status === 'Cancelada') return;
+      const valorTotal = Number(enc.valor_total) || 0;
+      if (valorTotal <= 0) return;
+
+      const valorPago = Math.max(0, Number(enc.valor_pago) || 0);
+      const numPedido = StorageService.formatOrderNumber ? StorageService.formatOrderNumber(enc) : `#${String(enc.id).slice(-5)}`;
+      const itensResumo = (enc.itens || []).map(i => `${i.quantidade || 1}x ${i.produto_nome || 'Item'}`).join(', ');
+
+      // Garante data válida (YYYY-MM-DD com ano >= 2020)
+      const isDataValida = (d) => typeof d === 'string' && /^20\d{2}-\d{2}-\d{2}/.test(d);
+      const dataCriacao = (enc.created_at && isDataValida(enc.created_at.split('T')[0])) ? enc.created_at.split('T')[0] : hojeIso;
+      const dataPedido = isDataValida(enc.data_confirmacao)
+        ? enc.data_confirmacao
+        : (isDataValida(enc.data_pedido) ? enc.data_pedido : dataCriacao);
+      const dataEntrega = isDataValida(enc.data_entrega_prevista) ? enc.data_entrega_prevista : dataPedido;
+
+      const catLower = (enc.categoria || '').toLowerCase();
+      const categoriaFin = catLower.includes('3d')
+        ? 'Impressão 3D'
+        : (catLower.includes('laser') || catLower.includes('gravação') ? 'Gravação Laser' : 'Venda de Personalizados');
+      const centroCusto = catLower.includes('3d') ? 'Produção 3D' : 'Oficina / Produção Laser';
+
+      const base = {
+        tipo: 'receita',
+        categoria: categoriaFin,
+        centro_custo: centroCusto,
+        forma_pagamento: enc.forma_pagamento || 'Pix',
+        local_pagamento: 'Encomendas',
+        proprietario: 'Sistema',
+        observacoes: itensResumo || 'Pedido de Personalizados',
+        estornado: false,
+        origem: 'encomenda',
+        encomenda_id: enc.id,
+        encomenda_numero: numPedido,
+        parcela_atual: 1,
+        total_parcelas: 1
+      };
+
+      if (enc.pagamento_status === 'Pago' || valorPago >= valorTotal) {
+        result.push({
+          ...base,
+          id: `enc-fin-pago-${enc.id}`,
+          descricao: `Pedido ${numPedido} — ${enc.cliente_nome || 'Cliente'}`,
+          valor: valorTotal,
+          data: dataPedido,
+          status: 'recebido'
+        });
+      } else if (enc.pagamento_status === 'Parcial' || valorPago > 0) {
+        if (valorPago > 0) {
+          result.push({
+            ...base,
+            id: `enc-fin-pago-${enc.id}`,
+            descricao: `Pedido ${numPedido} — ${enc.cliente_nome || 'Cliente'} (Entrada)`,
+            valor: valorPago,
+            data: dataPedido,
+            status: 'recebido'
+          });
+        }
+        const restante = Math.max(0, Number((valorTotal - valorPago).toFixed(2)));
+        if (restante > 0) {
+          result.push({
+            ...base,
+            id: `enc-fin-pend-${enc.id}`,
+            descricao: `Pedido ${numPedido} — ${enc.cliente_nome || 'Cliente'} (Saldo a Receber)`,
+            valor: restante,
+            data: dataEntrega,
+            status: 'pendente'
+          });
+        }
+      } else {
+        result.push({
+          ...base,
+          id: `enc-fin-pend-${enc.id}`,
+          descricao: `Pedido ${numPedido} — ${enc.cliente_nome || 'Cliente'}`,
+          valor: valorTotal,
+          data: dataEntrega,
+          status: 'pendente'
+        });
+      }
+    });
+
+    return result;
+  },
+
+  getLancamentos() {
+    return [...this.getLancamentosManuais(), ...this.getLancamentosEncomendas()];
+  },
+
+  quitarEncomenda(encomendaId) {
+    if (!encomendaId || typeof EncomendasModule === 'undefined') return;
+    EncomendasModule.quitarPagamento(encomendaId);
+    this.render();
+    if (typeof App !== 'undefined' && App.renderDashboard) App.renderDashboard();
   },
 
   formatIsoDate(date) {
@@ -494,8 +595,12 @@ const FinanceiroModule = {
         ? `<span class="status-badge" style="background: rgba(16, 185, 129, 0.15); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.35);">🟢 Receita</span>`
         : `<span class="status-badge" style="background: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.35);">🔴 Despesa</span>`;
 
-      // Parcelamento / Recorrência Tags
+      // Parcelamento / Recorrência / Encomenda Tags
+      const isEncomenda = item.origem === 'encomenda' && item.encomenda_id;
       let metaTags = '';
+      if (isEncomenda) {
+        metaTags += `<span style="font-size: 0.68rem; font-weight: 700; background: rgba(16, 185, 129, 0.16); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.4); padding: 1px 6px; border-radius: 4px; margin-left: 6px;">🛍️ Encomenda</span>`;
+      }
       if (item.total_parcelas && item.total_parcelas > 1) {
         metaTags += `<span style="font-size: 0.68rem; font-weight: 700; background: rgba(56, 189, 248, 0.18); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.4); padding: 1px 6px; border-radius: 4px; margin-left: 6px;">Parcela ${item.parcela_atual}/${item.total_parcelas}</span>`;
       }
@@ -539,31 +644,42 @@ const FinanceiroModule = {
           </td>
           <td style="text-align: right; white-space: nowrap;">
             <div style="display: inline-flex; align-items: center; gap: 5px;">
-              ${isPendente && !isEstornado ? `
-                <button type="button" class="btn btn-primary btn-sm" onclick="FinanceiroModule.baixarLancamento('${item.id}')" title="Marcar como Liquidado/Efetivado" style="padding: 4px 8px; font-size: 0.72rem; background: #10b981;">
-                  ✓ Baixar
+              ${isEncomenda ? `
+                ${isPendente ? `
+                  <button type="button" class="btn btn-primary btn-sm" onclick="FinanceiroModule.quitarEncomenda('${item.encomenda_id}')" title="Quitar pagamento desta encomenda" style="padding: 4px 8px; font-size: 0.72rem; background: #10b981;">
+                    ✓ Quitar
+                  </button>
+                ` : ''}
+                <button type="button" class="btn btn-secondary btn-sm" onclick="EncomendasModule.openEditModal('${item.encomenda_id}')" title="Abrir encomenda para editar valores ou pagamento" style="padding: 4px 8px; font-size: 0.72rem;">
+                  ✏️ Pedido
                 </button>
-              ` : ''}
-              
-              <button type="button" class="btn btn-secondary btn-icon" onclick="FinanceiroModule.openDetalhesModal('${item.id}')" title="Ver Detalhes e Auditoria">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-              </button>
-
-              ${!isEstornado ? `
-                <button type="button" class="btn btn-secondary btn-icon" onclick="FinanceiroModule.openEditModal('${item.id}')" title="Editar Lançamento">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+              ` : `
+                ${isPendente && !isEstornado ? `
+                  <button type="button" class="btn btn-primary btn-sm" onclick="FinanceiroModule.baixarLancamento('${item.id}')" title="Marcar como Liquidado/Efetivado" style="padding: 4px 8px; font-size: 0.72rem; background: #10b981;">
+                    ✓ Baixar
+                  </button>
+                ` : ''}
+                
+                <button type="button" class="btn btn-secondary btn-icon" onclick="FinanceiroModule.openDetalhesModal('${item.id}')" title="Ver Detalhes e Auditoria">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
                 </button>
-              ` : ''}
 
-              ${!isPendente && !isEstornado ? `
-                <button type="button" class="btn btn-secondary btn-icon" onclick="FinanceiroModule.openEstornoModal('${item.id}')" title="Registrar Estorno" style="color: #fbbf24;">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
+                ${!isEstornado ? `
+                  <button type="button" class="btn btn-secondary btn-icon" onclick="FinanceiroModule.openEditModal('${item.id}')" title="Editar Lançamento">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                  </button>
+                ` : ''}
+
+                ${!isPendente && !isEstornado ? `
+                  <button type="button" class="btn btn-secondary btn-icon" onclick="FinanceiroModule.openEstornoModal('${item.id}')" title="Registrar Estorno" style="color: #fbbf24;">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
+                  </button>
+                ` : ''}
+
+                <button type="button" class="btn btn-secondary btn-icon" onclick="FinanceiroModule.excluirLancamento('${item.id}')" title="Excluir Lançamento" style="color: #f87171;">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
                 </button>
-              ` : ''}
-
-              <button type="button" class="btn btn-secondary btn-icon" onclick="FinanceiroModule.excluirLancamento('${item.id}')" title="Excluir Lançamento" style="color: #f87171;">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
-              </button>
+              `}
             </div>
           </td>
         </tr>
