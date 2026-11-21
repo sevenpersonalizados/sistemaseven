@@ -48,7 +48,7 @@
   <meta http-equiv="Expires" content="0">
 
   <!-- Estilos Customizados -->
-  <link rel="stylesheet" href="css/styles.css?v=58">
+  <link rel="stylesheet" href="css/styles.css?v=59">
 </head>
 
 <body>
@@ -1654,9 +1654,9 @@
 
   <!-- MODAL: ENCOMENDA -->
   <div class="modal-overlay" id="modal-encomenda">
-    <div class="modal-container" style="max-width: 780px;">
+    <div class="modal-container" style="max-width: 820px;">
       <div class="modal-header">
-        <h3 id="enc-modal-title">Nova Encomenda</h3>
+        <h3 id="enc-modal-title">Editar Encomenda</h3>
         <button class="btn-icon"
           style="background: transparent; border: none; color: var(--text-muted); cursor: pointer;"
           onclick="App.closeModal('modal-encomenda')">✕</button>
@@ -1665,26 +1665,32 @@
         <input type="hidden" id="enc-form-id">
         <div class="form-row">
           <div class="form-group">
-            <label>Nome do Cliente *</label>
-            <input type="text" id="enc-form-cliente" class="form-control" placeholder="Nome completo">
+            <label>Cliente / Razão Social *</label>
+            <input type="text" id="enc-form-cliente" class="form-control" placeholder="Nome completo ou empresa">
           </div>
           <div class="form-group">
-            <label>Telefone</label>
+            <label>WhatsApp / Fone</label>
             <input type="text" id="enc-form-telefone" class="form-control" placeholder="(00) 00000-0000">
           </div>
         </div>
 
-        <div class="form-row">
+        <div class="form-group">
+          <label>Categoria de Produção *</label>
+          <select id="enc-form-categoria" class="form-control" required></select>
+        </div>
+
+        <!-- Datas do Orçamento, Confirmação e Entrega (mesmo padrão do Novo Orçamento) -->
+        <div class="form-row" style="grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));">
           <div class="form-group">
-            <label>Categoria de Produção *</label>
-            <select id="enc-form-categoria" class="form-control" required></select>
+            <label>📅 Data do Orçamento</label>
+            <input type="date" id="enc-form-data-orcamento" class="form-control">
           </div>
           <div class="form-group">
-            <label>Data do Pedido</label>
-            <input type="date" id="enc-form-data-pedido" class="form-control">
+            <label>✅ Data de Confirmação do Pedido</label>
+            <input type="date" id="enc-form-data-confirmacao" class="form-control">
           </div>
           <div class="form-group">
-            <label>Previsão de Entrega</label>
+            <label>🚚 Data de Entrega</label>
             <input type="date" id="enc-form-data-entrega" class="form-control">
           </div>
         </div>
@@ -1756,35 +1762,10 @@
           </div>
         </div>
 
-        <div class="form-group">
+        <div class="form-group" style="margin-bottom: 0;">
           <label style="font-weight: 600; color: var(--text-primary);">Observações Gerais do Pedido</label>
           <textarea id="enc-form-obs" class="form-control" rows="2"
             placeholder="Instruções gerais da encomenda, entrega, cliente, embalagem..."></textarea>
-        </div>
-
-        <!-- Anexo de Foto / Arte de Referência na Encomenda -->
-        <div class="form-group" style="margin-bottom: 0;">
-          <label style="font-weight: 600; color: var(--text-primary); display: flex; align-items: center; gap: 6px;">
-            <span>📷</span> Foto / Arte de Referência (Anexo)
-          </label>
-          <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap; background: rgba(255,255,255,0.025); border: 1px dashed var(--border); border-radius: 8px; padding: 10px 12px;">
-            <input type="file" id="enc-foto-input" accept="image/*" style="display: none;" onchange="EncomendasModule.onFotoSelected(this)">
-            <button type="button" class="btn btn-secondary btn-sm" onclick="document.getElementById('enc-foto-input').click()" style="font-size: 0.78rem;">
-              📎 Anexar / Trocar Foto
-            </button>
-            <div id="enc-foto-preview-box" style="display: none; align-items: center; gap: 10px; flex: 1; min-width: 180px;">
-              <img id="enc-foto-preview-img" src="" alt="Preview" onclick="EncomendasModule.abrirFotoPreview()" title="Clique para ampliar em tela cheia"
-                style="width: 46px; height: 46px; object-fit: cover; border-radius: 6px; border: 1px solid rgba(56, 189, 248, 0.5); cursor: pointer;">
-              <div style="flex: 1; min-width: 0;">
-                <div id="enc-foto-preview-nome" style="font-size: 0.76rem; color: #ffffff; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;"></div>
-                <div style="font-size: 0.68rem; color: var(--text-muted);">Clique na miniatura para ampliar</div>
-              </div>
-              <button type="button" class="btn btn-secondary btn-icon" onclick="EncomendasModule.removerFoto()" title="Remover foto" style="padding: 4px 8px; color: #f87171;">
-                🗑️
-              </button>
-            </div>
-            <span id="enc-foto-empty-hint" style="font-size: 0.76rem; color: var(--text-muted);">Nenhuma foto anexada</span>
-          </div>
         </div>
       </div>
       <div class="modal-footer">
@@ -2733,20 +2714,20 @@
   <!-- CONTAINER DE TOASTS -->
   <div class="toast-container" id="toast-container"></div>
 
-  <!-- SCRIPTS DO SISTEMA (com cache-busting v58) -->
-  <script src="js/notifications.js?v=58"></script>
-  <script src="js/storage.js?v=58"></script>
-  <script src="js/auth.js?v=58"></script>
-  <script src="js/crm.js?v=58"></script>
-  <script src="js/encomendas.js?v=58"></script>
-  <script src="js/estoque.js?v=58"></script>
-  <script src="js/financeiro.js?v=58"></script>
-  <script src="js/propostas.js?v=58"></script>
-  <script src="js/calculadora.js?v=58"></script>
-  <script src="js/calculadora-laser.js?v=58"></script>
-  <script src="js/calendario.js?v=58"></script>
-  <script src="js/configuracoes.js?v=58"></script>
-  <script src="js/app.js?v=58"></script>
+  <!-- SCRIPTS DO SISTEMA (com cache-busting v59) -->
+  <script src="js/notifications.js?v=59"></script>
+  <script src="js/storage.js?v=59"></script>
+  <script src="js/auth.js?v=59"></script>
+  <script src="js/crm.js?v=59"></script>
+  <script src="js/encomendas.js?v=59"></script>
+  <script src="js/estoque.js?v=59"></script>
+  <script src="js/financeiro.js?v=59"></script>
+  <script src="js/propostas.js?v=59"></script>
+  <script src="js/calculadora.js?v=59"></script>
+  <script src="js/calculadora-laser.js?v=59"></script>
+  <script src="js/calendario.js?v=59"></script>
+  <script src="js/configuracoes.js?v=59"></script>
+  <script src="js/app.js?v=59"></script>
 </body>
 
 </html>

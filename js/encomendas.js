@@ -607,7 +607,11 @@ const EncomendasModule = {
       catSelect.value = cats[0] || '3D';
     }
 
-    document.getElementById('enc-form-data-pedido').value = new Date().toISOString().split('T')[0];
+    const hojeIso = new Date().toISOString().split('T')[0];
+    const dataOrcEl = document.getElementById('enc-form-data-orcamento');
+    const dataConfEl = document.getElementById('enc-form-data-confirmacao');
+    if (dataOrcEl) dataOrcEl.value = hojeIso;
+    if (dataConfEl) dataConfEl.value = hojeIso;
 
     const padroes = StorageService.getPadroesOrcamentoPedido();
     const diasEntrega = parseInt(padroes.pedido_dias_entrega, 10);
@@ -633,7 +637,6 @@ const EncomendasModule = {
     document.getElementById('enc-btn-delete').style.display = 'none';
 
     encomendaFotoTemp = { dataUrl: '', nome: '' };
-    this.renderFotoPreview();
 
     const valorEstimado = parseFloat(lead?.value) || 0;
     encomendaItensTemp = [
@@ -645,6 +648,8 @@ const EncomendasModule = {
         quantidade: 1,
         preco_unitario: valorEstimado,
         subtotal: valorEstimado,
+        foto_anexo: '',
+        foto_nome: '',
         estoque_id: 'auto',
         estoque_item_id: null,
         estoque_item_nome: null,
@@ -673,11 +678,24 @@ const EncomendasModule = {
       catSelect.value = enc.categoria || cats[0] || '3D';
     }
 
-    document.getElementById('enc-form-data-pedido').value = enc.data_pedido || '';
+    const dataOrcEl = document.getElementById('enc-form-data-orcamento');
+    const dataConfEl = document.getElementById('enc-form-data-confirmacao');
+    if (dataOrcEl) dataOrcEl.value = enc.data_orcamento || enc.data_pedido || '';
+    if (dataConfEl) dataConfEl.value = enc.data_confirmacao || enc.data_pedido || '';
     document.getElementById('enc-form-data-entrega').value = enc.data_entrega_prevista || '';
     document.getElementById('enc-form-status').value = enc.status || 'Fila';
     document.getElementById('enc-form-pagto-status').value = enc.pagamento_status || 'Pendente';
-    document.getElementById('enc-form-forma-pagto').value = enc.forma_pagamento || 'Pix';
+
+    // Popula formas de pagamento cadastradas dinamicamente
+    const formaPagtoSelect = document.getElementById('enc-form-forma-pagto');
+    if (formaPagtoSelect) {
+      const formas = StorageService.getFormasPagamento();
+      const formaAtual = enc.forma_pagamento || 'Pix';
+      const listaFormas = formas.includes(formaAtual) ? formas : [...formas, formaAtual];
+      formaPagtoSelect.innerHTML = listaFormas.map(f => `<option value="${App.escapeHtml(f)}">${App.escapeHtml(f)}</option>`).join('');
+      formaPagtoSelect.value = formaAtual;
+    }
+
     document.getElementById('enc-form-valor-pago').value = enc.valor_pago || 0;
     document.getElementById('enc-form-obs').value = enc.observacoes || '';
     document.getElementById('enc-btn-delete').style.display = 'inline-block';
@@ -686,7 +704,6 @@ const EncomendasModule = {
       dataUrl: enc.foto_anexo || '',
       nome: enc.foto_nome || (enc.foto_anexo ? 'anexo-encomenda.jpg' : '')
     };
-    this.renderFotoPreview();
 
     encomendaItensTemp = (enc.itens && enc.itens.length > 0)
       ? enc.itens.map(it => ({
@@ -704,7 +721,7 @@ const EncomendasModule = {
           estoque_item_nome: it.estoque_item_nome || null,
           qtd_deduzida_estoque: Number(it.qtd_deduzida_estoque) || 0
         }))
-      : [{ produto_nome: '', cor: '', personalizacao: '', observacao: '', quantidade: 1, preco_unitario: 0, subtotal: 0, estoque_id: 'auto', estoque_item_id: null, estoque_item_nome: null, qtd_deduzida_estoque: 0 }];
+      : [{ produto_nome: '', cor: '', personalizacao: '', observacao: '', quantidade: 1, preco_unitario: 0, subtotal: 0, foto_anexo: '', foto_nome: '', estoque_id: 'auto', estoque_item_id: null, estoque_item_nome: null, qtd_deduzida_estoque: 0 }];
 
     this.renderItensTable();
     App.openModal('modal-encomenda');
@@ -719,6 +736,8 @@ const EncomendasModule = {
       quantidade: 1,
       preco_unitario: 0,
       subtotal: 0,
+      foto_anexo: '',
+      foto_nome: '',
       estoque_id: 'auto',
       estoque_item_id: null,
       estoque_item_nome: null,
@@ -936,7 +955,7 @@ const EncomendasModule = {
               </span>
             </div>
             ${encomendaItensTemp.length > 1 ? `
-              <button type="button" class="btn-icon" style="background: rgba(239, 68, 68, 0.12); border: 1px solid rgba(239, 68, 68, 0.4); color: #f87171; cursor: pointer; padding: 3px 8px; border-radius: 6px; font-size: 0.75rem; font-weight: 600;" 
+              <button type="button" style="display: inline-flex; align-items: center; gap: 5px; white-space: nowrap; flex-shrink: 0; background: rgba(239, 68, 68, 0.14); border: 1px solid rgba(239, 68, 68, 0.45); color: #f87171; cursor: pointer; padding: 5px 10px; border-radius: 6px; font-size: 0.76rem; font-weight: 600;" 
                       onclick="EncomendasModule.removeItemRow(${idx})" title="Remover este item">
                 ✕ Excluir Item
               </button>
@@ -966,26 +985,53 @@ const EncomendasModule = {
             </div>
           </div>
 
-          <!-- Linha 2: Personalização / Arte e Observação do Produto -->
-          <div class="form-row" style="margin-bottom: 10px;">
-            <div class="form-group" style="margin-bottom: 0;">
-              <label style="font-size: 0.78rem; font-weight: 600; color: var(--text-primary);">Personalização / Arte (Instruções ou Nome)</label>
-              <input type="text" class="form-control" style="height: 38px;" 
-                     value="${App.escapeHtml(item.personalizacao || '')}" 
-                     placeholder="Ex: Nome da Aniversariante, Frase, Logo..." 
-                     oninput="EncomendasModule.updateItemField(${idx}, 'personalizacao', this.value)">
-            </div>
-            <div class="form-group" style="margin-bottom: 0;">
-              <label style="font-size: 0.78rem; font-weight: 600; color: var(--text-primary);">Observação do Produto</label>
-              <input type="text" class="form-control" style="height: 38px;" 
-                     value="${App.escapeHtml(item.observacao || '')}" 
-                     placeholder="Ex: Acabamento especial, tamanho, embalagem..." 
-                     oninput="EncomendasModule.updateItemField(${idx}, 'observacao', this.value)">
+          <!-- Linha 2: Personalização / Detalhes (campo amplo multi-linha) -->
+          <div class="form-group" style="margin-bottom: 10px;">
+            <label style="font-size: 0.78rem; font-weight: 600; color: var(--text-primary);">Personalização / Detalhes</label>
+            <textarea class="form-control" rows="3" style="min-height: 82px; resize: vertical; line-height: 1.45;" 
+                      placeholder="Ex: Nome da Aniversariante, Frase, Logo, Fonte, Medidas, Posição da gravação..." 
+                      oninput="EncomendasModule.updateItemField(${idx}, 'personalizacao', this.value)">${App.escapeHtml(item.personalizacao || '')}</textarea>
+          </div>
+
+          <!-- Linha 2B: Observação do Item -->
+          <div class="form-group" style="margin-bottom: 10px;">
+            <label style="font-size: 0.78rem; font-weight: 600; color: var(--text-primary);">Observação do Item</label>
+            <input type="text" class="form-control" style="height: 38px;" 
+                   value="${App.escapeHtml(item.observacao || '')}" 
+                   placeholder="Ex: Acabamento especial, tamanho, embalagem..." 
+                   oninput="EncomendasModule.updateItemField(${idx}, 'observacao', this.value)">
+          </div>
+
+          <!-- Linha 2C: Foto / Arte de Referência individual deste Item -->
+          <div class="form-group" style="margin-bottom: 12px;">
+            <label style="font-size: 0.78rem; font-weight: 600; color: var(--text-primary); display: flex; align-items: center; gap: 5px;">
+              <span>📷</span> Foto / Arte de Referência (Item #${idx + 1})
+            </label>
+            <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap; background: rgba(255,255,255,0.02); border: 1px dashed rgba(56, 189, 248, 0.35); border-radius: 6px; padding: 8px 10px;">
+              <input type="file" id="enc-item-foto-input-${idx}" accept="image/*" style="display: none;" onchange="EncomendasModule.onItemFotoSelected(${idx}, this)">
+              <button type="button" class="btn btn-secondary btn-sm" onclick="document.getElementById('enc-item-foto-input-${idx}').click()" style="font-size: 0.76rem; padding: 5px 10px;">
+                📎 ${item.foto_anexo ? 'Trocar Foto' : 'Inserir Foto'}
+              </button>
+              ${item.foto_anexo ? `
+                <div style="display: flex; align-items: center; gap: 8px; flex: 1; min-width: 160px;">
+                  <img src="${item.foto_anexo}" alt="Referência Item #${idx + 1}" onclick="EncomendasModule.abrirItemFotoPreview(${idx})" title="Clique para ampliar em tela cheia e baixar"
+                       style="width: 42px; height: 42px; object-fit: cover; border-radius: 6px; border: 1.5px solid rgba(56, 189, 248, 0.55); cursor: pointer;">
+                  <div style="flex: 1; min-width: 0;">
+                    <div style="font-size: 0.74rem; color: #ffffff; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${App.escapeHtml(item.foto_nome || 'foto-anexo.jpg')}</div>
+                    <div style="font-size: 0.66rem; color: var(--text-muted);">Clique na foto para ampliar</div>
+                  </div>
+                  <button type="button" class="btn btn-secondary btn-icon" onclick="EncomendasModule.removerItemFoto(${idx})" title="Remover foto deste item" style="padding: 4px 7px; color: #f87171;">
+                    🗑️
+                  </button>
+                </div>
+              ` : `
+                <span style="font-size: 0.73rem; color: var(--text-muted);">Opcional — arte ou foto de referência exclusiva deste item</span>
+              `}
             </div>
           </div>
 
           <!-- Linha 3: Quantidade, Valor Unitário e Subtotal -->
-          <div class="form-row" style="margin-bottom: 10px; align-items: flex-end;">
+          <div class="form-row" style="margin-bottom: 12px; align-items: flex-end;">
             <div class="form-group" style="margin-bottom: 0;">
               <label style="font-size: 0.78rem; font-weight: 600; color: var(--text-primary);">Quantidade</label>
               <input type="number" min="1" class="form-control" style="height: 38px;" 
@@ -999,10 +1045,16 @@ const EncomendasModule = {
                      placeholder="0,00"
                      oninput="EncomendasModule.updateItemCalc(${idx}, 'preco_unitario', this.value)">
             </div>
+            <div class="form-group" style="margin-bottom: 0;">
+              <label style="font-size: 0.78rem; font-weight: 600; color: var(--text-primary);">Subtotal</label>
+              <div id="enc-item-subtotal-${idx}" style="height: 38px; display: flex; align-items: center; font-size: 1.05rem; font-weight: 700; color: #34d399; background: rgba(0,0,0,0.25); border: 1px solid var(--border); border-radius: 6px; padding: 0 12px;">
+                ${App.formatMoney(item.subtotal || 0)}
+              </div>
+            </div>
           </div>
 
           <!-- Linha 4: Baixa de Material do Estoque em Tempo Real -->
-          <div style="background: rgba(0, 0, 0, 0.28); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 8px; padding: 10px 12px; margin-bottom: 8px;">
+          <div style="background: rgba(0, 0, 0, 0.28); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 8px; padding: 10px 12px; margin-bottom: 0;">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; flex-wrap: wrap; gap: 6px;">
               <span style="font-size: 0.78rem; font-weight: 700; color: #38bdf8; display: inline-flex; align-items: center; gap: 5px;">
                 📦 Baixa no Estoque (Diminui automaticamente ao salvar):
@@ -1037,27 +1089,6 @@ const EncomendasModule = {
               </optgroup>
             </select>
           </div>
-
-          <!-- Subtotal do Item -->
-          <div style="display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; margin-top: 10px; padding-top: 8px; border-top: 1px dashed rgba(255, 255, 255, 0.08);">
-            <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
-              <input type="file" id="enc-item-foto-input-${idx}" accept="image/*" style="display: none;" onchange="EncomendasModule.onItemFotoSelected(${idx}, this)">
-              <button type="button" class="btn btn-secondary btn-sm" onclick="document.getElementById('enc-item-foto-input-${idx}').click()" style="font-size: 0.72rem; padding: 4px 8px;">
-                📷 ${item.foto_anexo ? 'Trocar Foto' : 'Foto Item #' + (idx + 1)}
-              </button>
-              ${item.foto_anexo ? `
-                <img src="${item.foto_anexo}" alt="Item #${idx + 1}" onclick="EncomendasModule.abrirItemFotoPreview(${idx})" title="Clique para ampliar e baixar"
-                     style="width: 34px; height: 34px; object-fit: cover; border-radius: 5px; border: 1.5px solid rgba(56, 189, 248, 0.55); cursor: pointer;">
-                <button type="button" class="btn btn-secondary btn-icon" onclick="EncomendasModule.removerItemFoto(${idx})" title="Remover foto deste item" style="padding: 2px 6px; font-size: 0.7rem; color: #f87171;">🗑️</button>
-              ` : ''}
-            </div>
-            <div style="display: flex; align-items: center; gap: 8px;">
-              <span style="font-size: 0.76rem; color: var(--text-muted); text-transform: uppercase; font-weight: 600;">Subtotal do Item:</span>
-              <span id="enc-item-subtotal-${idx}" style="font-size: 1.15rem; font-weight: 800; color: #34d399;">
-                ${App.formatMoney(item.subtotal || 0)}
-              </span>
-            </div>
-          </div>
         </div>
       `;
     }).join('');
@@ -1071,7 +1102,9 @@ const EncomendasModule = {
     const cliente = document.getElementById('enc-form-cliente').value.trim();
     const categoria = document.getElementById('enc-form-categoria')?.value || '3D';
     const telefone = document.getElementById('enc-form-telefone').value.trim();
-    const dataPedido = document.getElementById('enc-form-data-pedido').value;
+    const dataOrcamento = document.getElementById('enc-form-data-orcamento')?.value || '';
+    const dataConfirmacao = document.getElementById('enc-form-data-confirmacao')?.value || '';
+    const dataPedido = dataConfirmacao || dataOrcamento || new Date().toISOString().split('T')[0];
     const dataEntrega = document.getElementById('enc-form-data-entrega').value;
     const status = document.getElementById('enc-form-status').value || 'Fila';
     const pagtoStatus = document.getElementById('enc-form-pagto-status').value;
@@ -1125,6 +1158,8 @@ const EncomendasModule = {
       cliente_nome: cliente,
       categoria: categoria,
       telefone: telefone,
+      data_orcamento: dataOrcamento || null,
+      data_confirmacao: dataConfirmacao || null,
       data_pedido: dataPedido,
       data_entrega_prevista: dataEntrega,
       status: status,
