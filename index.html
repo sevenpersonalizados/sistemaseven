@@ -48,7 +48,7 @@
   <meta http-equiv="Expires" content="0">
 
   <!-- Estilos Customizados -->
-  <link rel="stylesheet" href="css/styles.css?v=48">
+  <link rel="stylesheet" href="css/styles.css?v=49">
 </head>
 
 <body>
@@ -1787,7 +1787,16 @@
         <input type="hidden" id="est-form-id">
         <div class="form-group">
           <label>Nome do Insumo / Material *</label>
-          <input type="text" id="est-form-nome" class="form-control" placeholder="Ex: Filamento PETG Preto">
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 4px;">
+            <select id="est-form-produto-estabelecido" class="form-control" onchange="EstoqueModule.selecionarProdutoEstabelecido(this.value)" title="Selecionar um produto já cadastrado em Configurações do Estúdio">
+              <option value="">📋 Produtos Estabelecidos (Configurações)...</option>
+            </select>
+            <input type="text" id="est-form-nome" list="est-produtos-estabelecidos-list" class="form-control" placeholder="Ou digite o nome do insumo / produto...">
+          </div>
+          <datalist id="est-produtos-estabelecidos-list"></datalist>
+          <div style="font-size: 0.72rem; color: var(--text-muted);">
+            💡 Escolha um produto da lista cadastrada em <strong>Configurações</strong> ou digite um insumo personalizado.
+          </div>
         </div>
 
         <div class="form-row">
@@ -2678,20 +2687,20 @@
   <!-- CONTAINER DE TOASTS -->
   <div class="toast-container" id="toast-container"></div>
 
-  <!-- SCRIPTS DO SISTEMA (com cache-busting v48) -->
-  <script src="js/notifications.js?v=48"></script>
-  <script src="js/storage.js?v=48"></script>
-  <script src="js/auth.js?v=48"></script>
-  <script src="js/crm.js?v=48"></script>
-  <script src="js/encomendas.js?v=48"></script>
-  <script src="js/estoque.js?v=48"></script>
-  <script src="js/financeiro.js?v=48"></script>
-  <script src="js/propostas.js?v=48"></script>
-  <script src="js/calculadora.js?v=48"></script>
-  <script src="js/calculadora-laser.js?v=48"></script>
-  <script src="js/calendario.js?v=48"></script>
-  <script src="js/configuracoes.js?v=48"></script>
-  <script src="js/app.js?v=48"></script>
+  <!-- SCRIPTS DO SISTEMA (com cache-busting v49) -->
+  <script src="js/notifications.js?v=49"></script>
+  <script src="js/storage.js?v=49"></script>
+  <script src="js/auth.js?v=49"></script>
+  <script src="js/crm.js?v=49"></script>
+  <script src="js/encomendas.js?v=49"></script>
+  <script src="js/estoque.js?v=49"></script>
+  <script src="js/financeiro.js?v=49"></script>
+  <script src="js/propostas.js?v=49"></script>
+  <script src="js/calculadora.js?v=49"></script>
+  <script src="js/calculadora-laser.js?v=49"></script>
+  <script src="js/calendario.js?v=49"></script>
+  <script src="js/configuracoes.js?v=49"></script>
+  <script src="js/app.js?v=49"></script>
 </body>
 
 </html>

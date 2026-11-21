@@ -95,6 +95,8 @@ const EstoqueModule = {
       corSelect.value = '';
     }
 
+    this.popularProdutosEstabelecidos('');
+
     document.getElementById('est-form-unidade').value = 'un';
     document.getElementById('est-form-qtd').value = '0';
     document.getElementById('est-form-minimo').value = '5';
@@ -106,6 +108,27 @@ const EstoqueModule = {
     App.openModal('modal-estoque');
   },
 
+  popularProdutosEstabelecidos(valorAtual = '') {
+    const produtos = StorageService.getProdutosEstabelecidos() || [];
+    const sel = document.getElementById('est-form-produto-estabelecido');
+    if (sel) {
+      sel.innerHTML = `<option value="">📋 Produtos Estabelecidos (${produtos.length})...</option>` +
+        produtos.map(p => `<option value="${App.escapeHtml(p)}" ${p === valorAtual ? 'selected' : ''}>${App.escapeHtml(p)}</option>`).join('');
+    }
+    const dl = document.getElementById('est-produtos-estabelecidos-list');
+    if (dl) {
+      dl.innerHTML = produtos.map(p => `<option value="${App.escapeHtml(p)}"></option>`).join('');
+    }
+  },
+
+  selecionarProdutoEstabelecido(valor) {
+    if (!valor) return;
+    const nomeInput = document.getElementById('est-form-nome');
+    if (nomeInput) {
+      nomeInput.value = valor;
+    }
+  },
+
   openEditModal(id) {
     const item = StorageService.get('estoque').find(i => i.id === id);
     if (!item) return;
@@ -113,6 +136,7 @@ const EstoqueModule = {
     document.getElementById('est-modal-title').textContent = 'Editar Item de Estoque';
     document.getElementById('est-form-id').value = item.id;
     document.getElementById('est-form-nome').value = item.nome || '';
+    this.popularProdutosEstabelecidos(item.nome || '');
 
     // Popula categorias cadastradas dinamicamente
     const catSelect = document.getElementById('est-form-categoria');
