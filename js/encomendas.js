@@ -270,7 +270,7 @@ const EncomendasModule = {
               <div onclick="event.stopPropagation(); App.openOrderItemPhoto('encomendas', '${enc.id}', ${idx})" title="Foto de ${App.escapeHtml(i.produto_nome || 'Item')} — Clique para tela cheia e download"
                    style="flex-shrink: 0; position: relative; cursor: pointer;">
                 <img src="${i.foto_anexo}" alt="Anexo Item ${idx + 1}" style="width: 44px; height: 44px; object-fit: cover; border-radius: 7px; border: 1.5px solid rgba(56, 189, 248, 0.6); box-shadow: 0 2px 8px rgba(0,0,0,0.35); display: block;">
-                <span style="position: absolute; right: -4px; bottom: -4px; background: #0f172a; border: 1px solid rgba(56,189,248,0.65); border-radius: 999px; font-size: 0.56rem; padding: 1px 3px;">🔍</span>
+                <span style="position: absolute; right: 2px; bottom: 2px; background: rgba(15, 23, 42, 0.88); border: 1px solid rgba(56,189,248,0.65); border-radius: 999px; font-size: 0.54rem; line-height: 1; padding: 2px 3px;">🔍</span>
               </div>
             `
             : '';
@@ -375,7 +375,7 @@ const EncomendasModule = {
                 </span>
               ` : ''}
             </div>
-            <div style="max-height: 240px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px;">
+            <div style="display: flex; flex-direction: column; gap: 8px; overflow: visible;">
               ${itensHtml}
             </div>
             ${obsParaExibir ? `
