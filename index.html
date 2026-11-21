@@ -48,7 +48,7 @@
   <meta http-equiv="Expires" content="0">
 
   <!-- Estilos Customizados -->
-  <link rel="stylesheet" href="css/styles.css?v=62">
+  <link rel="stylesheet" href="css/styles.css?v=63">
 </head>
 
 <body>
@@ -156,7 +156,7 @@
             <polyline points="3.27 6.96 12 12.01 20.73 6.96" />
             <line x1="12" y1="22.08" x2="12" y2="12" />
           </svg>
-          <span>Estoque Insumos</span>
+          <span>Estoque</span>
           <span class="badge-counter" id="nav-badge-estoque">0</span>
         </button>
       </li>
@@ -554,29 +554,30 @@
 
         <!-- 4. VIEW ESTOQUE -->
         <section class="view-section" id="view-estoque">
-          <div class="themed-panel theme-cyan">
+          <!-- 1. MATÉRIA PRIMA -->
+          <div class="themed-panel theme-cyan" style="margin-bottom: 24px;">
             <div class="themed-header">
               <div style="display: flex; align-items: center; gap: 14px; flex-wrap: wrap;">
                 <span class="themed-icon-box">🧱</span>
                 <div>
                   <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
-                    <h3 class="themed-title">Controle de Insumos & Matéria-Prima</h3>
+                    <h3 class="themed-title">Matéria Prima</h3>
                     <span
                       style="font-size: 0.72rem; font-weight: 700; text-transform: uppercase; padding: 3px 10px; border-radius: 999px; background: rgba(6, 182, 212, 0.22); color: #22d3ee; border: 1px solid rgba(6, 182, 212, 0.55);">
                       ESTOQUE ATIVO
                     </span>
                   </div>
                   <div class="themed-subtitle">
-                    Filamentos 3D, chapas de MDF, acrílicos, resinas e copos inox
+                    Chapas de MDF, acrílicos, resinas, copos inox e materiais de produção
                   </div>
                 </div>
               </div>
               <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
                 <span class="themed-chip">
-                  📦 <strong id="estoque-total-qtd" style="color: #ffffff;">0</strong> insumos
+                  📦 <strong id="estoque-total-qtd" style="color: #ffffff;">0</strong> itens
                 </span>
-                <button class="btn btn-primary" onclick="EstoqueModule.openNewModal()">
-                  <span>+</span> Novo Insumo / Material
+                <button class="btn btn-primary" onclick="EstoqueModule.openNewModal('materia_prima')">
+                  <span>+</span> Nova Matéria Prima
                 </button>
               </div>
             </div>
@@ -584,7 +585,7 @@
               <table class="modern-table">
                 <thead>
                   <tr>
-                    <th>Insumo / Material</th>
+                    <th>Material / Produto</th>
                     <th>Cor</th>
                     <th>Estoque Atual</th>
                     <th>Estoque Mínimo</th>
@@ -595,6 +596,97 @@
                   </tr>
                 </thead>
                 <tbody id="estoque-table-body"></tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- 2. FILAMENTOS (INTERLIGADO COM A CALCULADORA DE FILAMENTOS) -->
+          <div class="themed-panel theme-amber" style="margin-bottom: 24px;">
+            <div class="themed-header">
+              <div style="display: flex; align-items: center; gap: 14px; flex-wrap: wrap;">
+                <span class="themed-icon-box">🧵</span>
+                <div>
+                  <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+                    <h3 class="themed-title">Filamentos</h3>
+                    <span
+                      style="font-size: 0.72rem; font-weight: 700; text-transform: uppercase; padding: 3px 10px; border-radius: 999px; background: rgba(245, 158, 11, 0.22); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.55);">
+                      CALCULADORA 3D
+                    </span>
+                  </div>
+                  <div class="themed-subtitle">
+                    Rolos de PLA, PETG, ABS e TPU sincronizados automaticamente com a Calculadora de Filamentos
+                  </div>
+                </div>
+              </div>
+              <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+                <span class="themed-chip">
+                  🧵 <strong id="estoque-filamentos-qtd" style="color: #ffffff;">0</strong> filamentos
+                </span>
+                <button class="btn btn-primary" onclick="CalculadoraModule.abrirModalFilamentos()" style="background: #f59e0b; border-color: #f59e0b; color: #0b1120; font-weight: 700;">
+                  <span>+</span> Adicionar Filamento
+                </button>
+              </div>
+            </div>
+            <div class="table-responsive">
+              <table class="modern-table">
+                <thead>
+                  <tr>
+                    <th>Material & Marca</th>
+                    <th>Cor</th>
+                    <th>Local & Data da Compra</th>
+                    <th>Peso</th>
+                    <th>Preço Rolo</th>
+                    <th>Custo/g</th>
+                    <th style="text-align: right;">Ações</th>
+                  </tr>
+                </thead>
+                <tbody id="estoque-filamentos-tbody"></tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- 3. OUTROS -->
+          <div class="themed-panel theme-purple">
+            <div class="themed-header">
+              <div style="display: flex; align-items: center; gap: 14px; flex-wrap: wrap;">
+                <span class="themed-icon-box">📦</span>
+                <div>
+                  <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+                    <h3 class="themed-title">Outros</h3>
+                    <span
+                      style="font-size: 0.72rem; font-weight: 700; text-transform: uppercase; padding: 3px 10px; border-radius: 999px; background: rgba(168, 85, 247, 0.22); color: #c084fc; border: 1px solid rgba(168, 85, 247, 0.55);">
+                      GERAL
+                    </span>
+                  </div>
+                  <div class="themed-subtitle">
+                    Embalagens, caixas, acessórios, fitas e demais itens do estúdio
+                  </div>
+                </div>
+              </div>
+              <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+                <span class="themed-chip">
+                  📦 <strong id="estoque-outros-qtd" style="color: #ffffff;">0</strong> itens
+                </span>
+                <button class="btn btn-primary" onclick="EstoqueModule.openNewModal('outros')" style="background: #9333ea; border-color: #9333ea;">
+                  <span>+</span> Novo Item em Outros
+                </button>
+              </div>
+            </div>
+            <div class="table-responsive">
+              <table class="modern-table">
+                <thead>
+                  <tr>
+                    <th>Item / Material</th>
+                    <th>Cor</th>
+                    <th>Estoque Atual</th>
+                    <th>Estoque Mínimo</th>
+                    <th>Custo Unitário</th>
+                    <th>Data Última Compra</th>
+                    <th>Status</th>
+                    <th style="text-align: right;">Ações</th>
+                  </tr>
+                </thead>
+                <tbody id="estoque-outros-tbody"></tbody>
               </table>
             </div>
           </div>
@@ -1781,7 +1873,7 @@
   <div class="modal-overlay" id="modal-estoque">
     <div class="modal-container">
       <div class="modal-header">
-        <h3 id="est-modal-title">Novo Insumo em Estoque</h3>
+        <h3 id="est-modal-title">Novo Item de Estoque</h3>
         <button class="btn-icon"
           style="background: transparent; border: none; color: var(--text-muted); cursor: pointer;"
           onclick="App.closeModal('modal-estoque')">✕</button>
@@ -1789,16 +1881,23 @@
       <div class="modal-body">
         <input type="hidden" id="est-form-id">
         <div class="form-group">
-          <label>Nome do Insumo / Material *</label>
+          <label>Seção do Estoque *</label>
+          <select id="est-form-secao" class="form-control">
+            <option value="materia_prima">🧱 Matéria Prima</option>
+            <option value="outros">📦 Outros</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Nome do Material / Produto *</label>
           <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 4px;">
             <select id="est-form-produto-estabelecido" class="form-control" onchange="EstoqueModule.selecionarProdutoEstabelecido(this.value)" title="Selecionar um produto já cadastrado em Configurações do Estúdio">
               <option value="">📋 Produtos Estabelecidos (Configurações)...</option>
             </select>
-            <input type="text" id="est-form-nome" list="est-produtos-estabelecidos-list" class="form-control" placeholder="Ou digite o nome do insumo / produto...">
+            <input type="text" id="est-form-nome" list="est-produtos-estabelecidos-list" class="form-control" placeholder="Ou digite o nome do material / produto...">
           </div>
           <datalist id="est-produtos-estabelecidos-list"></datalist>
           <div style="font-size: 0.72rem; color: var(--text-muted);">
-            💡 Escolha um produto da lista cadastrada em <strong>Configurações</strong> ou digite um insumo personalizado.
+            💡 Escolha um produto da lista cadastrada em <strong>Configurações</strong> ou digite um item personalizado.
           </div>
         </div>
 
@@ -1808,7 +1907,7 @@
             <select id="est-form-categoria" class="form-control"></select>
           </div>
           <div class="form-group">
-            <label>Cor do Produto / Insumo</label>
+            <label>Cor do Produto / Material</label>
             <select id="est-form-cor" class="form-control">
               <option value="">(Sem cor / Padrão)</option>
             </select>
@@ -1855,9 +1954,9 @@
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-danger" id="est-btn-delete" onclick="EstoqueModule.deleteCurrent()">Excluir
-          Insumo</button>
+          Item</button>
         <button type="button" class="btn btn-secondary" onclick="App.closeModal('modal-estoque')">Cancelar</button>
-        <button type="button" class="btn btn-primary" onclick="EstoqueModule.save()">Salvar Insumo</button>
+        <button type="button" class="btn btn-primary" onclick="EstoqueModule.save()">Salvar Item</button>
       </div>
     </div>
   </div>
@@ -2714,20 +2813,20 @@
   <!-- CONTAINER DE TOASTS -->
   <div class="toast-container" id="toast-container"></div>
 
-  <!-- SCRIPTS DO SISTEMA (com cache-busting v62) -->
-  <script src="js/notifications.js?v=62"></script>
-  <script src="js/storage.js?v=62"></script>
-  <script src="js/auth.js?v=62"></script>
-  <script src="js/crm.js?v=62"></script>
-  <script src="js/encomendas.js?v=62"></script>
-  <script src="js/estoque.js?v=62"></script>
-  <script src="js/financeiro.js?v=62"></script>
-  <script src="js/propostas.js?v=62"></script>
-  <script src="js/calculadora.js?v=62"></script>
-  <script src="js/calculadora-laser.js?v=62"></script>
-  <script src="js/calendario.js?v=62"></script>
-  <script src="js/configuracoes.js?v=62"></script>
-  <script src="js/app.js?v=62"></script>
+  <!-- SCRIPTS DO SISTEMA (com cache-busting v63) -->
+  <script src="js/notifications.js?v=63"></script>
+  <script src="js/storage.js?v=63"></script>
+  <script src="js/auth.js?v=63"></script>
+  <script src="js/crm.js?v=63"></script>
+  <script src="js/encomendas.js?v=63"></script>
+  <script src="js/estoque.js?v=63"></script>
+  <script src="js/financeiro.js?v=63"></script>
+  <script src="js/propostas.js?v=63"></script>
+  <script src="js/calculadora.js?v=63"></script>
+  <script src="js/calculadora-laser.js?v=63"></script>
+  <script src="js/calendario.js?v=63"></script>
+  <script src="js/configuracoes.js?v=63"></script>
+  <script src="js/app.js?v=63"></script>
 </body>
 
 </html>

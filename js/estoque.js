@@ -7,20 +7,35 @@ const EstoqueModule = {
   init() {
     this.render();
     window.addEventListener('seven_data_updated', (e) => {
-      if (e.detail?.table === 'estoque') this.render();
+      const table = e.detail?.table;
+      if (!table || table === 'estoque' || table === 'filamentos') {
+        this.render();
+      }
     });
   },
 
   render() {
-    const itens = StorageService.get('estoque');
-    const totalQtdEl = document.getElementById('estoque-total-qtd');
-    if (totalQtdEl) totalQtdEl.textContent = itens.length;
+    const todos = StorageService.get('estoque') || [];
+    const materiaPrima = todos.filter(i => (i.secao || 'materia_prima') !== 'outros');
+    const outros = todos.filter(i => i.secao === 'outros');
 
-    const tbody = document.getElementById('estoque-table-body');
+    const totalQtdEl = document.getElementById('estoque-total-qtd');
+    if (totalQtdEl) totalQtdEl.textContent = materiaPrima.length;
+
+    const outrosQtdEl = document.getElementById('estoque-outros-qtd');
+    if (outrosQtdEl) outrosQtdEl.textContent = outros.length;
+
+    this.renderTabelaItens('estoque-table-body', materiaPrima, '🧱', 'Nenhuma matéria-prima cadastrada no momento.');
+    this.renderTabelaItens('estoque-outros-tbody', outros, '📦', 'Nenhum item cadastrado em Outros no momento.');
+    this.renderFilamentos();
+  },
+
+  renderTabelaItens(tbodyId, itens, emptyIcon, emptyMsg) {
+    const tbody = document.getElementById(tbodyId);
     if (!tbody) return;
 
     if (itens.length === 0) {
-      tbody.innerHTML = `<tr><td colspan="8" style="text-align: center; padding: 36px; color: var(--text-muted);"><div style="font-size: 1.5rem; margin-bottom: 8px;">🧱</div>Nenhum item em estoque cadastrado no momento.</td></tr>`;
+      tbody.innerHTML = `<tr><td colspan="8" style="text-align: center; padding: 32px; color: var(--text-muted);"><div style="font-size: 1.4rem; margin-bottom: 6px;">${emptyIcon}</div>${emptyMsg}</td></tr>`;
       return;
     }
 
@@ -73,9 +88,72 @@ const EstoqueModule = {
     }).join('');
   },
 
-  openNewModal() {
-    document.getElementById('est-modal-title').textContent = 'Novo Insumo ou Produto';
+  renderFilamentos() {
+    const tbody = document.getElementById('estoque-filamentos-tbody');
+    const filamentos = StorageService.get('filamentos') || [];
+    const qtdEl = document.getElementById('estoque-filamentos-qtd');
+    if (qtdEl) qtdEl.textContent = filamentos.length;
+    if (!tbody) return;
+
+    if (filamentos.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; padding: 32px; color: var(--text-muted);"><div style="font-size: 1.4rem; margin-bottom: 6px;">🧵</div>Nenhum filamento cadastrado ainda. Clique em "+ Adicionar Filamento".</td></tr>`;
+      return;
+    }
+
+    tbody.innerHTML = filamentos.map(f => {
+      const preco = Number(f.preco_rolo) || 0;
+      const peso = Number(f.peso_rolo_g) || 1000;
+      const custoG = (Number(f.custo_por_g) || (peso > 0 ? preco / peso : 0)).toFixed(3);
+
+      return `
+        <tr>
+          <td>
+            <strong style="color: #ffffff; font-size: 0.92rem;">${App.escapeHtml(f.material)}</strong>
+            <div style="font-size: 0.74rem; color: #38bdf8; font-weight: 600;">🏷️ ${App.escapeHtml(f.marca || 'Genérica')}</div>
+          </td>
+          <td>
+            <span class="badge-cor-tag" style="display: inline-flex; align-items: center; gap: 4px;">
+              🎨 ${App.escapeHtml(f.cor || 'Padrão')}
+            </span>
+          </td>
+          <td>
+            ${f.local_compra ? `<div style="font-weight: 600; font-size: 0.82rem; color: #f1f5f9;">🏪 ${App.escapeHtml(f.local_compra)}</div>` : '<span style="color: var(--text-muted); font-size: 0.8rem;">—</span>'}
+            ${f.data_compra ? `<div style="font-size: 0.72rem; color: #94a3b8; margin-top: 2px;">📅 ${App.formatDate(f.data_compra)}</div>` : ''}
+          </td>
+          <td><strong>${peso}g</strong></td>
+          <td><strong>${App.formatMoney(preco)}</strong></td>
+          <td>
+            <span style="font-weight: 700; color: #10b981; background: rgba(16, 185, 129, 0.15); padding: 3px 8px; border-radius: 999px;">
+              R$ ${custoG.replace('.', ',')}/g
+            </span>
+          </td>
+          <td style="text-align: right;">
+            <div style="display: flex; gap: 6px; justify-content: flex-end;">
+              <button class="btn btn-secondary btn-icon" onclick="EstoqueModule.editarFilamento('${f.id}')" title="Editar filamento">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+              </button>
+              <button class="btn btn-secondary btn-icon" onclick="CalculadoraModule.excluirFilamento('${f.id}')" style="color: var(--danger);" title="Excluir filamento">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg>
+              </button>
+            </div>
+          </td>
+        </tr>
+      `;
+    }).join('');
+  },
+
+  editarFilamento(id) {
+    if (typeof CalculadoraModule === 'undefined') return;
+    CalculadoraModule.abrirModalFilamentos();
+    CalculadoraModule.editarFilamento(id);
+  },
+
+  openNewModal(secao = 'materia_prima') {
+    const isOutros = secao === 'outros';
+    document.getElementById('est-modal-title').textContent = isOutros ? 'Novo Item em Outros' : 'Nova Matéria Prima';
     document.getElementById('est-form-id').value = '';
+    const secaoEl = document.getElementById('est-form-secao');
+    if (secaoEl) secaoEl.value = isOutros ? 'outros' : 'materia_prima';
     document.getElementById('est-form-nome').value = '';
 
     // Popula categorias cadastradas dinamicamente
@@ -135,6 +213,8 @@ const EstoqueModule = {
 
     document.getElementById('est-modal-title').textContent = 'Editar Item de Estoque';
     document.getElementById('est-form-id').value = item.id;
+    const secaoEl = document.getElementById('est-form-secao');
+    if (secaoEl) secaoEl.value = item.secao === 'outros' ? 'outros' : 'materia_prima';
     document.getElementById('est-form-nome').value = item.nome || '';
     this.popularProdutosEstabelecidos(item.nome || '');
 
@@ -168,6 +248,7 @@ const EstoqueModule = {
 
   save() {
     const id = document.getElementById('est-form-id').value;
+    const secao = document.getElementById('est-form-secao')?.value || 'materia_prima';
     const nome = document.getElementById('est-form-nome').value.trim();
     const categoria = document.getElementById('est-form-categoria').value;
     const cor = document.getElementById('est-form-cor')?.value || '';
@@ -184,6 +265,7 @@ const EstoqueModule = {
     }
 
     const payload = {
+      secao,
       nome,
       categoria,
       cor,
