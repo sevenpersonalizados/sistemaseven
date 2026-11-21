@@ -1600,6 +1600,170 @@ const FinanceiroModule = {
         if (boxCartao) boxCartao.style.display = 'none';
       }
     }
+
+    // Atualiza exibição do bloco de Entrada Automática no Estoque (quando categoria = Matéria-Prima)
+    const catAtual = document.getElementById('fin-form-categoria')?.value || '';
+    this.onCategoriaModalChange(catAtual);
+  },
+
+  isCategoriaMateriaPrima(cat) {
+    const norm = (cat || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    return norm.includes('materia') && norm.includes('prima');
+  },
+
+  onCategoriaModalChange(categoria) {
+    const tipo = document.getElementById('fin-form-tipo')?.value;
+    const boxEst = document.getElementById('fin-box-estoque-auto');
+    if (!boxEst) return;
+
+    const deveMostrar = (tipo === 'despesa' && !this.currentEditId && this.isCategoriaMateriaPrima(categoria));
+    boxEst.style.display = deveMostrar ? 'block' : 'none';
+    if (deveMostrar) {
+      this.popularCamposEstoqueAuto();
+      const tipoEst = document.getElementById('fin-est-tipo')?.value || 'materia_prima';
+      this.onEstoqueAutoTipoChange(tipoEst);
+    }
+  },
+
+  popularCamposEstoqueAuto() {
+    const produtos = StorageService.getProdutosEstabelecidos() || [];
+    const selProd = document.getElementById('fin-est-mp-prod-estab');
+    if (selProd) {
+      const atual = selProd.value;
+      selProd.innerHTML = `<option value="">📋 Produtos Estabelecidos (${produtos.length})...</option>` +
+        produtos.map(p => `<option value="${App.escapeHtml(p)}">${App.escapeHtml(p)}</option>`).join('');
+      if (atual) selProd.value = atual;
+    }
+
+    const catsProd = StorageService.getCategoriasProducao() || ['3D'];
+    const selCatProd = document.getElementById('fin-est-mp-cat');
+    if (selCatProd) {
+      const atual = selCatProd.value;
+      selCatProd.innerHTML = catsProd.map(c => `<option value="${App.escapeHtml(c)}">${App.escapeHtml(c)}</option>`).join('');
+      selCatProd.value = catsProd.includes(atual) ? atual : (catsProd[0] || '3D');
+    }
+
+    const cores = StorageService.getCoresDisponiveis() || [];
+    const selCorMp = document.getElementById('fin-est-mp-cor');
+    if (selCorMp) {
+      const atual = selCorMp.value;
+      selCorMp.innerHTML = `<option value="">(Sem cor / Padrão)</option>` +
+        cores.map(c => `<option value="${App.escapeHtml(c)}">${App.escapeHtml(c)}</option>`).join('');
+      selCorMp.value = atual;
+    }
+
+    const selCorFil = document.getElementById('fin-est-fil-cor');
+    if (selCorFil) {
+      const atual = selCorFil.value;
+      selCorFil.innerHTML = cores.map(c => `<option value="${App.escapeHtml(c)}">${App.escapeHtml(c)}</option>`).join('');
+      if (atual && cores.includes(atual)) selCorFil.value = atual;
+    }
+
+    const marcas = StorageService.getMarcasFilamento() || ['Voolt3D'];
+    const selMarca = document.getElementById('fin-est-fil-marca');
+    if (selMarca) {
+      const atual = selMarca.value;
+      selMarca.innerHTML = marcas.map(m => `<option value="${App.escapeHtml(m)}">${App.escapeHtml(m)}</option>`).join('');
+      if (atual && marcas.includes(atual)) selMarca.value = atual;
+    }
+  },
+
+  onEstoqueAutoTipoChange(tipoEst) {
+    const subMp = document.getElementById('fin-est-sub-mp');
+    const subFil = document.getElementById('fin-est-sub-fil');
+    if (subMp) subMp.style.display = (tipoEst === 'materia_prima' || tipoEst === 'outros') ? 'block' : 'none';
+    if (subFil) subFil.style.display = (tipoEst === 'filamentos') ? 'block' : 'none';
+  },
+
+  onSelectProdEstabFinanceiro(val) {
+    if (!val) return;
+    const nomeEl = document.getElementById('fin-est-mp-nome');
+    if (nomeEl) nomeEl.value = val;
+    const descEl = document.getElementById('fin-form-descricao');
+    if (descEl && !descEl.value.trim()) descEl.value = `Compra de ${val}`;
+  },
+
+  processarEntradaEstoqueAuto({ tipo, categoria, valor, data, descricao }) {
+    if (tipo !== 'despesa' || !this.isCategoriaMateriaPrima(categoria)) return '';
+    const boxEst = document.getElementById('fin-box-estoque-auto');
+    if (!boxEst || boxEst.style.display === 'none') return '';
+
+    const tipoEst = document.getElementById('fin-est-tipo')?.value || 'nao_adicionar';
+    if (tipoEst === 'nao_adicionar') return '';
+
+    if (tipoEst === 'filamentos') {
+      const material = document.getElementById('fin-est-fil-material')?.value || 'PLA';
+      const marca = document.getElementById('fin-est-fil-marca')?.value || 'Voolt3D';
+      const cor = document.getElementById('fin-est-fil-cor')?.value || 'Preto';
+      const peso = Math.max(1, parseFloat(document.getElementById('fin-est-fil-peso')?.value) || 1000);
+      const localCompra = document.getElementById('fin-est-fil-local')?.value.trim() ||
+        document.getElementById('fin-cc-estabelecimento')?.value.trim() || '';
+      const custoG = peso > 0 ? (valor / peso) : 0;
+
+      StorageService.insert('filamentos', {
+        material,
+        marca,
+        cor,
+        local_compra: localCompra,
+        data_compra: data,
+        peso_rolo_g: peso,
+        peso_atual_g: peso,
+        preco_rolo: valor,
+        custo_por_g: custoG,
+        ativo: true
+      });
+
+      if (typeof EstoqueModule !== 'undefined' && EstoqueModule.render) EstoqueModule.render();
+      if (typeof CalculadoraModule !== 'undefined' && CalculadoraModule.renderFilamentoSelect) {
+        CalculadoraModule.renderFilamentoSelect();
+      }
+      return ` 🧵 Filamento ${material} ${cor} (${peso}g) adicionado ao Estoque!`;
+    }
+
+    // Matéria Prima ou Outros
+    const nome = (document.getElementById('fin-est-mp-nome')?.value || '').trim() || descricao;
+    const catProd = document.getElementById('fin-est-mp-cat')?.value || '3D';
+    const cor = document.getElementById('fin-est-mp-cor')?.value || '';
+    const unidade = document.getElementById('fin-est-mp-unidade')?.value || 'un';
+    const qtd = Math.max(0.1, parseFloat(document.getElementById('fin-est-mp-qtd')?.value) || 1);
+    const minimo = parseFloat(document.getElementById('fin-est-mp-minimo')?.value) || 5;
+    const custoUnit = Number((valor / qtd).toFixed(2));
+    const secao = tipoEst === 'outros' ? 'outros' : 'materia_prima';
+
+    // Se já existir item idêntico (mesmo nome + cor + seção), soma a quantidade ao estoque existente
+    const estoqueAtual = StorageService.get('estoque') || [];
+    const existente = estoqueAtual.find(e =>
+      (e.nome || '').toLowerCase().trim() === nome.toLowerCase().trim() &&
+      (e.cor || '').toLowerCase().trim() === cor.toLowerCase().trim() &&
+      (e.secao || 'materia_prima') === secao
+    );
+
+    if (existente) {
+      const novaQtd = Number(((Number(existente.quantidade_atual) || 0) + qtd).toFixed(2));
+      StorageService.update('estoque', existente.id, {
+        quantidade_atual: novaQtd,
+        custo_unitario: custoUnit,
+        data_ultima_compra: data,
+        ativo: true
+      });
+      if (typeof EstoqueModule !== 'undefined' && EstoqueModule.render) EstoqueModule.render();
+      return ` 📦 Estoque atualizado: +${qtd} ${unidade} de ${nome} (total: ${novaQtd} ${unidade})!`;
+    } else {
+      StorageService.insert('estoque', {
+        secao,
+        nome,
+        categoria: catProd,
+        cor,
+        unidade,
+        quantidade_atual: qtd,
+        estoque_minimo: minimo,
+        custo_unitario: custoUnit,
+        data_ultima_compra: data,
+        ativo: true
+      });
+      if (typeof EstoqueModule !== 'undefined' && EstoqueModule.render) EstoqueModule.render();
+      return ` 📦 Adicionado ao Estoque: ${qtd} ${unidade} de ${nome}!`;
+    }
   },
 
   onFormaPagtoModalChange(forma) {
@@ -1820,6 +1984,9 @@ const FinanceiroModule = {
       return;
     }
 
+    // Processa entrada automática no Estoque (quando Categoria = Matéria-Prima)
+    const msgEstoqueAuto = this.processarEntradaEstoqueAuto({ tipo, categoria, valor, data, descricao });
+
     // Caso de COMPRA NO CARTÃO DE CRÉDITO (encaminha cada parcela para a despesa do mês correspondente)
     const isCartaoCredito = tipo === 'despesa' && document.getElementById('fin-form-chk-cartao')?.checked;
     if (isCartaoCredito) {
@@ -1884,7 +2051,7 @@ const FinanceiroModule = {
         detalhes: `Cartão ${cartao} • ${numParcelas}x de ${App.formatMoney(valor / numParcelas)} • 1ª fatura ${mesesNomes[mesInicio - 1]}/${anoInicio}`
       });
 
-      App.toast(`💳 Compra no ${cartao} registrada em ${numParcelas}x de ${App.formatMoney(valor / numParcelas)}!`, 'success');
+      App.toast(`💳 Compra no ${cartao} registrada em ${numParcelas}x de ${App.formatMoney(valor / numParcelas)}!${msgEstoqueAuto}`, 'success');
       App.closeModal('modal-lancamento-financeiro');
       this.render();
       return;
@@ -1946,7 +2113,7 @@ const FinanceiroModule = {
         detalhes: `${tipo === 'receita' ? 'Receita' : 'Despesa'} em ${numParcelas}x de ${App.formatMoney(valor / numParcelas)} • Início ${String(mesInicio).padStart(2, '0')}/${anoInicio} • ${categoria} • ${local}`
       });
 
-      App.toast(`${numParcelas} parcelas de ${App.formatMoney(valor / numParcelas)} registradas como Pendentes!`, 'success');
+      App.toast(`${numParcelas} parcelas de ${App.formatMoney(valor / numParcelas)} registradas como Pendentes!${msgEstoqueAuto}`, 'success');
       App.closeModal('modal-lancamento-financeiro');
       this.render();
       return;
@@ -2012,7 +2179,7 @@ const FinanceiroModule = {
         detalhes: `${repeticoes} lançamentos de ${App.formatMoney(valor)} (${frequencia}) • ${categoria}`
       });
 
-      App.toast(`${repeticoes} repetições registradas com sucesso!`, 'success');
+      App.toast(`${repeticoes} repetições registradas com sucesso!${msgEstoqueAuto}`, 'success');
       App.closeModal('modal-lancamento-financeiro');
       this.render();
       return;
@@ -2053,7 +2220,7 @@ const FinanceiroModule = {
       valor,
       detalhes: `Status: ${status} • ${categoria} • ${centro} • ${forma} (${local})`
     });
-    App.toast(`${tipo === 'receita' ? 'Receita' : 'Despesa'} registrada com sucesso!`, 'success');
+    App.toast(`${tipo === 'receita' ? 'Receita' : 'Despesa'} registrada com sucesso!${msgEstoqueAuto}`, 'success');
     App.closeModal('modal-lancamento-financeiro');
     this.render();
   },

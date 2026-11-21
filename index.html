@@ -48,7 +48,7 @@
   <meta http-equiv="Expires" content="0">
 
   <!-- Estilos Customizados -->
-  <link rel="stylesheet" href="css/styles.css?v=92">
+  <link rel="stylesheet" href="css/styles.css?v=93">
 </head>
 
 <body>
@@ -2050,11 +2050,110 @@
         <div class="form-row" id="fin-row-cat-centro">
           <div class="form-group">
             <label>Categoria *</label>
-            <select id="fin-form-categoria" class="form-control"></select>
+            <select id="fin-form-categoria" class="form-control" onchange="FinanceiroModule.onCategoriaModalChange(this.value)"></select>
           </div>
           <div class="form-group" id="fin-group-centro-custo">
             <label>Centro de Custo *</label>
             <select id="fin-form-centro" class="form-control"></select>
+          </div>
+        </div>
+
+        <!-- ENTRADA AUTOMÁTICA NO ESTOQUE (QUANDO CATEGORIA = MATÉRIA-PRIMA) -->
+        <div id="fin-box-estoque-auto" style="display: none; background: rgba(6, 182, 212, 0.06); border: 1px solid rgba(6, 182, 212, 0.4); border-radius: 10px; padding: 14px; margin-bottom: 14px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; flex-wrap: wrap; gap: 8px;">
+            <span style="font-size: 0.86rem; font-weight: 700; color: #22d3ee;">📦 Adicionar Automaticamente ao Estoque</span>
+            <span style="font-size: 0.72rem; color: var(--text-muted);">Ao confirmar o lançamento, o produto entra direto na aba Estoque</span>
+          </div>
+
+          <div class="form-group" style="margin-bottom: 10px;">
+            <label>Destino no Estoque *</label>
+            <select id="fin-est-tipo" class="form-control" onchange="FinanceiroModule.onEstoqueAutoTipoChange(this.value)">
+              <option value="materia_prima">🧱 Matéria Prima</option>
+              <option value="filamentos">🧵 Filamentos (interligado à Calculadora 3D)</option>
+              <option value="outros">📦 Outros</option>
+              <option value="nao_adicionar">🚫 Não adicionar ao estoque (apenas lançar despesa)</option>
+            </select>
+          </div>
+
+          <!-- Sub-formulário: Matéria Prima / Outros -->
+          <div id="fin-est-sub-mp">
+            <div class="form-group">
+              <label>Nome do Material / Produto *</label>
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                <select id="fin-est-mp-prod-estab" class="form-control" onchange="FinanceiroModule.onSelectProdEstabFinanceiro(this.value)">
+                  <option value="">📋 Produtos Estabelecidos...</option>
+                </select>
+                <input type="text" id="fin-est-mp-nome" class="form-control" placeholder="Ou digite o nome do material...">
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label>Categoria de Produção</label>
+                <select id="fin-est-mp-cat" class="form-control"></select>
+              </div>
+              <div class="form-group">
+                <label>Cor</label>
+                <select id="fin-est-mp-cor" class="form-control">
+                  <option value="">(Sem cor / Padrão)</option>
+                </select>
+              </div>
+            </div>
+            <div class="form-row" style="grid-template-columns: 1fr 1fr 1fr;">
+              <div class="form-group" style="margin-bottom: 0;">
+                <label>Unidade</label>
+                <select id="fin-est-mp-unidade" class="form-control">
+                  <option value="un">Unidade (un)</option>
+                  <option value="kg">Quilo (kg)</option>
+                  <option value="g">Grama (g)</option>
+                  <option value="m">Metro (m)</option>
+                  <option value="fl">Folha (fl)</option>
+                </select>
+              </div>
+              <div class="form-group" style="margin-bottom: 0;">
+                <label>Quantidade *</label>
+                <input type="number" step="0.1" min="0.1" id="fin-est-mp-qtd" class="form-control" value="1">
+              </div>
+              <div class="form-group" style="margin-bottom: 0;">
+                <label>Estoque Mínimo</label>
+                <input type="number" step="0.1" min="0" id="fin-est-mp-minimo" class="form-control" value="5">
+              </div>
+            </div>
+          </div>
+
+          <!-- Sub-formulário: Filamentos -->
+          <div id="fin-est-sub-fil" style="display: none;">
+            <div class="form-row">
+              <div class="form-group">
+                <label>Tipo de Material *</label>
+                <select id="fin-est-fil-material" class="form-control">
+                  <option value="PLA">PLA</option>
+                  <option value="PETG">PETG</option>
+                  <option value="ABS">ABS</option>
+                  <option value="TPU">TPU</option>
+                  <option value="ASA">ASA</option>
+                  <option value="Nylon">Nylon</option>
+                  <option value="Resina">Resina</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>Marca / Fabricante *</label>
+                <select id="fin-est-fil-marca" class="form-control"></select>
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label>Cor do Filamento *</label>
+                <select id="fin-est-fil-cor" class="form-control"></select>
+              </div>
+              <div class="form-group">
+                <label>Peso do Rolo (gramas) *</label>
+                <input type="number" step="10" min="1" id="fin-est-fil-peso" class="form-control" value="1000">
+              </div>
+            </div>
+            <div class="form-group" style="margin-bottom: 0;">
+              <label>Local da Compra</label>
+              <input type="text" id="fin-est-fil-local" class="form-control" placeholder="Ex: Mercado Livre, Amazon, Shopee...">
+            </div>
           </div>
         </div>
 
@@ -3115,20 +3214,20 @@
   <!-- CONTAINER DE TOASTS -->
   <div class="toast-container" id="toast-container"></div>
 
-  <!-- SCRIPTS DO SISTEMA (com cache-busting v92) -->
-  <script src="js/notifications.js?v=92"></script>
-  <script src="js/storage.js?v=92"></script>
-  <script src="js/auth.js?v=92"></script>
-  <script src="js/crm.js?v=92"></script>
-  <script src="js/encomendas.js?v=92"></script>
-  <script src="js/estoque.js?v=92"></script>
-  <script src="js/financeiro.js?v=92"></script>
-  <script src="js/propostas.js?v=92"></script>
-  <script src="js/calculadora.js?v=92"></script>
-  <script src="js/calculadora-laser.js?v=92"></script>
-  <script src="js/calendario.js?v=92"></script>
-  <script src="js/configuracoes.js?v=92"></script>
-  <script src="js/app.js?v=92"></script>
+  <!-- SCRIPTS DO SISTEMA (com cache-busting v93) -->
+  <script src="js/notifications.js?v=93"></script>
+  <script src="js/storage.js?v=93"></script>
+  <script src="js/auth.js?v=93"></script>
+  <script src="js/crm.js?v=93"></script>
+  <script src="js/encomendas.js?v=93"></script>
+  <script src="js/estoque.js?v=93"></script>
+  <script src="js/financeiro.js?v=93"></script>
+  <script src="js/propostas.js?v=93"></script>
+  <script src="js/calculadora.js?v=93"></script>
+  <script src="js/calculadora-laser.js?v=93"></script>
+  <script src="js/calendario.js?v=93"></script>
+  <script src="js/configuracoes.js?v=93"></script>
+  <script src="js/app.js?v=93"></script>
 </body>
 
 </html>
