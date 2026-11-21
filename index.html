@@ -48,7 +48,7 @@
   <meta http-equiv="Expires" content="0">
 
   <!-- Estilos Customizados -->
-  <link rel="stylesheet" href="css/styles.css?v=69">
+  <link rel="stylesheet" href="css/styles.css?v=70">
 </head>
 
 <body>
@@ -1065,26 +1065,31 @@
                   placeholder="Ex: Luminária Seven 3D, Chaveiro, Troféu..." value="Troféu Seven 3D">
               </div>
 
-              <div class="form-group">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
-                  <label style="margin-bottom: 0;">Material Utilizado *</label>
-                  <button type="button"
-                    style="background: none; border: none; color: #fb923c; font-size: 0.75rem; cursor: pointer; text-decoration: underline;"
-                    onclick="CalculadoraModule.abrirModalFilamentos()">
-                    + Novo Filamento
-                  </button>
+              <div class="form-group" style="background: rgba(255, 255, 255, 0.02); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 12px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; flex-wrap: wrap; gap: 8px;">
+                  <label style="margin-bottom: 0; font-weight: 700; color: #ffffff;">🧵 Materiais / Cores Utilizadas *</label>
+                  <div style="display: flex; align-items: center; gap: 10px;">
+                    <button type="button" class="btn btn-secondary btn-sm"
+                      style="padding: 4px 10px; font-size: 0.74rem; border-color: rgba(56, 189, 248, 0.45); color: #38bdf8; font-weight: 600;"
+                      onclick="CalculadoraModule.addFilamentoUsoRow()">
+                      + Adicionar Cor
+                    </button>
+                    <button type="button"
+                      style="background: none; border: none; color: #fb923c; font-size: 0.74rem; cursor: pointer; text-decoration: underline;"
+                      onclick="CalculadoraModule.abrirModalFilamentos()">
+                      + Novo Filamento
+                    </button>
+                  </div>
                 </div>
-                <select id="calc-form-filamento" class="form-control"></select>
+                <div id="calc-filamentos-uso-container" style="display: flex; flex-direction: column; gap: 8px;"></div>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 8px; padding-top: 8px; border-top: 1px dashed rgba(255,255,255,0.08); font-size: 0.76rem; color: var(--text-muted);">
+                  <span>Peso total no fatiador (soma das cores):</span>
+                  <strong id="calc-filamentos-peso-total-badge" style="color: #fb923c; font-size: 0.88rem;">120 g</strong>
+                </div>
+                <input type="hidden" id="calc-form-gramas" value="120">
               </div>
 
               <div class="form-row">
-                <div class="form-group">
-                  <label>Peso Utilizado (gramas) *</label>
-                  <input type="number" step="0.1" id="calc-form-gramas" class="form-control" placeholder="Ex: 85"
-                    value="120">
-                  <small style="color: var(--text-muted); font-size: 0.72rem;">Peso total informado no fatiador</small>
-                </div>
-
                 <div class="form-group">
                   <label>Tempo de Impressão *</label>
                   <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
@@ -1100,22 +1105,20 @@
                     </div>
                   </div>
                 </div>
-              </div>
 
-              <div class="form-row">
                 <div class="form-group">
                   <label>Quantidade de Peças Produzidas</label>
                   <input type="number" min="1" step="1" id="calc-form-qtd-pecas" class="form-control" value="1">
                   <small style="color: var(--text-muted); font-size: 0.72rem;">Divide o custo e preço pelo total de
                     peças</small>
                 </div>
+              </div>
 
-                <div class="form-group">
-                  <label>Observações do Fatiamento (Opcional)</label>
-                  <input type="text" id="calc-form-obs" class="form-control"
-                    placeholder="Ex: Bico 0.4mm, Layer 0.20, Infill 15%">
-                  <small style="color: var(--text-muted); font-size: 0.72rem;">Configurações e notas da peça</small>
-                </div>
+              <div class="form-group">
+                <label>Observações do Fatiamento (Opcional)</label>
+                <input type="text" id="calc-form-obs" class="form-control"
+                  placeholder="Ex: Bico 0.4mm, Layer 0.20, Infill 15%">
+                <small style="color: var(--text-muted); font-size: 0.72rem;">Configurações e notas da peça</small>
               </div>
 
               <!-- MARGEM DE LUCRO DESEJADA -->
@@ -2875,20 +2878,20 @@
   <!-- CONTAINER DE TOASTS -->
   <div class="toast-container" id="toast-container"></div>
 
-  <!-- SCRIPTS DO SISTEMA (com cache-busting v69) -->
-  <script src="js/notifications.js?v=69"></script>
-  <script src="js/storage.js?v=69"></script>
-  <script src="js/auth.js?v=69"></script>
-  <script src="js/crm.js?v=69"></script>
-  <script src="js/encomendas.js?v=69"></script>
-  <script src="js/estoque.js?v=69"></script>
-  <script src="js/financeiro.js?v=69"></script>
-  <script src="js/propostas.js?v=69"></script>
-  <script src="js/calculadora.js?v=69"></script>
-  <script src="js/calculadora-laser.js?v=69"></script>
-  <script src="js/calendario.js?v=69"></script>
-  <script src="js/configuracoes.js?v=69"></script>
-  <script src="js/app.js?v=69"></script>
+  <!-- SCRIPTS DO SISTEMA (com cache-busting v70) -->
+  <script src="js/notifications.js?v=70"></script>
+  <script src="js/storage.js?v=70"></script>
+  <script src="js/auth.js?v=70"></script>
+  <script src="js/crm.js?v=70"></script>
+  <script src="js/encomendas.js?v=70"></script>
+  <script src="js/estoque.js?v=70"></script>
+  <script src="js/financeiro.js?v=70"></script>
+  <script src="js/propostas.js?v=70"></script>
+  <script src="js/calculadora.js?v=70"></script>
+  <script src="js/calculadora-laser.js?v=70"></script>
+  <script src="js/calendario.js?v=70"></script>
+  <script src="js/configuracoes.js?v=70"></script>
+  <script src="js/app.js?v=70"></script>
 </body>
 
 </html>

@@ -400,10 +400,19 @@ const PropostasModule = {
     if (!h) return;
 
     const precoUnit = Number(h.preco_venda_unitario) || (Number(h.preco_venda_total) / (Number(h.quantidade_pecas) || 1)) || Number(h.custo_unitario) || 0;
-    const gramasUnit = (Number(h.gramas) || 0) / Math.max(1, Number(h.quantidade_pecas) || 1);
+    const qtdLote = Math.max(1, Number(h.quantidade_pecas) || 1);
+    const gramasUnit = (Number(h.gramas) || 0) / qtdLote;
     item.calc_3d_historico_id = h.id;
     item.calc_3d_filamento_id = h.filamento_id || '';
     item.gramas_unitario = Number(gramasUnit.toFixed(2));
+    item.filamentos_usados_unitario = (Array.isArray(h.filamentos_usados) && h.filamentos_usados.length > 0)
+      ? h.filamentos_usados.map(u => ({
+          filamento_id: u.filamento_id || '',
+          cor: u.cor || '',
+          material: u.material || '',
+          gramas_unitario: Number(((Number(u.gramas) || 0) / qtdLote).toFixed(2))
+        }))
+      : [];
     item.produto_nome = h.produto_nome || item.produto_nome;
     item.preco_unitario = Number(precoUnit.toFixed(2));
     item.subtotal = (Number(item.quantidade) || 1) * item.preco_unitario;
@@ -696,6 +705,7 @@ const PropostasModule = {
       payload.itens.forEach(it => {
         it.filamento_deduzido_id = null;
         it.filamento_deduzido_g = 0;
+        it.filamentos_deduzidos = [];
       });
     }
 
@@ -792,6 +802,8 @@ const PropostasModule = {
           calc_3d_historico_id: it.calc_3d_historico_id || '',
           calc_3d_filamento_id: it.calc_3d_filamento_id || '',
           gramas_unitario: Number(it.gramas_unitario) || 0,
+          filamentos_usados_unitario: Array.isArray(it.filamentos_usados_unitario) ? it.filamentos_usados_unitario : [],
+          filamentos_deduzidos: Array.isArray(it.filamentos_deduzidos) ? it.filamentos_deduzidos : [],
           filamento_deduzido_id: it.filamento_deduzido_id || null,
           filamento_deduzido_g: Number(it.filamento_deduzido_g) || 0
         }))

@@ -742,6 +742,8 @@ const EncomendasModule = {
         calc_3d_historico_id: it.calc_3d_historico_id || '',
         calc_3d_filamento_id: it.calc_3d_filamento_id || '',
         gramas_unitario: Number(it.gramas_unitario) || 0,
+        filamentos_usados_unitario: Array.isArray(it.filamentos_usados_unitario) ? it.filamentos_usados_unitario : [],
+        filamentos_deduzidos: Array.isArray(it.filamentos_deduzidos) ? it.filamentos_deduzidos : [],
         filamento_deduzido_id: it.filamento_deduzido_id || null,
         filamento_deduzido_g: Number(it.filamento_deduzido_g) || 0,
         estoque_id: it.estoque_id || (it.estoque_item_id ? it.estoque_item_id : 'auto'),
@@ -793,10 +795,19 @@ const EncomendasModule = {
     if (!h) return;
 
     const precoUnit = Number(h.preco_venda_unitario) || (Number(h.preco_venda_total) / (Number(h.quantidade_pecas) || 1)) || Number(h.custo_unitario) || 0;
-    const gramasUnit = (Number(h.gramas) || 0) / Math.max(1, Number(h.quantidade_pecas) || 1);
+    const qtdLote = Math.max(1, Number(h.quantidade_pecas) || 1);
+    const gramasUnit = (Number(h.gramas) || 0) / qtdLote;
     item.calc_3d_historico_id = h.id;
     item.calc_3d_filamento_id = h.filamento_id || '';
     item.gramas_unitario = Number(gramasUnit.toFixed(2));
+    item.filamentos_usados_unitario = (Array.isArray(h.filamentos_usados) && h.filamentos_usados.length > 0)
+      ? h.filamentos_usados.map(u => ({
+          filamento_id: u.filamento_id || '',
+          cor: u.cor || '',
+          material: u.material || '',
+          gramas_unitario: Number(((Number(u.gramas) || 0) / qtdLote).toFixed(2))
+        }))
+      : [];
     item.produto_nome = h.produto_nome || item.produto_nome;
     item.preco_unitario = Number(precoUnit.toFixed(2));
     item.subtotal = (Number(item.quantidade) || 1) * item.preco_unitario;
@@ -962,10 +973,57 @@ const EncomendasModule = {
 
     itens.forEach(item => {
       // Evita dupla baixa caso já tenha sido deduzido ao salvar o orçamento
-      if (item.filamento_deduzido_id && Number(item.filamento_deduzido_g) > 0) {
+      const jaDeduzidoMulti = Array.isArray(item.filamentos_deduzidos) && item.filamentos_deduzidos.length > 0;
+      const jaDeduzidoUnico = item.filamento_deduzido_id && Number(item.filamento_deduzido_g) > 0;
+      if (jaDeduzidoMulti || jaDeduzidoUnico) {
         return;
       }
 
+      const qtd = Math.max(1, Number(item.quantidade) || 1);
+
+      // 1. Verifica se o item possui múltiplas cores/filamentos salvos (impressão multicolorida)
+      let listaMulti = (Array.isArray(item.filamentos_usados_unitario) && item.filamentos_usados_unitario.length > 0)
+        ? item.filamentos_usados_unitario
+        : [];
+
+      if (listaMulti.length === 0 && item.calc_3d_historico_id) {
+        const h = historico3D.find(rec => rec.id === item.calc_3d_historico_id);
+        if (h && Array.isArray(h.filamentos_usados) && h.filamentos_usados.length > 0) {
+          const qtdLote = Math.max(1, Number(h.quantidade_pecas) || 1);
+          listaMulti = h.filamentos_usados.map(u => ({
+            filamento_id: u.filamento_id || '',
+            cor: u.cor || '',
+            material: u.material || '',
+            gramas_unitario: Number(((Number(u.gramas) || 0) / qtdLote).toFixed(2))
+          }));
+          item.filamentos_usados_unitario = listaMulti;
+        }
+      }
+
+      if (listaMulti.length > 0) {
+        const deduzidos = [];
+        listaMulti.forEach(u => {
+          const gUnit = Number(u.gramas_unitario) || 0;
+          if (gUnit <= 0) return;
+          const pesoConsumido = Math.round(gUnit * qtd * 10) / 10;
+          const fil = this.encontrarFilamentoPorCor(u.cor || item.cor, u.filamento_id || null);
+          if (fil) {
+            const pesoOriginal = Number(fil.peso_rolo_g) || 1000;
+            const pesoAtual = (fil.peso_atual_g !== undefined && fil.peso_atual_g !== null) ? Number(fil.peso_atual_g) : pesoOriginal;
+            const novoPesoAtual = Math.max(0, Math.round((pesoAtual - pesoConsumido) * 10) / 10);
+
+            StorageService.update('filamentos', fil.id, { peso_atual_g: novoPesoAtual });
+            deduzidos.push({ filamento_id: fil.id, gramas: pesoConsumido });
+            baixasFilamento.push(`-${pesoConsumido}g ${fil.material || 'Filamento'} ${fil.cor || ''} (restam ${novoPesoAtual}g)`);
+          }
+        });
+        item.filamentos_deduzidos = deduzidos;
+        item.filamento_deduzido_id = null;
+        item.filamento_deduzido_g = 0;
+        return;
+      }
+
+      // 2. Fallback: item de cor única
       let gramasUnit = Number(item.gramas_unitario) || 0;
       let filIdPref = item.calc_3d_filamento_id || null;
 
@@ -986,10 +1044,10 @@ const EncomendasModule = {
       if (gramasUnit <= 0) {
         item.filamento_deduzido_id = null;
         item.filamento_deduzido_g = 0;
+        item.filamentos_deduzidos = [];
         return;
       }
 
-      const qtd = Math.max(1, Number(item.quantidade) || 1);
       const pesoConsumido = Math.round(gramasUnit * qtd * 10) / 10;
       const fil = this.encontrarFilamentoPorCor(item.cor, filIdPref);
 
@@ -1004,10 +1062,12 @@ const EncomendasModule = {
 
         item.filamento_deduzido_id = fil.id;
         item.filamento_deduzido_g = pesoConsumido;
+        item.filamentos_deduzidos = [{ filamento_id: fil.id, gramas: pesoConsumido }];
         baixasFilamento.push(`-${pesoConsumido}g ${fil.material || 'Filamento'} ${fil.cor || ''} (restam ${novoPesoAtual}g)`);
       } else {
         item.filamento_deduzido_id = null;
         item.filamento_deduzido_g = 0;
+        item.filamentos_deduzidos = [];
       }
     });
 
@@ -1021,7 +1081,22 @@ const EncomendasModule = {
     if (!itens || !Array.isArray(itens)) return;
     let houveEstorno = false;
     itens.forEach(it => {
-      if (it.filamento_deduzido_id && Number(it.filamento_deduzido_g) > 0) {
+      if (Array.isArray(it.filamentos_deduzidos) && it.filamentos_deduzidos.length > 0) {
+        it.filamentos_deduzidos.forEach(d => {
+          if (d.filamento_id && Number(d.gramas) > 0) {
+            const fil = (StorageService.get('filamentos') || []).find(f => f.id === d.filamento_id);
+            if (fil) {
+              const pesoAtual = (fil.peso_atual_g !== undefined && fil.peso_atual_g !== null) ? Number(fil.peso_atual_g) : (Number(fil.peso_rolo_g) || 0);
+              const novoPesoAtual = Math.round((pesoAtual + Number(d.gramas)) * 10) / 10;
+              StorageService.update('filamentos', fil.id, { peso_atual_g: novoPesoAtual });
+              houveEstorno = true;
+            }
+          }
+        });
+        it.filamentos_deduzidos = [];
+        it.filamento_deduzido_id = null;
+        it.filamento_deduzido_g = 0;
+      } else if (it.filamento_deduzido_id && Number(it.filamento_deduzido_g) > 0) {
         const fil = (StorageService.get('filamentos') || []).find(f => f.id === it.filamento_deduzido_id);
         if (fil) {
           const pesoAtual = (fil.peso_atual_g !== undefined && fil.peso_atual_g !== null) ? Number(fil.peso_atual_g) : (Number(fil.peso_rolo_g) || 0);
@@ -1330,6 +1405,7 @@ const EncomendasModule = {
     encomendaItensTemp.forEach(item => {
       item.filamento_deduzido_id = null;
       item.filamento_deduzido_g = 0;
+      item.filamentos_deduzidos = [];
     });
 
     if (status !== 'Cancelada') {

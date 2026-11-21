@@ -5,8 +5,10 @@
 
 const CalculadoraModule = {
   filamentoEditandoId: null,
+  filamentosUsoTemp: [],
 
   init() {
+    this.initFilamentosUso();
     this.renderFilamentoSelect();
     this.carregarParametrosConfig();
     this.renderHistorico();
@@ -21,6 +23,45 @@ const CalculadoraModule = {
         this.renderHistorico();
       }
     });
+  },
+
+  initFilamentosUso() {
+    if (!this.filamentosUsoTemp || this.filamentosUsoTemp.length === 0) {
+      const ativos = (StorageService.get('filamentos') || []).filter(f => f.ativo !== false);
+      this.filamentosUsoTemp = [
+        { filamento_id: ativos[0]?.id || '', gramas: 120 }
+      ];
+    }
+  },
+
+  addFilamentoUsoRow() {
+    const ativos = (StorageService.get('filamentos') || []).filter(f => f.ativo !== false);
+    const usadosIds = new Set(this.filamentosUsoTemp.map(r => r.filamento_id));
+    const proximo = ativos.find(f => !usadosIds.has(f.id)) || ativos[0];
+    this.filamentosUsoTemp.push({
+      filamento_id: proximo?.id || '',
+      gramas: 0
+    });
+    this.renderFilamentoSelect();
+    this.calcular();
+  },
+
+  removeFilamentoUsoRow(idx) {
+    if (this.filamentosUsoTemp.length <= 1) return;
+    this.filamentosUsoTemp.splice(idx, 1);
+    this.renderFilamentoSelect();
+    this.calcular();
+  },
+
+  updateFilamentoUso(idx, field, value) {
+    const row = this.filamentosUsoTemp[idx];
+    if (!row) return;
+    if (field === 'gramas') {
+      row.gramas = parseFloat(value) || 0;
+    } else {
+      row[field] = value;
+    }
+    this.calcular();
   },
 
   attachEvents() {
@@ -66,67 +107,130 @@ const CalculadoraModule = {
     }
   },
 
-  // Popula o <select> de filamentos cadastrados
+  // Renderiza as linhas de Filamentos / Cores Utilizadas (suporte a múltiplas cores com peso por cor)
   renderFilamentoSelect(selectedId = null) {
-    const select = document.getElementById('calc-form-filamento');
-    if (!select) return;
+    this.initFilamentosUso();
+    const container = document.getElementById('calc-filamentos-uso-container');
+    if (!container) return;
 
     const filamentos = StorageService.get('filamentos') || [];
     const ativos = filamentos.filter(f => f.ativo !== false);
 
-    if (ativos.length === 0) {
-      select.innerHTML = '<option value="">Nenhum filamento cadastrado</option>';
-      return;
+    if (selectedId && this.filamentosUsoTemp.length > 0) {
+      this.filamentosUsoTemp[0].filamento_id = selectedId;
     }
 
-    const currentVal = selectedId || select.value || (ativos[0] ? ativos[0].id : '');
+    // Garante que cada linha tenha um filamento válido selecionado quando houver filamentos cadastrados
+    if (ativos.length > 0) {
+      this.filamentosUsoTemp.forEach(row => {
+        if (!row.filamento_id || !ativos.some(f => f.id === row.filamento_id)) {
+          row.filamento_id = ativos[0].id;
+        }
+      });
+    }
 
-    select.innerHTML = ativos.map(f => {
-      const custoG = (Number(f.custo_por_g) || (Number(f.preco_rolo) / Number(f.peso_rolo_g || 1000))).toFixed(3);
-      return `<option value="${f.id}" ${f.id === currentVal ? 'selected' : ''}>
-        ${App.escapeHtml(f.material)} ${f.cor ? '— ' + App.escapeHtml(f.cor) : ''} (${App.escapeHtml(f.marca || 'Genérico')}) • R$ ${custoG.replace('.', ',')}/g
-      </option>`;
-    }).join('');
+    const optionsHtmlFor = (currentId) => {
+      if (ativos.length === 0) {
+        return '<option value="">Nenhum filamento cadastrado</option>';
+      }
+      return ativos.map(f => {
+        const pesoRolo = Number(f.peso_rolo_g) || 1000;
+        const custoG = (Number(f.custo_por_g) > 0 ? Number(f.custo_por_g) : (Number(f.preco_rolo) / pesoRolo)).toFixed(3);
+        const pesoAtual = (f.peso_atual_g !== undefined && f.peso_atual_g !== null) ? Number(f.peso_atual_g) : pesoRolo;
+        return `<option value="${f.id}" ${f.id === currentId ? 'selected' : ''}>
+          ${App.escapeHtml(f.material)} ${f.cor ? '— ' + App.escapeHtml(f.cor) : ''} (${App.escapeHtml(f.marca || 'Genérico')}) • R$ ${custoG.replace('.', ',')}/g (${pesoAtual}g)
+        </option>`;
+      }).join('');
+    };
+
+    container.innerHTML = this.filamentosUsoTemp.map((row, idx) => `
+      <div style="display: flex; gap: 8px; align-items: center; flex-wrap: nowrap;">
+        <select class="form-control" style="flex: 1; min-width: 0; height: 38px; font-size: 0.84rem;"
+                onchange="CalculadoraModule.updateFilamentoUso(${idx}, 'filamento_id', this.value)">
+          ${optionsHtmlFor(row.filamento_id)}
+        </select>
+        <div style="position: relative; width: 108px; flex-shrink: 0;">
+          <input type="number" step="0.1" min="0" class="form-control" style="height: 38px; padding-right: 22px; font-weight: 700;"
+                 value="${row.gramas || ''}" placeholder="0"
+                 oninput="CalculadoraModule.updateFilamentoUso(${idx}, 'gramas', this.value)">
+          <span style="position: absolute; right: 8px; top: 50%; transform: translateY(-50%); font-size: 0.74rem; color: var(--text-muted); pointer-events: none;">g</span>
+        </div>
+        ${this.filamentosUsoTemp.length > 1 ? `
+          <button type="button" onclick="CalculadoraModule.removeFilamentoUsoRow(${idx})" title="Remover cor"
+                  style="display: inline-flex; align-items: center; justify-content: center; width: 34px; height: 38px; flex-shrink: 0; background: rgba(239, 68, 68, 0.14); border: 1px solid rgba(239, 68, 68, 0.4); color: #f87171; border-radius: 6px; cursor: pointer; font-weight: 700;">
+            ✕
+          </button>
+        ` : ''}
+      </div>
+    `).join('');
   },
 
-  // Obtém os dados e calcula tudo em tempo real
+  // Obtém os dados e calcula tudo em tempo real (com suporte a múltiplas cores)
   calcular() {
-    const gramas = parseFloat(document.getElementById('calc-form-gramas')?.value) || 0;
+    this.initFilamentosUso();
     const horas = parseFloat(document.getElementById('calc-form-horas')?.value) || 0;
     const minutos = parseFloat(document.getElementById('calc-form-minutos')?.value) || 0;
     const qtdPecas = Math.max(1, parseInt(document.getElementById('calc-form-qtd-pecas')?.value) || 1);
-    const filamentoId = document.getElementById('calc-form-filamento')?.value;
     const produtoNome = document.getElementById('calc-form-produto')?.value.trim() || 'Nova Peça 3D';
 
     const filamentos = StorageService.get('filamentos') || [];
-    const filamento = filamentos.find(f => f.id === filamentoId) || filamentos[0];
-
     const cfg = StorageService.getCalc3DConfig();
     const tarifaKwh = Number(cfg.tarifa_kwh) || 0.85;
     const potenciaW = Number(cfg.potencia_impressora_w) || 200;
     const custoHoraOp = Number(cfg.custo_operacional_hora) || 3.50;
 
-    // 1. Custo do filamento (usa custo_por_g salvo para não distorcer quando o peso do rolo diminuir no estoque)
-    let custoPorGrama = 0.11;
-    if (filamento) {
-      const precoRolo = Number(filamento.preco_rolo) || 0;
-      const pesoRolo = Number(filamento.peso_rolo_g) || 1000;
-      custoPorGrama = Number(filamento.custo_por_g) > 0
-        ? Number(filamento.custo_por_g)
-        : (pesoRolo > 0 ? (precoRolo / pesoRolo) : 0);
+    // 1. Custo detalhado de cada cor/filamento utilizado
+    let gramas = 0;
+    let custoMaterial = 0;
+    const filamentosUsados = [];
+
+    this.filamentosUsoTemp.forEach(row => {
+      const g = Number(row.gramas) || 0;
+      const fil = filamentos.find(f => f.id === row.filamento_id) || filamentos[0];
+      let custoG = 0.11;
+      if (fil) {
+        const precoRolo = Number(fil.preco_rolo) || 0;
+        const pesoRolo = Number(fil.peso_rolo_g) || 1000;
+        custoG = Number(fil.custo_por_g) > 0
+          ? Number(fil.custo_por_g)
+          : (pesoRolo > 0 ? (precoRolo / pesoRolo) : 0);
+      }
+      const custoRow = g * custoG;
+      gramas += g;
+      custoMaterial += custoRow;
+      if (fil && g > 0) {
+        filamentosUsados.push({
+          filamento_id: fil.id,
+          material: fil.material || 'PLA',
+          marca: fil.marca || '',
+          cor: fil.cor || '',
+          gramas: Number(g.toFixed(2)),
+          custo_por_g: Number(custoG.toFixed(4)),
+          custo: Number(custoRow.toFixed(2))
+        });
+      }
+    });
+
+    const filamento = filamentos.find(f => f.id === this.filamentosUsoTemp[0]?.filamento_id) || filamentos[0];
+    const custoPorGrama = gramas > 0 ? (custoMaterial / gramas) : (Number(filamento?.custo_por_g) || 0.11);
+
+    // Atualiza total de gramas no badge e input hidden
+    const gramasHidden = document.getElementById('calc-form-gramas');
+    if (gramasHidden) gramasHidden.value = gramas;
+    const pesoTotalBadge = document.getElementById('calc-filamentos-peso-total-badge');
+    if (pesoTotalBadge) {
+      const qtdCores = this.filamentosUsoTemp.length;
+      pesoTotalBadge.textContent = `${gramas.toLocaleString('pt-BR', { maximumFractionDigits: 1 })} g${qtdCores > 1 ? ` (${qtdCores} cores)` : ''}`;
     }
-    const custoMaterial = gramas * custoPorGrama;
 
     // 2. Tempo total em horas
     const tempoTotalHoras = horas + (minutos / 60);
 
     // 3. Custo da energia elétrica
-    // Consumo em kWh = (Potência em Watts × Tempo em horas) ÷ 1.000
     const consumoKwh = (potenciaW * tempoTotalHoras) / 1000;
     const custoEnergia = consumoKwh * tarifaKwh;
 
     // 4. Custo operacional da impressora
-    // Custo operacional = Tempo em horas × Custo operacional por hora
     const custoOperacional = tempoTotalHoras * custoHoraOp;
 
     // 5. Custo total e unitário
@@ -143,10 +247,16 @@ const CalculadoraModule = {
     const precoVendaUnitario = qtdPecas > 0 ? (precoVendaTotal / qtdPecas) : precoVendaTotal;
     const lucroUnitario = qtdPecas > 0 ? (lucroTotal / qtdPecas) : lucroTotal;
 
+    const resumoMaterialTexto = filamentosUsados.length > 1
+      ? filamentosUsados.map(u => `${u.cor || u.material} (${u.gramas}g)`).join(' + ')
+      : (filamento ? `${filamento.material} ${filamento.cor} (${filamento.marca})` : 'Material Padrão');
+
     // Atualiza a visualização no Painel de Resultados
     this.atualizarPainelResultados({
       produtoNome,
       filamento,
+      filamentosUsados,
+      resumoMaterialTexto,
       gramas,
       horas,
       minutos,
@@ -171,6 +281,8 @@ const CalculadoraModule = {
     return {
       produtoNome,
       filamento,
+      filamentosUsados,
+      resumoMaterialTexto,
       gramas,
       horas,
       minutos,
@@ -199,9 +311,9 @@ const CalculadoraModule = {
 
     const elMaterial = document.getElementById('calc-res-material-resumo');
     if (elMaterial) {
-      elMaterial.textContent = res.filamento 
+      elMaterial.textContent = res.resumoMaterialTexto || (res.filamento 
         ? `${res.filamento.material} ${res.filamento.cor} (${res.filamento.marca})`
-        : 'Material Padrão';
+        : 'Material Padrão');
     }
 
     const elGramas = document.getElementById('calc-res-gramas-resumo');
@@ -284,9 +396,10 @@ const CalculadoraModule = {
       data: new Date().toISOString(),
       produto_nome: dados.produtoNome,
       filamento_id: dados.filamento?.id || '',
-      filamento_nome: dados.filamento 
+      filamento_nome: dados.resumoMaterialTexto || (dados.filamento 
         ? `${dados.filamento.material} ${dados.filamento.cor} (${dados.filamento.marca})`
-        : 'Filamento',
+        : 'Filamento'),
+      filamentos_usados: dados.filamentosUsados || [],
       gramas: dados.gramas || 0,
       tempo_horas: dados.horas || 0,
       tempo_minutos: dados.minutos || 0,
@@ -317,7 +430,9 @@ const CalculadoraModule = {
 
   limparFormulario() {
     document.getElementById('calc-form-produto').value = '';
-    document.getElementById('calc-form-gramas').value = '';
+    const ativos = (StorageService.get('filamentos') || []).filter(f => f.ativo !== false);
+    this.filamentosUsoTemp = [{ filamento_id: ativos[0]?.id || '', gramas: 0 }];
+    this.renderFilamentoSelect();
     document.getElementById('calc-form-horas').value = '';
     document.getElementById('calc-form-minutos').value = '';
     document.getElementById('calc-form-qtd-pecas').value = '1';
@@ -458,10 +573,18 @@ const CalculadoraModule = {
     if (!item) return;
 
     document.getElementById('calc-form-produto').value = item.produto_nome || '';
-    if (item.filamento_id) {
-      document.getElementById('calc-form-filamento').value = item.filamento_id;
+    if (Array.isArray(item.filamentos_usados) && item.filamentos_usados.length > 0) {
+      this.filamentosUsoTemp = item.filamentos_usados.map(u => ({
+        filamento_id: u.filamento_id || '',
+        gramas: Number(u.gramas) || 0
+      }));
+    } else {
+      this.filamentosUsoTemp = [{
+        filamento_id: item.filamento_id || '',
+        gramas: Number(item.gramas) || 0
+      }];
     }
-    document.getElementById('calc-form-gramas').value = item.gramas || '';
+    this.renderFilamentoSelect();
     document.getElementById('calc-form-horas').value = item.tempo_horas || '';
     document.getElementById('calc-form-minutos').value = item.tempo_minutos || '';
     document.getElementById('calc-form-qtd-pecas').value = item.quantidade_pecas || '1';
