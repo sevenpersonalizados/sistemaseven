@@ -48,7 +48,7 @@
   <meta http-equiv="Expires" content="0">
 
   <!-- Estilos Customizados -->
-  <link rel="stylesheet" href="css/styles.css?v=87">
+  <link rel="stylesheet" href="css/styles.css?v=88">
 </head>
 
 <body>
@@ -834,18 +834,30 @@
                 <option value="Geral">Geral</option>
               </select>
 
-              <select id="fin-filtro-proprietario" class="form-control" style="width: auto; font-size: 0.8rem;" onchange="FinanceiroModule.onFiltroProprietarioChange(this.value)">
-                <option value="">Proprietário: Ambos</option>
-                <option value="Proprietário 1">Proprietário 1</option>
-                <option value="Proprietário 2">Proprietário 2</option>
+              <select id="fin-filtro-ano" class="form-control" style="width: auto; font-size: 0.8rem;" onchange="FinanceiroModule.onFiltroAnoChange(this.value)">
+                <option value="TODOS" selected>Ano: Todos</option>
+                <option value="2025">2025</option>
+                <option value="2026">2026</option>
+                <option value="2027">2027</option>
+                <option value="2028">2028</option>
+                <option value="2029">2029</option>
+                <option value="2030">2030</option>
               </select>
 
-              <select id="fin-filtro-mesano" class="form-control" style="width: auto; font-size: 0.8rem;" onchange="FinanceiroModule.onFiltroMesAnoChange(this.value)">
-                <option value="TODOS" selected>Período: Todo o Histórico</option>
-                <option value="2026-11">Novembro/2026 (Mês Atual)</option>
-                <option value="2026-10">Outubro/2026</option>
-                <option value="2026-09">Setembro/2026</option>
-                <option value="2026-12">Dezembro/2026</option>
+              <select id="fin-filtro-mes" class="form-control" style="width: auto; font-size: 0.8rem;" onchange="FinanceiroModule.onFiltroMesChange(this.value)">
+                <option value="TODOS" selected>Mês: Todos</option>
+                <option value="01">Janeiro</option>
+                <option value="02">Fevereiro</option>
+                <option value="03">Março</option>
+                <option value="04">Abril</option>
+                <option value="05">Maio</option>
+                <option value="06">Junho</option>
+                <option value="07">Julho</option>
+                <option value="08">Agosto</option>
+                <option value="09">Setembro</option>
+                <option value="10">Outubro</option>
+                <option value="11">Novembro</option>
+                <option value="12">Dezembro</option>
               </select>
 
               <button type="button" class="btn btn-secondary btn-sm" onclick="FinanceiroModule.limparFiltros()" title="Limpar Filtros" style="font-size: 0.78rem;">
@@ -3080,20 +3092,20 @@
   <!-- CONTAINER DE TOASTS -->
   <div class="toast-container" id="toast-container"></div>
 
-  <!-- SCRIPTS DO SISTEMA (com cache-busting v87) -->
-  <script src="js/notifications.js?v=87"></script>
-  <script src="js/storage.js?v=87"></script>
-  <script src="js/auth.js?v=87"></script>
-  <script src="js/crm.js?v=87"></script>
-  <script src="js/encomendas.js?v=87"></script>
-  <script src="js/estoque.js?v=87"></script>
-  <script src="js/financeiro.js?v=87"></script>
-  <script src="js/propostas.js?v=87"></script>
-  <script src="js/calculadora.js?v=87"></script>
-  <script src="js/calculadora-laser.js?v=87"></script>
-  <script src="js/calendario.js?v=87"></script>
-  <script src="js/configuracoes.js?v=87"></script>
-  <script src="js/app.js?v=87"></script>
+  <!-- SCRIPTS DO SISTEMA (com cache-busting v88) -->
+  <script src="js/notifications.js?v=88"></script>
+  <script src="js/storage.js?v=88"></script>
+  <script src="js/auth.js?v=88"></script>
+  <script src="js/crm.js?v=88"></script>
+  <script src="js/encomendas.js?v=88"></script>
+  <script src="js/estoque.js?v=88"></script>
+  <script src="js/financeiro.js?v=88"></script>
+  <script src="js/propostas.js?v=88"></script>
+  <script src="js/calculadora.js?v=88"></script>
+  <script src="js/calculadora-laser.js?v=88"></script>
+  <script src="js/calendario.js?v=88"></script>
+  <script src="js/configuracoes.js?v=88"></script>
+  <script src="js/app.js?v=88"></script>
 </body>
 
 </html>

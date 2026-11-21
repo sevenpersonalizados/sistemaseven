@@ -18,7 +18,8 @@ const FinanceiroModule = {
   filtroStatus: '',   // '' | 'pago' | 'recebido' | 'pendente' | 'estornado'
   filtroCentro: '',
   filtroProprietario: '',
-  filtroMesAno: '',   // YYYY-MM ou 'TODOS'
+  filtroAno: 'TODOS',
+  filtroMes: 'TODOS',
   searchQuery: '',
 
   // Estado do gráfico
@@ -32,12 +33,16 @@ const FinanceiroModule = {
   expandedParcelaGroups: new Set(),
 
   init() {
-    // Inicializa exibindo Todo o Histórico para não ocultar encomendas com entrega em outros meses
+    // Inicializa exibindo Todos os Anos e Todos os Meses para não ocultar encomendas futuras
     const hoje = new Date();
-    this.filtroMesAno = 'TODOS';
+    this.filtroAno = 'TODOS';
+    this.filtroMes = 'TODOS';
     this.chartAno = hoje.getFullYear();
     this.chartMes = hoje.getMonth() + 1;
-    const selMes = document.getElementById('fin-filtro-mesano');
+    this.populateFiltroAnos();
+    const selAno = document.getElementById('fin-filtro-ano');
+    const selMes = document.getElementById('fin-filtro-mes');
+    if (selAno) selAno.value = 'TODOS';
     if (selMes) selMes.value = 'TODOS';
 
     this.render();
@@ -938,9 +943,12 @@ const FinanceiroModule = {
       items = items.filter(i => i.proprietario === this.filtroProprietario);
     }
 
-    // 6. Filtro por Período / Mês
-    if (this.filtroMesAno && this.filtroMesAno !== 'TODOS') {
-      items = items.filter(i => (i.data || '').startsWith(this.filtroMesAno));
+    // 6. Filtro por Ano e Mês
+    if (this.filtroAno && this.filtroAno !== 'TODOS') {
+      items = items.filter(i => (i.data || '').startsWith(`${this.filtroAno}-`));
+    }
+    if (this.filtroMes && this.filtroMes !== 'TODOS') {
+      items = items.filter(i => (i.data || '').slice(5, 7) === this.filtroMes);
     }
 
     // 7. Busca textual
@@ -1160,8 +1168,31 @@ const FinanceiroModule = {
     }
   },
 
-  onFiltroMesAnoChange(val) {
-    this.filtroMesAno = val;
+  populateFiltroAnos() {
+    const selAno = document.getElementById('fin-filtro-ano');
+    if (!selAno) return;
+    const anoAtual = new Date().getFullYear();
+    const anosSet = new Set();
+    for (let y = Math.min(2025, anoAtual); y <= Math.max(2030, anoAtual + 5); y++) {
+      anosSet.add(String(y));
+    }
+    this.getLancamentos().forEach(l => {
+      const y = (l.data || '').slice(0, 4);
+      if (/^20\d{2}$/.test(y)) anosSet.add(y);
+    });
+    const anos = Array.from(anosSet).sort();
+    const atual = this.filtroAno || 'TODOS';
+    selAno.innerHTML = `<option value="TODOS">Ano: Todos</option>` +
+      anos.map(a => `<option value="${a}" ${a === atual ? 'selected' : ''}>${a}</option>`).join('');
+  },
+
+  onFiltroAnoChange(val) {
+    this.filtroAno = val || 'TODOS';
+    this.renderTabelaLancamentos();
+  },
+
+  onFiltroMesChange(val) {
+    this.filtroMes = val || 'TODOS';
     this.renderTabelaLancamentos();
   },
 
@@ -1171,7 +1202,8 @@ const FinanceiroModule = {
     this.filtroStatus = '';
     this.filtroCentro = '';
     this.filtroProprietario = '';
-    this.filtroMesAno = 'TODOS';
+    this.filtroAno = 'TODOS';
+    this.filtroMes = 'TODOS';
     this.searchQuery = '';
 
     const searchInput = document.getElementById('fin-search-input');
@@ -1186,10 +1218,10 @@ const FinanceiroModule = {
     const selCentro = document.getElementById('fin-filtro-centro');
     if (selCentro) selCentro.value = '';
 
-    const selProp = document.getElementById('fin-filtro-proprietario');
-    if (selProp) selProp.value = '';
+    const selAno = document.getElementById('fin-filtro-ano');
+    if (selAno) selAno.value = 'TODOS';
 
-    const selMes = document.getElementById('fin-filtro-mesano');
+    const selMes = document.getElementById('fin-filtro-mes');
     if (selMes) selMes.value = 'TODOS';
 
     document.querySelectorAll('.fin-filter-tab-btn').forEach(btn => {
