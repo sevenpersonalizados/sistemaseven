@@ -6,6 +6,7 @@
  */
 
 let propostaItensTemp = [];
+let propostaFotoTemp = { dataUrl: '', nome: '' };
 
 const PropostasModule = {
   init() {
@@ -102,11 +103,22 @@ const PropostasModule = {
               <span style="font-size: 0.75rem; color: var(--text-muted);">${App.formatDate(p.criada_em)}</span>
             </div>
 
-            <h4 style="font-family: var(--font-display); font-size: 1.1rem; color: var(--text-primary); margin: 6px 0 4px 0;">
-              ${App.escapeHtml(p.titulo || 'Orçamento Comercial')}
-            </h4>
-            <div style="font-size: 0.86rem; color: var(--accent); margin-bottom: 8px; font-weight: 600;">
-              👤 Cliente: ${App.escapeHtml(p.cliente)} ${p.telefone ? `<span style="color: var(--text-muted); font-size: 0.78rem;">(${App.escapeHtml(p.telefone)})</span>` : ''}
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 10px;">
+              <div style="flex: 1; min-width: 0;">
+                <h4 style="font-family: var(--font-display); font-size: 1.1rem; color: var(--text-primary); margin: 6px 0 4px 0;">
+                  ${App.escapeHtml(p.titulo || 'Orçamento Comercial')}
+                </h4>
+                <div style="font-size: 0.86rem; color: var(--accent); margin-bottom: 8px; font-weight: 600;">
+                  👤 Cliente: ${App.escapeHtml(p.cliente)} ${p.telefone ? `<span style="color: var(--text-muted); font-size: 0.78rem;">(${App.escapeHtml(p.telefone)})</span>` : ''}
+                </div>
+              </div>
+              ${p.foto_anexo ? `
+                <div onclick="event.stopPropagation(); App.openOrderPhoto('propostas', '${p.id}')" title="Clique para ver a foto em tela cheia e baixar"
+                     style="flex-shrink: 0; position: relative; cursor: pointer; margin-top: 4px;">
+                  <img src="${p.foto_anexo}" alt="Anexo" style="width: 48px; height: 48px; object-fit: cover; border-radius: 8px; border: 1.5px solid rgba(56, 189, 248, 0.55); box-shadow: 0 2px 8px rgba(0,0,0,0.35); display: block;">
+                  <span style="position: absolute; right: -4px; bottom: -4px; background: #0f172a; border: 1px solid rgba(56,189,248,0.6); border-radius: 999px; font-size: 0.62rem; padding: 1px 4px;">🔍</span>
+                </div>
+              ` : ''}
             </div>
 
             <div style="font-size: 0.82rem; color: var(--text-secondary); line-height: 1.5; margin-bottom: 14px; background: rgba(255,255,255,0.02); padding: 8px 10px; border-radius: 6px; border: 1px solid var(--border);">
@@ -186,6 +198,9 @@ const PropostasModule = {
     document.getElementById('prop-prazo').value = padroes.orcamento_prazo || '';
     document.getElementById('prop-condicoes').value = padroes.orcamento_condicoes || '';
 
+    propostaFotoTemp = { dataUrl: '', nome: '' };
+    this.renderFotoPreview();
+
     propostaItensTemp = [
       {
         produto_nome: '',
@@ -230,6 +245,12 @@ const PropostasModule = {
     document.getElementById('prop-metodo').value = p.metodo || '';
     document.getElementById('prop-prazo').value = p.prazo || '';
     document.getElementById('prop-condicoes').value = p.condicoes || '';
+
+    propostaFotoTemp = {
+      dataUrl: p.foto_anexo || '',
+      nome: p.foto_nome || (p.foto_anexo ? 'anexo-orcamento.jpg' : '')
+    };
+    this.renderFotoPreview();
 
     propostaItensTemp = (p.itens && p.itens.length > 0)
       ? p.itens.map(it => ({
@@ -479,6 +500,8 @@ const PropostasModule = {
       investimento: investimentoTotal,
       condicoes,
       status: 'Aguardando Aprovação',
+      foto_anexo: propostaFotoTemp.dataUrl || null,
+      foto_nome: propostaFotoTemp.nome || null,
       itens: JSON.parse(JSON.stringify(propostaItensTemp))
     };
 
@@ -504,6 +527,49 @@ const PropostasModule = {
     const p = StorageService.get('propostas').find(item => item.id === id);
     if (!p) return;
     this.converterParaEncomenda(p, id);
+  },
+
+  async onFotoSelected(input) {
+    const file = input?.files?.[0];
+    if (!file) return;
+    try {
+      const res = await App.compressImageFile(file);
+      propostaFotoTemp = res;
+      this.renderFotoPreview();
+      App.toast('Foto anexada ao orçamento! 📷', 'success');
+    } catch (err) {
+      console.error('Erro ao processar foto do orçamento:', err);
+      App.toast('Não foi possível carregar a imagem.', 'error');
+    }
+    input.value = '';
+  },
+
+  renderFotoPreview() {
+    const box = document.getElementById('prop-foto-preview-box');
+    const img = document.getElementById('prop-foto-preview-img');
+    const nome = document.getElementById('prop-foto-preview-nome');
+    const hint = document.getElementById('prop-foto-empty-hint');
+
+    if (propostaFotoTemp.dataUrl) {
+      if (img) img.src = propostaFotoTemp.dataUrl;
+      if (nome) nome.textContent = propostaFotoTemp.nome || 'anexo.jpg';
+      if (box) box.style.display = 'flex';
+      if (hint) hint.style.display = 'none';
+    } else {
+      if (img) img.src = '';
+      if (box) box.style.display = 'none';
+      if (hint) hint.style.display = 'inline';
+    }
+  },
+
+  abrirFotoPreview() {
+    if (!propostaFotoTemp.dataUrl) return;
+    App.openImageLightbox(propostaFotoTemp.dataUrl, propostaFotoTemp.nome || 'Foto do Orçamento', propostaFotoTemp.nome || 'anexo-orcamento.jpg');
+  },
+
+  removerFoto() {
+    propostaFotoTemp = { dataUrl: '', nome: '' };
+    this.renderFotoPreview();
   },
 
   converterParaEncomenda(p, idPropostaParaExcluir = null) {
@@ -545,6 +611,8 @@ const PropostasModule = {
       valor_total: Number(p.investimento) || 0,
       valor_pago: 0,
       observacoes: `Origem: Orçamento "${p.titulo}".\nPrazo Comercial: ${p.prazo || '5 a 7 dias'}.\nCondições: ${p.condicoes || ''}`,
+      foto_anexo: p.foto_anexo || null,
+      foto_nome: p.foto_nome || null,
       itens: itensEncomenda
     };
 

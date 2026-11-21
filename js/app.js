@@ -435,6 +435,80 @@ const App = {
     }
   },
 
+  // Compressão automática de imagens anexadas (mantém qualidade nítida e tamanho leve no Supabase)
+  compressImageFile(file, maxSize = 1280, quality = 0.82) {
+    return new Promise((resolve, reject) => {
+      if (!file) return reject(new Error('Arquivo inválido'));
+      const reader = new FileReader();
+      reader.onerror = () => reject(new Error('Erro ao ler imagem'));
+      reader.onload = (ev) => {
+        const img = new Image();
+        img.onerror = () => resolve({ dataUrl: ev.target.result, nome: file.name || 'anexo.jpg' });
+        img.onload = () => {
+          let w = img.width;
+          let h = img.height;
+          if (w > maxSize || h > maxSize) {
+            if (w >= h) {
+              h = Math.round((h * maxSize) / w);
+              w = maxSize;
+            } else {
+              w = Math.round((w * maxSize) / h);
+              h = maxSize;
+            }
+          }
+          const canvas = document.createElement('canvas');
+          canvas.width = w;
+          canvas.height = h;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, w, h);
+          const dataUrl = canvas.toDataURL('image/jpeg', quality);
+          const baseName = (file.name || 'anexo').replace(/\.[^.]+$/, '');
+          resolve({ dataUrl, nome: `${baseName}.jpg` });
+        };
+        img.src = ev.target.result;
+      };
+      reader.readAsDataURL(file);
+    });
+  },
+
+  _lightboxData: { src: '', filename: 'imagem-seven.jpg' },
+
+  openOrderPhoto(table, id) {
+    const list = StorageService.get(table) || [];
+    const item = list.find(x => x.id === id);
+    if (!item || !item.foto_anexo) return;
+    const titulo = item.cliente_nome || item.cliente || item.titulo || 'Anexo do Pedido';
+    const nomeArq = item.foto_nome || `anexo-${(item.id || 'pedido').slice(-5)}.jpg`;
+    this.openImageLightbox(item.foto_anexo, titulo, nomeArq);
+  },
+
+  openImageLightbox(src, title = 'Anexo do Pedido', filename = 'anexo-seven.jpg') {
+    if (!src) return;
+    this._lightboxData = { src, filename };
+    const overlay = document.getElementById('modal-image-lightbox');
+    const imgEl = document.getElementById('lightbox-img-el');
+    const titleEl = document.getElementById('lightbox-img-title');
+    if (imgEl) imgEl.src = src;
+    if (titleEl) titleEl.textContent = title;
+    if (overlay) overlay.style.display = 'flex';
+  },
+
+  closeImageLightbox() {
+    const overlay = document.getElementById('modal-image-lightbox');
+    if (overlay) overlay.style.display = 'none';
+  },
+
+  downloadLightboxImage() {
+    if (!this._lightboxData?.src) return;
+    const a = document.createElement('a');
+    a.href = this._lightboxData.src;
+    a.download = this._lightboxData.filename || 'anexo-seven.jpg';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    this.toast('Download da imagem iniciado! ⬇️', 'success');
+  },
+
   // Toast
   toast(message, type = 'info') {
     const container = document.getElementById('toast-container');

@@ -48,7 +48,7 @@
   <meta http-equiv="Expires" content="0">
 
   <!-- Estilos Customizados -->
-  <link rel="stylesheet" href="css/styles.css?v=52">
+  <link rel="stylesheet" href="css/styles.css?v=53">
 </head>
 
 <body>
@@ -1764,6 +1764,31 @@
           <textarea id="enc-form-obs" class="form-control" rows="2"
             placeholder="Instruções gerais da encomenda, entrega, cliente, embalagem..."></textarea>
         </div>
+
+        <!-- Anexo de Foto / Arte de Referência na Encomenda -->
+        <div class="form-group" style="margin-bottom: 0;">
+          <label style="font-weight: 600; color: var(--text-primary); display: flex; align-items: center; gap: 6px;">
+            <span>📷</span> Foto / Arte de Referência (Anexo)
+          </label>
+          <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap; background: rgba(255,255,255,0.025); border: 1px dashed var(--border); border-radius: 8px; padding: 10px 12px;">
+            <input type="file" id="enc-foto-input" accept="image/*" style="display: none;" onchange="EncomendasModule.onFotoSelected(this)">
+            <button type="button" class="btn btn-secondary btn-sm" onclick="document.getElementById('enc-foto-input').click()" style="font-size: 0.78rem;">
+              📎 Anexar / Trocar Foto
+            </button>
+            <div id="enc-foto-preview-box" style="display: none; align-items: center; gap: 10px; flex: 1; min-width: 180px;">
+              <img id="enc-foto-preview-img" src="" alt="Preview" onclick="EncomendasModule.abrirFotoPreview()" title="Clique para ampliar em tela cheia"
+                style="width: 46px; height: 46px; object-fit: cover; border-radius: 6px; border: 1px solid rgba(56, 189, 248, 0.5); cursor: pointer;">
+              <div style="flex: 1; min-width: 0;">
+                <div id="enc-foto-preview-nome" style="font-size: 0.76rem; color: #ffffff; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;"></div>
+                <div style="font-size: 0.68rem; color: var(--text-muted);">Clique na miniatura para ampliar</div>
+              </div>
+              <button type="button" class="btn btn-secondary btn-icon" onclick="EncomendasModule.removerFoto()" title="Remover foto" style="padding: 4px 8px; color: #f87171;">
+                🗑️
+              </button>
+            </div>
+            <span id="enc-foto-empty-hint" style="font-size: 0.76rem; color: var(--text-muted);">Nenhuma foto anexada</span>
+          </div>
+        </div>
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-danger" id="enc-btn-delete"
@@ -2238,6 +2263,31 @@
           <input type="hidden" id="prop-investimento" value="0">
         </div>
 
+        <!-- Anexo de Foto / Arte de Referência no Orçamento -->
+        <div class="form-group" style="margin-bottom: 16px;">
+          <label style="font-weight: 700; color: var(--text-primary); display: flex; align-items: center; gap: 6px;">
+            <span>📷</span> Foto / Arte de Referência (Anexo)
+          </label>
+          <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap; background: rgba(255,255,255,0.025); border: 1px dashed rgba(56, 189, 248, 0.4); border-radius: 8px; padding: 12px 14px;">
+            <input type="file" id="prop-foto-input" accept="image/*" style="display: none;" onchange="PropostasModule.onFotoSelected(this)">
+            <button type="button" class="btn btn-secondary btn-sm" onclick="document.getElementById('prop-foto-input').click()" style="font-size: 0.8rem;">
+              📎 Inserir Foto
+            </button>
+            <div id="prop-foto-preview-box" style="display: none; align-items: center; gap: 10px; flex: 1; min-width: 200px;">
+              <img id="prop-foto-preview-img" src="" alt="Preview" onclick="PropostasModule.abrirFotoPreview()" title="Clique para ampliar em tela cheia"
+                style="width: 52px; height: 52px; object-fit: cover; border-radius: 6px; border: 1px solid rgba(56, 189, 248, 0.55); cursor: pointer;">
+              <div style="flex: 1; min-width: 0;">
+                <div id="prop-foto-preview-nome" style="font-size: 0.78rem; color: #ffffff; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;"></div>
+                <div style="font-size: 0.70rem; color: var(--text-muted);">Ficará visível discretamente no cartão da encomenda</div>
+              </div>
+              <button type="button" class="btn btn-secondary btn-icon" onclick="PropostasModule.removerFoto()" title="Remover foto" style="padding: 4px 8px; color: #f87171;">
+                🗑️
+              </button>
+            </div>
+            <span id="prop-foto-empty-hint" style="font-size: 0.76rem; color: var(--text-muted);">Opcional — anexe foto do produto, arte ou referência do cliente</span>
+          </div>
+        </div>
+
         <div class="form-group">
           <label>1. Escopo e Solução dos Produtos</label>
           <textarea id="prop-escopo" class="form-control" rows="2"></textarea>
@@ -2684,23 +2734,47 @@
     </div>
   </div>
 
+  <!-- LIGHTBOX DE IMAGEM EM TELA CHEIA COM DOWNLOAD -->
+  <div id="modal-image-lightbox"
+    onclick="if (event.target === this) App.closeImageLightbox()"
+    style="display: none; position: fixed; inset: 0; z-index: 999999; background: rgba(4, 7, 15, 0.94); backdrop-filter: blur(10px); flex-direction: column; align-items: center; justify-content: center; padding: 18px;">
+    <div style="width: 100%; max-width: 1100px; display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 14px; flex-wrap: wrap;">
+      <div style="color: #ffffff; font-weight: 700; font-size: 0.95rem; display: flex; align-items: center; gap: 8px; min-width: 0;">
+        <span>🖼️</span>
+        <span id="lightbox-img-title" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Anexo do Pedido</span>
+      </div>
+      <div style="display: flex; align-items: center; gap: 8px;">
+        <button type="button" class="btn btn-primary btn-sm" onclick="App.downloadLightboxImage()" style="background: #10b981; border-color: #10b981; font-weight: 700; padding: 7px 14px;">
+          ⬇️ Baixar Imagem
+        </button>
+        <button type="button" class="btn btn-secondary btn-sm" onclick="App.closeImageLightbox()" style="padding: 7px 12px;">
+          ✕ Fechar
+        </button>
+      </div>
+    </div>
+    <div style="flex: 1; display: flex; align-items: center; justify-content: center; width: 100%; max-height: 82vh;">
+      <img id="lightbox-img-el" src="" alt="Visualização em tela cheia"
+        style="max-width: 94vw; max-height: 80vh; object-fit: contain; border-radius: 10px; box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8); border: 1px solid rgba(255, 255, 255, 0.14);">
+    </div>
+  </div>
+
   <!-- CONTAINER DE TOASTS -->
   <div class="toast-container" id="toast-container"></div>
 
-  <!-- SCRIPTS DO SISTEMA (com cache-busting v52) -->
-  <script src="js/notifications.js?v=52"></script>
-  <script src="js/storage.js?v=52"></script>
-  <script src="js/auth.js?v=52"></script>
-  <script src="js/crm.js?v=52"></script>
-  <script src="js/encomendas.js?v=52"></script>
-  <script src="js/estoque.js?v=52"></script>
-  <script src="js/financeiro.js?v=52"></script>
-  <script src="js/propostas.js?v=52"></script>
-  <script src="js/calculadora.js?v=52"></script>
-  <script src="js/calculadora-laser.js?v=52"></script>
-  <script src="js/calendario.js?v=52"></script>
-  <script src="js/configuracoes.js?v=52"></script>
-  <script src="js/app.js?v=52"></script>
+  <!-- SCRIPTS DO SISTEMA (com cache-busting v53) -->
+  <script src="js/notifications.js?v=53"></script>
+  <script src="js/storage.js?v=53"></script>
+  <script src="js/auth.js?v=53"></script>
+  <script src="js/crm.js?v=53"></script>
+  <script src="js/encomendas.js?v=53"></script>
+  <script src="js/estoque.js?v=53"></script>
+  <script src="js/financeiro.js?v=53"></script>
+  <script src="js/propostas.js?v=53"></script>
+  <script src="js/calculadora.js?v=53"></script>
+  <script src="js/calculadora-laser.js?v=53"></script>
+  <script src="js/calendario.js?v=53"></script>
+  <script src="js/configuracoes.js?v=53"></script>
+  <script src="js/app.js?v=53"></script>
 </body>
 
 </html>

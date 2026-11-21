@@ -4,6 +4,7 @@
  */
 
 let encomendaItensTemp = [];
+let encomendaFotoTemp = { dataUrl: '', nome: '' };
 
 const EncomendasModule = {
   init() {
@@ -291,13 +292,25 @@ const EncomendasModule = {
             </span>
           </div>
 
-          <!-- Cliente e Telefone -->
-          <h4 style="font-family: var(--font-display); font-size: 1.05rem; color: var(--text-primary); margin: 4px 0 2px 0;">
-            👤 ${App.escapeHtml(enc.cliente_nome)}
-          </h4>
-          <div style="font-size: 0.78rem; color: var(--text-muted); margin-bottom: 10px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
-            <span>📞 ${App.escapeHtml(enc.telefone || 'Sem telefone')}</span>
-            <span>• Pedido em ${App.formatDate(enc.data_pedido)}</span>
+          <!-- Cliente, Telefone e Miniatura Discreta da Foto Anexada -->
+          <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 10px;">
+            <div style="flex: 1; min-width: 0;">
+              <h4 style="font-family: var(--font-display); font-size: 1.05rem; color: var(--text-primary); margin: 4px 0 2px 0;">
+                👤 ${App.escapeHtml(enc.cliente_nome)}
+              </h4>
+              <div style="font-size: 0.78rem; color: var(--text-muted); margin-bottom: 10px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+                <span>📞 ${App.escapeHtml(enc.telefone || 'Sem telefone')}</span>
+                <span>• Pedido em ${App.formatDate(enc.data_pedido)}</span>
+              </div>
+            </div>
+            ${enc.foto_anexo ? `
+              <div onclick="event.stopPropagation(); App.openOrderPhoto('encomendas', '${enc.id}')" title="Clique para ampliar a foto em tela cheia e fazer download"
+                   style="flex-shrink: 0; position: relative; cursor: pointer; margin-top: 2px;">
+                <img src="${enc.foto_anexo}" alt="Anexo do pedido"
+                     style="width: 48px; height: 48px; object-fit: cover; border-radius: 8px; border: 1.5px solid rgba(56, 189, 248, 0.55); box-shadow: 0 2px 8px rgba(0,0,0,0.4); display: block;">
+                <span style="position: absolute; right: -4px; bottom: -4px; background: #0f172a; border: 1px solid rgba(56,189,248,0.65); border-radius: 999px; font-size: 0.62rem; padding: 1px 4px;">🔍</span>
+              </div>
+            ` : ''}
           </div>
 
           <!-- Caixa de Itens em Tópicos (igual ao visual de Orçamentos) -->
@@ -591,6 +604,9 @@ const EncomendasModule = {
     document.getElementById('enc-form-obs').value = lead?.last_message || padroes.pedido_obs || '';
     document.getElementById('enc-btn-delete').style.display = 'none';
 
+    encomendaFotoTemp = { dataUrl: '', nome: '' };
+    this.renderFotoPreview();
+
     const valorEstimado = parseFloat(lead?.value) || 0;
     encomendaItensTemp = [
       {
@@ -637,6 +653,12 @@ const EncomendasModule = {
     document.getElementById('enc-form-valor-pago').value = enc.valor_pago || 0;
     document.getElementById('enc-form-obs').value = enc.observacoes || '';
     document.getElementById('enc-btn-delete').style.display = 'inline-block';
+
+    encomendaFotoTemp = {
+      dataUrl: enc.foto_anexo || '',
+      nome: enc.foto_nome || (enc.foto_anexo ? 'anexo-encomenda.jpg' : '')
+    };
+    this.renderFotoPreview();
 
     encomendaItensTemp = (enc.itens && enc.itens.length > 0)
       ? enc.itens.map(it => ({
@@ -1068,6 +1090,8 @@ const EncomendasModule = {
       valor_total: valorTotal,
       valor_pago: valorPago,
       observacoes: obs,
+      foto_anexo: encomendaFotoTemp.dataUrl || null,
+      foto_nome: encomendaFotoTemp.nome || null,
       itens: encomendaItensTemp
     };
 
@@ -1241,5 +1265,48 @@ const EncomendasModule = {
   attachEvents() {
     document.getElementById('filtro-enc-status')?.addEventListener('change', () => this.render());
     document.getElementById('filtro-enc-pagto')?.addEventListener('change', () => this.render());
+  },
+
+  async onFotoSelected(input) {
+    const file = input?.files?.[0];
+    if (!file) return;
+    try {
+      const res = await App.compressImageFile(file);
+      encomendaFotoTemp = res;
+      this.renderFotoPreview();
+      App.toast('Foto anexada à encomenda! 📷', 'success');
+    } catch (err) {
+      console.error('Erro ao processar foto da encomenda:', err);
+      App.toast('Não foi possível carregar a imagem.', 'error');
+    }
+    input.value = '';
+  },
+
+  renderFotoPreview() {
+    const box = document.getElementById('enc-foto-preview-box');
+    const img = document.getElementById('enc-foto-preview-img');
+    const nome = document.getElementById('enc-foto-preview-nome');
+    const hint = document.getElementById('enc-foto-empty-hint');
+
+    if (encomendaFotoTemp.dataUrl) {
+      if (img) img.src = encomendaFotoTemp.dataUrl;
+      if (nome) nome.textContent = encomendaFotoTemp.nome || 'anexo.jpg';
+      if (box) box.style.display = 'flex';
+      if (hint) hint.style.display = 'none';
+    } else {
+      if (img) img.src = '';
+      if (box) box.style.display = 'none';
+      if (hint) hint.style.display = 'inline';
+    }
+  },
+
+  abrirFotoPreview() {
+    if (!encomendaFotoTemp.dataUrl) return;
+    App.openImageLightbox(encomendaFotoTemp.dataUrl, encomendaFotoTemp.nome || 'Foto da Encomenda', encomendaFotoTemp.nome || 'anexo-encomenda.jpg');
+  },
+
+  removerFoto() {
+    encomendaFotoTemp = { dataUrl: '', nome: '' };
+    this.renderFotoPreview();
   }
 };
