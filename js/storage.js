@@ -664,18 +664,24 @@ const StorageService = {
     }
   },
 
+  sortLista(arr) {
+    return [...(arr || [])].sort((a, b) =>
+      String(a || '').localeCompare(String(b || ''), 'pt-BR', { sensitivity: 'base', numeric: true })
+    );
+  },
+
   getCategoriasProducao() {
-    return this.getConfig().categorias_producao || ['3D', 'Gravação laser', 'Corte laser', 'Corte e Gravação'];
+    return this.sortLista(this.getConfig().categorias_producao || ['3D', 'Gravação laser', 'Corte laser', 'Corte e Gravação']);
   },
 
   addCategoriaProducao(nome) {
     const val = (nome || '').trim();
     if (!val) return;
     const cfg = this.getConfig();
-    const lista = [...(cfg.categorias_producao || [])];
+    const lista = [...this.getCategoriasProducao()];
     if (!lista.some(c => c.toLowerCase() === val.toLowerCase())) {
       lista.push(val);
-      this.saveConfig({ ...cfg, categorias_producao: lista });
+      this.saveConfig({ ...cfg, categorias_producao: this.sortLista(lista) });
     }
   },
 
@@ -683,53 +689,53 @@ const StorageService = {
     const val = (novoNome || '').trim();
     if (!val) return;
     const cfg = this.getConfig();
-    const lista = [...(cfg.categorias_producao || [])];
+    const lista = [...this.getCategoriasProducao()];
     if (lista[index] !== undefined) {
       lista[index] = val;
-      this.saveConfig({ ...cfg, categorias_producao: lista });
+      this.saveConfig({ ...cfg, categorias_producao: this.sortLista(lista) });
     }
   },
 
   removeCategoriaProducao(index) {
     const cfg = this.getConfig();
-    const lista = [...(cfg.categorias_producao || [])];
+    const lista = [...this.getCategoriasProducao()];
     if (lista.length <= 1) {
       alert('É necessário manter pelo menos uma categoria no sistema.');
       return;
     }
     lista.splice(index, 1);
-    this.saveConfig({ ...cfg, categorias_producao: lista });
+    this.saveConfig({ ...cfg, categorias_producao: this.sortLista(lista) });
   },
 
   getFormasPagamento() {
-    return this.getConfig().formas_pagamento || ['Pix', 'Cartão de Crédito', 'Cartão de Débito', 'Boleto', 'Dinheiro'];
+    return this.sortLista(this.getConfig().formas_pagamento || ['Pix', 'Cartão de Crédito', 'Cartão de Débito', 'Boleto', 'Dinheiro']);
   },
 
   addFormaPagamento(nome) {
     const val = (nome || '').trim();
     if (!val) return;
     const cfg = this.getConfig();
-    const lista = [...(cfg.formas_pagamento || [])];
+    const lista = [...this.getFormasPagamento()];
     if (!lista.some(c => c.toLowerCase() === val.toLowerCase())) {
       lista.push(val);
-      this.saveConfig({ ...cfg, formas_pagamento: lista });
+      this.saveConfig({ ...cfg, formas_pagamento: this.sortLista(lista) });
     }
   },
 
   removeFormaPagamento(index) {
     const cfg = this.getConfig();
-    const lista = [...(cfg.formas_pagamento || [])];
+    const lista = [...this.getFormasPagamento()];
     if (lista.length <= 1) return;
     lista.splice(index, 1);
-    this.saveConfig({ ...cfg, formas_pagamento: lista });
+    this.saveConfig({ ...cfg, formas_pagamento: this.sortLista(lista) });
   },
 
   /* --- CORES DISPONÍVEIS DE PERSONALIZAÇÃO --- */
   getCoresDisponiveis() {
-    return this.getConfig().cores || [
+    return this.sortLista(this.getConfig().cores || [
       'Preto', 'Branco', 'Dourado', 'Prata', 'Vermelho', 'Azul', 'Verde',
       'Amarelo', 'Rosa', 'Laranja', 'Roxo', 'Cobre / Bronze', 'Madeira Natural', 'Transparente'
-    ];
+    ]);
   },
 
   addCor(nome) {
@@ -739,7 +745,7 @@ const StorageService = {
     const lista = [...(this.getCoresDisponiveis())];
     if (!lista.some(c => c.toLowerCase() === val.toLowerCase())) {
       lista.push(val);
-      this.saveConfig({ ...cfg, cores: lista });
+      this.saveConfig({ ...cfg, cores: this.sortLista(lista) });
     }
   },
 
@@ -750,7 +756,7 @@ const StorageService = {
     const lista = [...(this.getCoresDisponiveis())];
     if (lista[index] !== undefined) {
       lista[index] = val;
-      this.saveConfig({ ...cfg, cores: lista });
+      this.saveConfig({ ...cfg, cores: this.sortLista(lista) });
     }
   },
 
@@ -762,14 +768,14 @@ const StorageService = {
       return;
     }
     lista.splice(index, 1);
-    this.saveConfig({ ...cfg, cores: lista });
+    this.saveConfig({ ...cfg, cores: this.sortLista(lista) });
   },
 
   /* --- MARCAS DE FILAMENTO 3D --- */
   getMarcasFilamento() {
-    return this.getConfig().marcas_filamento || [
+    return this.sortLista(this.getConfig().marcas_filamento || [
       'Voolt3D', 'Creality', '3D Fila', 'eSun', 'Sunlu', 'Sethi3D', 'National 3D', 'PrintaLot'
-    ];
+    ]);
   },
 
   addMarcaFilamento(nome) {
@@ -779,7 +785,7 @@ const StorageService = {
     const lista = [...(this.getMarcasFilamento())];
     if (!lista.some(m => m.toLowerCase() === val.toLowerCase())) {
       lista.push(val);
-      this.saveConfig({ ...cfg, marcas_filamento: lista });
+      this.saveConfig({ ...cfg, marcas_filamento: this.sortLista(lista) });
     }
   },
 
@@ -790,7 +796,7 @@ const StorageService = {
     const lista = [...(this.getMarcasFilamento())];
     if (lista[index] !== undefined) {
       lista[index] = val;
-      this.saveConfig({ ...cfg, marcas_filamento: lista });
+      this.saveConfig({ ...cfg, marcas_filamento: this.sortLista(lista) });
     }
   },
 
@@ -802,7 +808,7 @@ const StorageService = {
       return;
     }
     lista.splice(index, 1);
-    this.saveConfig({ ...cfg, marcas_filamento: lista });
+    this.saveConfig({ ...cfg, marcas_filamento: this.sortLista(lista) });
   },
 
   /* --- PRODUTOS ESTABELECIDOS (APENAS NOMES / SEM PREÇOS) --- */
@@ -811,7 +817,7 @@ const StorageService = {
       'Copo Térmico Inox', 'Taça de Gin Acrílica', 'Chaveiro MDF', 'Troféu Acrílico',
       'Quadro MDF Vazado', 'Peça Impressa 3D', 'Luminária LED Acrílico', 'Caneca Personalizada'
     ];
-    return raw.map(it => (typeof it === 'object' && it?.nome ? it.nome : String(it)));
+    return this.sortLista(raw.map(it => (typeof it === 'object' && it?.nome ? it.nome : String(it))));
   },
 
   addProdutoEstabelecido(nome) {
@@ -821,7 +827,7 @@ const StorageService = {
     const lista = [...(this.getProdutosEstabelecidos())];
     if (!lista.some(p => p.toLowerCase() === val.toLowerCase())) {
       lista.push(val);
-      this.saveConfig({ ...cfg, produtos_estabelecidos: lista });
+      this.saveConfig({ ...cfg, produtos_estabelecidos: this.sortLista(lista) });
     }
   },
 
@@ -832,7 +838,7 @@ const StorageService = {
     const lista = [...(this.getProdutosEstabelecidos())];
     if (lista[index] !== undefined) {
       lista[index] = val;
-      this.saveConfig({ ...cfg, produtos_estabelecidos: lista });
+      this.saveConfig({ ...cfg, produtos_estabelecidos: this.sortLista(lista) });
     }
   },
 
@@ -844,7 +850,7 @@ const StorageService = {
       return;
     }
     lista.splice(index, 1);
-    this.saveConfig({ ...cfg, produtos_estabelecidos: lista });
+    this.saveConfig({ ...cfg, produtos_estabelecidos: this.sortLista(lista) });
   },
 
   saveConfig(newConfig) {
@@ -1002,8 +1008,8 @@ const StorageService = {
   /* --- CONFIGURAÇÕES DO FINANCEIRO (PROPRIETÁRIOS, CATEGORIAS, CENTROS DE CUSTO, LOCAIS) --- */
   getProprietarios() {
     const raw = this.getConfig().proprietarios;
-    if (Array.isArray(raw) && raw.length > 0) return raw;
-    return ['Raphael', 'Yanka'];
+    if (Array.isArray(raw) && raw.length > 0) return this.sortLista(raw);
+    return this.sortLista(['Raphael', 'Yanka']);
   },
 
   getActiveProprietario() {
@@ -1074,8 +1080,8 @@ const StorageService = {
 
   getCentrosCusto() {
     const raw = this.getConfig().centros_custo;
-    if (Array.isArray(raw) && raw.length > 0) return raw;
-    return ['Oficina / Produção Laser', 'Produção 3D', 'Balcão / Loja Física', 'Administrativo & Vendas', 'Geral'];
+    if (Array.isArray(raw) && raw.length > 0) return this.sortLista(raw);
+    return this.sortLista(['Oficina / Produção Laser', 'Produção 3D', 'Balcão / Loja Física', 'Administrativo & Vendas', 'Geral']);
   },
 
   addCentroCusto(nome) {
@@ -1085,7 +1091,7 @@ const StorageService = {
     const lista = [...(this.getCentrosCusto())];
     if (!lista.some(c => c.toLowerCase() === val.toLowerCase())) {
       lista.push(val);
-      this.saveConfig({ ...cfg, centros_custo: lista });
+      this.saveConfig({ ...cfg, centros_custo: this.sortLista(lista) });
     }
   },
 
@@ -1094,13 +1100,13 @@ const StorageService = {
     const lista = [...(this.getCentrosCusto())];
     if (lista.length <= 1) return;
     lista.splice(index, 1);
-    this.saveConfig({ ...cfg, centros_custo: lista });
+    this.saveConfig({ ...cfg, centros_custo: this.sortLista(lista) });
   },
 
   getLocaisPagamento() {
     const raw = this.getConfig().locais_pagamento;
-    if (Array.isArray(raw) && raw.length > 0) return raw;
-    return ['Banco Inter', 'Nubank', 'Caixa Físico', 'Mercado Pago', 'Cofre'];
+    if (Array.isArray(raw) && raw.length > 0) return this.sortLista(raw);
+    return this.sortLista(['Banco Inter', 'Nubank', 'Caixa Físico', 'Mercado Pago', 'Cofre']);
   },
 
   addLocalPagamento(nome) {
@@ -1110,7 +1116,7 @@ const StorageService = {
     const lista = [...(this.getLocaisPagamento())];
     if (!lista.some(l => l.toLowerCase() === val.toLowerCase())) {
       lista.push(val);
-      this.saveConfig({ ...cfg, locais_pagamento: lista });
+      this.saveConfig({ ...cfg, locais_pagamento: this.sortLista(lista) });
     }
   },
 
@@ -1119,13 +1125,13 @@ const StorageService = {
     const lista = [...(this.getLocaisPagamento())];
     if (lista.length <= 1) return;
     lista.splice(index, 1);
-    this.saveConfig({ ...cfg, locais_pagamento: lista });
+    this.saveConfig({ ...cfg, locais_pagamento: this.sortLista(lista) });
   },
 
   getCategoriasReceita() {
     const raw = this.getConfig().categorias_receita;
-    if (Array.isArray(raw) && raw.length > 0) return raw;
-    return ['Venda de Personalizados', 'Gravação Laser', 'Impressão 3D', 'Brindes Corporativos', 'Serviço de Design', 'Outras Receitas'];
+    if (Array.isArray(raw) && raw.length > 0) return this.sortLista(raw);
+    return this.sortLista(['Venda de Personalizados', 'Gravação Laser', 'Impressão 3D', 'Brindes Corporativos', 'Serviço de Design', 'Outras Receitas']);
   },
 
   addCategoriaReceita(nome) {
@@ -1135,7 +1141,7 @@ const StorageService = {
     const lista = [...(this.getCategoriasReceita())];
     if (!lista.some(c => c.toLowerCase() === val.toLowerCase())) {
       lista.push(val);
-      this.saveConfig({ ...cfg, categorias_receita: lista });
+      this.saveConfig({ ...cfg, categorias_receita: this.sortLista(lista) });
     }
   },
 
@@ -1144,13 +1150,13 @@ const StorageService = {
     const lista = [...(this.getCategoriasReceita())];
     if (lista.length <= 1) return;
     lista.splice(index, 1);
-    this.saveConfig({ ...cfg, categorias_receita: lista });
+    this.saveConfig({ ...cfg, categorias_receita: this.sortLista(lista) });
   },
 
   getCategoriasDespesa() {
     const raw = this.getConfig().categorias_despesa;
-    if (Array.isArray(raw) && raw.length > 0) return raw;
-    return ['Matéria-Prima', 'Insumos 3D', 'Manutenção Máquinas', 'Custos Fixos (Luz/Água/Aluguel)', 'Embalagens & Envios', 'Marketing & Anúncios', 'Pró-Labore / Sócios', 'Impostos & Taxas', 'Outros'];
+    if (Array.isArray(raw) && raw.length > 0) return this.sortLista(raw);
+    return this.sortLista(['Matéria-Prima', 'Insumos 3D', 'Manutenção Máquinas', 'Custos Fixos (Luz/Água/Aluguel)', 'Embalagens & Envios', 'Marketing & Anúncios', 'Pró-Labore / Sócios', 'Impostos & Taxas', 'Outros']);
   },
 
   addCategoriaDespesa(nome) {
@@ -1160,7 +1166,7 @@ const StorageService = {
     const lista = [...(this.getCategoriasDespesa())];
     if (!lista.some(c => c.toLowerCase() === val.toLowerCase())) {
       lista.push(val);
-      this.saveConfig({ ...cfg, categorias_despesa: lista });
+      this.saveConfig({ ...cfg, categorias_despesa: this.sortLista(lista) });
     }
   },
 
@@ -1169,7 +1175,7 @@ const StorageService = {
     const lista = [...(this.getCategoriasDespesa())];
     if (lista.length <= 1) return;
     lista.splice(index, 1);
-    this.saveConfig({ ...cfg, categorias_despesa: lista });
+    this.saveConfig({ ...cfg, categorias_despesa: this.sortLista(lista) });
   },
 
   /* --- PADRÕES DE ORÇAMENTOS & PEDIDOS --- */

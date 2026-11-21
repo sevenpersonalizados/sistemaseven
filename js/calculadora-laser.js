@@ -920,11 +920,11 @@ const CalculadoraLaserModule = {
       );
     }
 
-    // Mantém itens em destaque (PADRÃO) sempre no topo
+    // Mantém itens em destaque (PADRÃO) sempre no topo e ordena o restante em ordem alfabética/numérica
     const ordenada = [...lista].sort((a, b) => {
       if (a.destaque && !b.destaque) return -1;
       if (!a.destaque && b.destaque) return 1;
-      return 0;
+      return String(a.item || '').localeCompare(String(b.item || ''), 'pt-BR', { sensitivity: 'base', numeric: true });
     });
 
     if (ordenada.length === 0) {
