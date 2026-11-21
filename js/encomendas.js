@@ -260,25 +260,39 @@ const EncomendasModule = {
     const itensHtml = (enc.itens && enc.itens.length > 0)
       ? enc.itens.map((i, idx) => {
           const corStr = i.cor ? ` <span style="color: #38bdf8;">[${App.escapeHtml(i.cor)}]</span>` : '';
-          const persStr = i.personalizacao ? ` <span style="color: var(--text-muted);">— ${App.escapeHtml(i.personalizacao)}</span>` : '';
-          const obsStr = i.observacao ? `<div style="font-size: 0.72rem; color: #fbbf24; margin-left: 12px;">Obs: ${App.escapeHtml(i.observacao)}</div>` : '';
           const thumbHtml = i.foto_anexo
             ? `
               <div onclick="event.stopPropagation(); App.openOrderItemPhoto('encomendas', '${enc.id}', ${idx})" title="Foto de ${App.escapeHtml(i.produto_nome || 'Item')} — Clique para tela cheia e download"
                    style="flex-shrink: 0; position: relative; cursor: pointer;">
-                <img src="${i.foto_anexo}" alt="Anexo" style="width: 36px; height: 36px; object-fit: cover; border-radius: 6px; border: 1.5px solid rgba(56, 189, 248, 0.55); display: block;">
+                <img src="${i.foto_anexo}" alt="Anexo" style="width: 38px; height: 38px; object-fit: cover; border-radius: 6px; border: 1.5px solid rgba(56, 189, 248, 0.55); display: block;">
                 <span style="position: absolute; right: -4px; bottom: -4px; background: #0f172a; border: 1px solid rgba(56,189,248,0.65); border-radius: 999px; font-size: 0.54rem; padding: 0 3px;">🔍</span>
               </div>
             `
             : '';
+          const descParts = [];
+          if (i.personalizacao && i.personalizacao.trim()) {
+            descParts.push(`<div style="font-size: 0.78rem; color: #e2e8f0; margin-top: 3px; white-space: pre-line; line-height: 1.4;">${App.escapeHtml(i.personalizacao.trim())}</div>`);
+          }
+          if (i.observacao && i.observacao.trim()) {
+            descParts.push(`<div style="font-size: 0.74rem; color: #fbbf24; margin-top: 2px;">Obs: ${App.escapeHtml(i.observacao.trim())}</div>`);
+          }
           return `
-            <div style="display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 5px;">
-              <div style="flex: 1; min-width: 0;">• <strong>${i.quantidade}x</strong> ${App.escapeHtml(i.produto_nome || 'Item')}${corStr}${persStr}${obsStr}</div>
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; margin-bottom: 8px; padding-bottom: 6px; border-bottom: 1px dashed rgba(255,255,255,0.06);">
+              <div style="flex: 1; min-width: 0;">
+                <div>• <strong>${i.quantidade}x</strong> ${App.escapeHtml(i.produto_nome || 'Item')}${corStr}</div>
+                ${descParts.join('')}
+              </div>
               ${thumbHtml}
             </div>
           `;
         }).join('')
       : `<div style="color: var(--text-muted);">• Item personalizado</div>`;
+
+    // Oculta o texto automático antigo ("Origem: Orçamento... Prazo Comercial... Condições...")
+    // exibindo apenas observações/descrições reais da encomenda
+    const obsLimpa = (enc.observacoes || '').trim();
+    const isObsComercialAntiga = /^Origem:\s*Orçamento/i.test(obsLimpa);
+    const obsParaExibir = isObsComercialAntiga ? '' : obsLimpa;
 
     const valorTotal = Number(enc.valor_total) || 0;
     const valorPago = Number(enc.valor_pago) || 0;
@@ -339,12 +353,12 @@ const EncomendasModule = {
                 </span>
               ` : ''}
             </div>
-            <div style="max-height: 95px; overflow-y: auto;">
+            <div style="max-height: 150px; overflow-y: auto;">
               ${itensHtml}
             </div>
-            ${enc.observacoes && enc.observacoes.trim() ? `
-              <div style="margin-top: 8px; padding-top: 6px; border-top: 1px dashed rgba(255,255,255,0.08); font-size: 0.74rem; color: #93c5fd;">
-                📄 <strong>Obs:</strong> ${App.escapeHtml(enc.observacoes)}
+            ${obsParaExibir ? `
+              <div style="margin-top: 8px; padding-top: 6px; border-top: 1px dashed rgba(255,255,255,0.08); font-size: 0.76rem; color: #93c5fd; white-space: pre-line;">
+                📝 <strong>Descrição:</strong> ${App.escapeHtml(obsParaExibir)}
               </div>
             ` : ''}
           </div>

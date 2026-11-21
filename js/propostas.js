@@ -700,7 +700,7 @@ const PropostasModule = {
       forma_pagamento: 'Pix',
       valor_total: Number(p.investimento) || 0,
       valor_pago: 0,
-      observacoes: `Origem: Orçamento "${p.titulo}".\nPrazo Comercial: ${p.prazo || '5 a 7 dias'}.\nCondições: ${p.condicoes || ''}`,
+      observacoes: '',
       foto_anexo: p.foto_anexo || null,
       foto_nome: p.foto_nome || null,
       itens: itensEncomenda
