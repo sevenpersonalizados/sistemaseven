@@ -228,6 +228,11 @@ const App = {
     const elEncAbertas = document.getElementById('dash-kpi-enc-abertas');
     if (elEncAbertas) elEncAbertas.textContent = encAbertas.length;
 
+    const elCalEncAbertas = document.getElementById('dash-cal-enc-abertas');
+    if (elCalEncAbertas) {
+      elCalEncAbertas.textContent = `${encAbertas.length} ${encAbertas.length === 1 ? 'Encomenda em Aberto' : 'Encomendas em Aberto'}`;
+    }
+
     // 2. Receita e Despesas (interligado com Lançamentos Financeiros + Encomendas)
     const lancamentosFin = (typeof FinanceiroModule !== 'undefined' && FinanceiroModule.getLancamentos)
       ? FinanceiroModule.getLancamentos()
