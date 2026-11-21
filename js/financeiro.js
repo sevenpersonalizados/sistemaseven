@@ -1601,6 +1601,18 @@ const FinanceiroModule = {
       }
     }
 
+    // Oculta o checkbox/bloco duplicado de "Parcelamento" nas Despesas (já existe no bloco de Cartão de Crédito acima)
+    const lblParcelar = document.getElementById('fin-label-chk-parcelar');
+    if (lblParcelar) {
+      lblParcelar.style.display = tipo === 'despesa' ? 'none' : 'inline-flex';
+      if (tipo === 'despesa') {
+        const chkParc = document.getElementById('fin-form-chk-parcelar');
+        const boxParc = document.getElementById('fin-box-parcelar');
+        if (chkParc) chkParc.checked = false;
+        if (boxParc) boxParc.style.display = 'none';
+      }
+    }
+
     // Atualiza exibição do bloco de Entrada Automática no Estoque (quando categoria = Matéria-Prima)
     const catAtual = document.getElementById('fin-form-categoria')?.value || '';
     this.onCategoriaModalChange(catAtual);
