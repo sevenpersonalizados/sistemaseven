@@ -1,4 +1,4 @@
-﻿/**
+/**
  * SEVEN PERSONALIZADOS — STORAGE & DATA SERVICE (SUPABASE CLOUD + LOCAL CACHE)
  * Gerenciador unificado de persistência sincronizado em tempo real com Supabase
  */
@@ -988,28 +988,15 @@ const StorageService = {
   },
 
   getCalcLaserHistorico() {
-    try {
-      const data = localStorage.getItem(STORAGE_KEYS.CALC_LASER_HISTORICO);
-      return data ? JSON.parse(data) : INITIAL_DATA.calc_laser_historico;
-    } catch {
-      return INITIAL_DATA.calc_laser_historico;
-    }
+    return this.get('calc_laser_historico');
   },
 
   saveCalcLaserHistoricoItem(item) {
-    const list = this.getCalcLaserHistorico();
-    list.unshift(item);
-    localStorage.setItem(STORAGE_KEYS.CALC_LASER_HISTORICO, JSON.stringify(list));
-    window.dispatchEvent(new CustomEvent('seven_data_updated', { detail: { table: 'calc_laser_historico' } }));
-    return list;
+    return this.insert('calc_laser_historico', item);
   },
 
   deleteCalcLaserHistoricoItem(id) {
-    let list = this.getCalcLaserHistorico();
-    list = list.filter(i => i.id !== id);
-    localStorage.setItem(STORAGE_KEYS.CALC_LASER_HISTORICO, JSON.stringify(list));
-    window.dispatchEvent(new CustomEvent('seven_data_updated', { detail: { table: 'calc_laser_historico' } }));
-    return list;
+    return this.delete('calc_laser_historico', id);
   },
 
   /* --- CONFIGURAÇÕES DO FINANCEIRO (PROPRIETÁRIOS, CATEGORIAS, CENTROS DE CUSTO, LOCAIS) --- */
