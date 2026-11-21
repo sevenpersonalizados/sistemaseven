@@ -672,7 +672,7 @@ const FinanceiroModule = {
     document.getElementById('fin-grp-edit-key').value = groupKey;
     document.getElementById('fin-grp-edit-descricao').value = baseDesc;
     document.getElementById('fin-grp-edit-valor-total').value = valorTotal.toFixed(2);
-    document.getElementById('fin-grp-edit-dia').value = Math.min(28, Math.max(1, diaIni || 15));
+    document.getElementById('fin-grp-edit-dia').value = 8;
     document.getElementById('fin-grp-edit-mes-inicio').value = String(mesIni || (new Date().getMonth() + 1));
     document.getElementById('fin-grp-edit-ano-inicio').value = String(anoIni || new Date().getFullYear());
     document.getElementById('fin-grp-edit-local').value = first.local_pagamento || '';
@@ -711,7 +711,7 @@ const FinanceiroModule = {
     const parcelas = this.findParcelasByGroupKey(groupKey);
     const n = Math.max(1, parcelas.length);
     const valorTotal = parseFloat(document.getElementById('fin-grp-edit-valor-total')?.value) || 0;
-    const dia = Math.min(28, Math.max(1, parseInt(document.getElementById('fin-grp-edit-dia')?.value, 10) || 15));
+    const dia = Math.min(28, Math.max(1, parseInt(document.getElementById('fin-grp-edit-dia')?.value, 10) || 8));
     const mes = parseInt(document.getElementById('fin-grp-edit-mes-inicio')?.value, 10) || 1;
     const ano = parseInt(document.getElementById('fin-grp-edit-ano-inicio')?.value, 10) || new Date().getFullYear();
     const mesesNomes = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
@@ -729,7 +729,7 @@ const FinanceiroModule = {
 
     const descricao = document.getElementById('fin-grp-edit-descricao')?.value.trim();
     const valorTotal = parseFloat(document.getElementById('fin-grp-edit-valor-total')?.value) || 0;
-    const dia = Math.min(28, Math.max(1, parseInt(document.getElementById('fin-grp-edit-dia')?.value, 10) || 15));
+    const dia = Math.min(28, Math.max(1, parseInt(document.getElementById('fin-grp-edit-dia')?.value, 10) || 8));
     const mesInicio = parseInt(document.getElementById('fin-grp-edit-mes-inicio')?.value, 10) || 1;
     const anoInicio = parseInt(document.getElementById('fin-grp-edit-ano-inicio')?.value, 10) || new Date().getFullYear();
     const categoria = document.getElementById('fin-grp-edit-categoria')?.value || 'Outros';
@@ -1839,9 +1839,9 @@ const FinanceiroModule = {
 
     if (valor > 0) {
       const valorParc = valor / parcelas;
-      hint.textContent = `💡 Compra vinculada à fatura de ${mesNome}/${ano} (vencimento dia 15) — ${parcelas}x de ${App.formatMoney(valorParc)}.`;
+      hint.textContent = `💡 Compra vinculada à fatura de ${mesNome}/${ano} (vencimento dia 8) — ${parcelas}x de ${App.formatMoney(valorParc)}.`;
     } else {
-      hint.textContent = `💡 Compra vinculada à fatura de ${mesNome}/${ano} (vencimento dia 15).`;
+      hint.textContent = `💡 Compra vinculada à fatura de ${mesNome}/${ano} (vencimento dia 8).`;
     }
   },
 
@@ -2029,7 +2029,7 @@ const FinanceiroModule = {
       const mesesNomes = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
 
       for (let p = 1; p <= numParcelas; p++) {
-        const dataFatura = new Date(anoInicio, (mesInicio - 1) + (p - 1), 15);
+        const dataFatura = new Date(anoInicio, (mesInicio - 1) + (p - 1), 8);
         const dataFaturaIso = this.formatIsoDate(dataFatura);
         const valorParc = p === numParcelas ? Number((valorBaseParcela + diferencaCentavos).toFixed(2)) : valorBaseParcela;
         const mesLabel = `${mesesNomes[dataFatura.getMonth()]}/${dataFatura.getFullYear()}`;
@@ -2092,7 +2092,7 @@ const FinanceiroModule = {
       const diferencaCentavos = Number((valor - (valorBaseParcela * numParcelas)).toFixed(2));
       const grupoId = 'grp-' + Date.now();
       const [, , diaBaseRaw] = data.split('-').map(Number);
-      const diaBase = Math.min(28, Math.max(1, diaBaseRaw || 15));
+      const diaBase = Math.min(28, Math.max(1, diaBaseRaw || 8));
       const mesInicio = parseInt(document.getElementById('fin-parc-mes-inicio')?.value, 10) || (new Date().getMonth() + 1);
       const anoInicio = parseInt(document.getElementById('fin-parc-ano-inicio')?.value, 10) || new Date().getFullYear();
 
