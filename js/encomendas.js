@@ -1034,10 +1034,10 @@ const EncomendasModule = {
                     onchange="EncomendasModule.selecionarHistorico3D(${idx}, this.value)">
               <option value="">${historico3D.length > 0 ? '— Selecionar peça salva no Histórico 3D (preenche nome e preço) —' : 'Nenhum item salvo no Histórico 3D ainda'}</option>
               ${historico3D.map(h => {
-                const precoUnit = Number(h.preco_venda_unitario) || (Number(h.preco_venda_total) / (Number(h.quantidade_pecas) || 1)) || Number(h.custo_unitario) || 0;
-                const label = `${h.produto_nome || 'Peça 3D'} — ${App.formatMoney(precoUnit)}/un (${h.filamento_nome || '3D'}${h.gramas ? ` • ${h.gramas}g` : ''})`;
-                return `<option value="${App.escapeHtml(h.id)}" ${item.calc_3d_historico_id === h.id ? 'selected' : ''}>${App.escapeHtml(label)}</option>`;
-              }).join('')}
+        const precoUnit = Number(h.preco_venda_unitario) || (Number(h.preco_venda_total) / (Number(h.quantidade_pecas) || 1)) || Number(h.custo_unitario) || 0;
+        const label = `${h.produto_nome || 'Peça 3D'} — ${App.formatMoney(precoUnit)}/un (${h.filamento_nome || '3D'}${h.gramas ? ` • ${h.gramas}g` : ''})`;
+        return `<option value="${App.escapeHtml(h.id)}" ${item.calc_3d_historico_id === h.id ? 'selected' : ''}>${App.escapeHtml(label)}</option>`;
+      }).join('')}
             </select>
           </div>
 

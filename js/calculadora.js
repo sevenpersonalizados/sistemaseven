@@ -309,7 +309,7 @@ const CalculadoraModule = {
     };
 
     StorageService.insert('calc_3d_historico', payload);
-    App.toast('Impressão 3D e preço sugerido salvos no histórico! 🎉', 'success');
+    App.toast('Impressão 3D e preço sugerido salvos na Tabela de Preço! 🎉', 'success');
     this.renderHistorico();
   },
 
@@ -472,6 +472,9 @@ const CalculadoraModule = {
     document.getElementById('calc-form-obs').value = item.observacoes || '';
 
     this.calcular();
+    if (typeof App !== 'undefined' && App.currentView !== 'calculadora') {
+      App.navigate('calculadora');
+    }
     window.scrollTo({ top: 0, behavior: 'smooth' });
     App.toast(`Dados de "${item.produto_nome}" carregados na calculadora!`, 'info');
   },

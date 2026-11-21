@@ -521,7 +521,7 @@ const PropostasModule = {
           <!-- Puxar item pré-salvo da Calculadora de Filamentos (Histórico 3D) -->
           <div class="form-group" style="margin-bottom: 10px; background: rgba(245, 158, 11, 0.06); border: 1px dashed rgba(245, 158, 11, 0.35); border-radius: 8px; padding: 8px 10px;">
             <label style="font-size: 0.74rem; font-weight: 700; color: #fbbf24; display: flex; align-items: center; justify-content: space-between; gap: 6px; margin-bottom: 5px;">
-              <span>🧵 Itens Pré-salvos — Histórico 3D (Calculadora de Filamentos)</span>
+              <span>🏷️ Itens Pré-salvos — Tabela de Preço (Histórico 3D)</span>
               <span style="font-size: 0.68rem; font-weight: 600; color: var(--text-muted);">${historico3D.length} ${historico3D.length === 1 ? 'item salvo' : 'itens salvos'}</span>
             </label>
             <select class="form-control" style="height: 36px; font-size: 0.82rem;"

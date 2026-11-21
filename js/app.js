@@ -102,6 +102,7 @@ const App = {
       finalizados: { title: 'Histórico de Finalizados', sub: 'Encomendas entregues, canceladas e concluídas' },
       estoque: { title: 'Estoque', sub: 'Matéria-prima, filamentos 3D e outros materiais' },
       financeiro: { title: 'Financeiro & Fluxo de Caixa', sub: 'Entradas, despesas operacionais e balanço' },
+      'tabela-preco': { title: 'Tabela de Preço', sub: 'Histórico de Impressões & Produção 3D com edição de preço de venda' },
       calculadora: { title: 'Calculadora de Filamentos', sub: 'Custos de produção 3D: filamento, energia elétrica e desgaste operacional' },
       'calculadora-laser': { title: 'Calculadora Laser', sub: 'Corte & Gravação: R$ 30,00/h de máquina, chapas de MDF por cores e acrílicos' },
       configuracoes: { title: 'Configurações do Estúdio', sub: 'Dados da empresa, dados bancários e integrações' }
@@ -122,6 +123,10 @@ const App = {
     } else if (viewName === 'financeiro') {
       if (typeof FinanceiroModule !== 'undefined') {
         FinanceiroModule.render();
+      }
+    } else if (viewName === 'tabela-preco') {
+      if (typeof CalculadoraModule !== 'undefined') {
+        CalculadoraModule.renderHistorico(document.getElementById('calc-historico-busca')?.value || '');
       }
     } else if (viewName === 'calculadora') {
       if (typeof CalculadoraModule !== 'undefined') {

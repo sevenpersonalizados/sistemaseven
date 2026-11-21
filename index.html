@@ -48,7 +48,7 @@
   <meta http-equiv="Expires" content="0">
 
   <!-- Estilos Customizados -->
-  <link rel="stylesheet" href="css/styles.css?v=65">
+  <link rel="stylesheet" href="css/styles.css?v=66">
 </head>
 
 <body>
@@ -186,6 +186,15 @@
             <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
           </svg>
           <span>Financeiro</span>
+        </button>
+      </li>
+      <li class="nav-item">
+        <button type="button" data-view="tabela-preco" id="nav-btn-tabela-preco">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z" />
+            <line x1="7" y1="7" x2="7.01" y2="7" />
+          </svg>
+          <span>Tabela de Preço</span>
         </button>
       </li>
       <li class="nav-item">
@@ -1264,49 +1273,57 @@
               </div>
             </div>
           </div>
+        </section>
 
-          <!-- HISTÓRICO DE IMPRESSÕES E CUSTOS 3D -->
-          <div class="card" style="margin-top: 24px;">
+        <!-- VIEW: TABELA DE PREÇO (HISTÓRICO DE IMPRESSÕES & PRODUÇÃO 3D) -->
+        <section class="view-section" id="view-tabela-preco">
+          <div class="card">
             <div class="card-header"
               style="border-bottom: 1px solid var(--border); padding-bottom: 14px; margin-bottom: 16px; flex-wrap: wrap; gap: 12px;">
               <div>
                 <h3 style="font-size: 1.15rem; color: #ffffff; display: flex; align-items: center; gap: 8px;">
-                  <span>📜</span> Histórico de Impressões & Produção 3D
+                  <span>🏷️</span> Tabela de Preço — Histórico de Impressões & Produção 3D
                 </h3>
                 <p style="font-size: 0.8rem; color: var(--text-muted); margin: 0;">
-                  Registro consolidado das produções calculadas para auditoria, controle de gastos e orçamentos
+                  Peças calculadas e sincronizadas em tempo real com a Calculadora de Filamentos e Novo Orçamento Comercial
                 </p>
               </div>
 
-              <!-- KPIS RÁPIDOS DO HISTÓRICO -->
               <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
-                <div
-                  style="background: rgba(255, 255, 255, 0.05); padding: 6px 12px; border-radius: 8px; border: 1px solid var(--border); font-size: 0.8rem;">
-                  Registros: <strong style="color: #ffffff;" id="calc-hist-kpi-qtd">0</strong>
-                </div>
-                <div
-                  style="background: rgba(249, 115, 22, 0.1); padding: 6px 12px; border-radius: 8px; border: 1px solid rgba(249, 115, 22, 0.3); font-size: 0.8rem;">
-                  Filamento: <strong style="color: #fb923c;" id="calc-hist-kpi-gramas">0 g</strong>
-                </div>
-                <div
-                  style="background: rgba(16, 185, 129, 0.1); padding: 6px 12px; border-radius: 8px; border: 1px solid rgba(16, 185, 129, 0.3); font-size: 0.8rem;">
-                  Custo Total: <strong style="color: #10b981;" id="calc-hist-kpi-custo">R$ 0,00</strong>
-                </div>
-                <div
-                  style="background: rgba(0, 168, 243, 0.1); padding: 6px 12px; border-radius: 8px; border: 1px solid rgba(0, 168, 243, 0.3); font-size: 0.8rem;">
-                  Venda Total: <strong style="color: #38bdf8;" id="calc-hist-kpi-venda">R$ 0,00</strong>
-                </div>
-                <div
-                  style="background: rgba(16, 185, 129, 0.1); padding: 6px 12px; border-radius: 8px; border: 1px solid rgba(16, 185, 129, 0.3); font-size: 0.8rem;">
-                  Lucro Est.: <strong style="color: #34d399;" id="calc-hist-kpi-lucro">R$ 0,00</strong>
-                </div>
+                <button type="button" class="btn btn-primary btn-sm" onclick="App.navigate('calculadora')" style="font-weight: 700;">
+                  + Nova Peça (Calculadora 3D)
+                </button>
+              </div>
+            </div>
+
+            <!-- KPIS RÁPIDOS DO HISTÓRICO -->
+            <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 16px;">
+              <div
+                style="background: rgba(255, 255, 255, 0.05); padding: 6px 12px; border-radius: 8px; border: 1px solid var(--border); font-size: 0.8rem;">
+                Registros: <strong style="color: #ffffff;" id="calc-hist-kpi-qtd">0</strong>
+              </div>
+              <div
+                style="background: rgba(249, 115, 22, 0.1); padding: 6px 12px; border-radius: 8px; border: 1px solid rgba(249, 115, 22, 0.3); font-size: 0.8rem;">
+                Filamento: <strong style="color: #fb923c;" id="calc-hist-kpi-gramas">0 g</strong>
+              </div>
+              <div
+                style="background: rgba(16, 185, 129, 0.1); padding: 6px 12px; border-radius: 8px; border: 1px solid rgba(16, 185, 129, 0.3); font-size: 0.8rem;">
+                Custo Total: <strong style="color: #10b981;" id="calc-hist-kpi-custo">R$ 0,00</strong>
+              </div>
+              <div
+                style="background: rgba(0, 168, 243, 0.1); padding: 6px 12px; border-radius: 8px; border: 1px solid rgba(0, 168, 243, 0.3); font-size: 0.8rem;">
+                Venda Total: <strong style="color: #38bdf8;" id="calc-hist-kpi-venda">R$ 0,00</strong>
+              </div>
+              <div
+                style="background: rgba(16, 185, 129, 0.1); padding: 6px 12px; border-radius: 8px; border: 1px solid rgba(16, 185, 129, 0.3); font-size: 0.8rem;">
+                Lucro Est.: <strong style="color: #34d399;" id="calc-hist-kpi-lucro">R$ 0,00</strong>
               </div>
             </div>
 
             <!-- FILTRO DE BUSCA -->
             <div style="margin-bottom: 16px;">
               <input type="text" id="calc-historico-busca" class="form-control"
-                placeholder="🔍 Buscar no histórico por nome da peça, material ou observação...">
+                placeholder="🔍 Buscar na tabela de preço por nome da peça, material ou observação...">
             </div>
 
             <div class="table-responsive">
@@ -2856,20 +2873,20 @@
   <!-- CONTAINER DE TOASTS -->
   <div class="toast-container" id="toast-container"></div>
 
-  <!-- SCRIPTS DO SISTEMA (com cache-busting v65) -->
-  <script src="js/notifications.js?v=65"></script>
-  <script src="js/storage.js?v=65"></script>
-  <script src="js/auth.js?v=65"></script>
-  <script src="js/crm.js?v=65"></script>
-  <script src="js/encomendas.js?v=65"></script>
-  <script src="js/estoque.js?v=65"></script>
-  <script src="js/financeiro.js?v=65"></script>
-  <script src="js/propostas.js?v=65"></script>
-  <script src="js/calculadora.js?v=65"></script>
-  <script src="js/calculadora-laser.js?v=65"></script>
-  <script src="js/calendario.js?v=65"></script>
-  <script src="js/configuracoes.js?v=65"></script>
-  <script src="js/app.js?v=65"></script>
+  <!-- SCRIPTS DO SISTEMA (com cache-busting v66) -->
+  <script src="js/notifications.js?v=66"></script>
+  <script src="js/storage.js?v=66"></script>
+  <script src="js/auth.js?v=66"></script>
+  <script src="js/crm.js?v=66"></script>
+  <script src="js/encomendas.js?v=66"></script>
+  <script src="js/estoque.js?v=66"></script>
+  <script src="js/financeiro.js?v=66"></script>
+  <script src="js/propostas.js?v=66"></script>
+  <script src="js/calculadora.js?v=66"></script>
+  <script src="js/calculadora-laser.js?v=66"></script>
+  <script src="js/calendario.js?v=66"></script>
+  <script src="js/configuracoes.js?v=66"></script>
+  <script src="js/app.js?v=66"></script>
 </body>
 
 </html>
