@@ -20,6 +20,8 @@ const FinanceiroModule = {
   filtroProprietario: '',
   filtroAno: 'TODOS',
   filtroMes: 'TODOS',
+  kpiDespMes: '',
+  kpiDespAno: '',
   searchQuery: '',
 
   // Estado do gráfico
@@ -37,13 +39,19 @@ const FinanceiroModule = {
     const hoje = new Date();
     this.filtroAno = 'TODOS';
     this.filtroMes = 'TODOS';
+    this.kpiDespMes = String(hoje.getMonth() + 1).padStart(2, '0');
+    this.kpiDespAno = String(hoje.getFullYear());
     this.chartAno = hoje.getFullYear();
     this.chartMes = hoje.getMonth() + 1;
     this.populateFiltroAnos();
     const selAno = document.getElementById('fin-filtro-ano');
     const selMes = document.getElementById('fin-filtro-mes');
+    const selKpiMes = document.getElementById('fin-kpi-desp-mes');
+    const selKpiAno = document.getElementById('fin-kpi-desp-ano');
     if (selAno) selAno.value = 'TODOS';
     if (selMes) selMes.value = 'TODOS';
+    if (selKpiMes) selKpiMes.value = this.kpiDespMes;
+    if (selKpiAno) selKpiAno.value = this.kpiDespAno;
 
     this.render();
 
@@ -332,12 +340,27 @@ const FinanceiroModule = {
     return { lucroRealizado, vendaRealizada, custoRealizado, lucroPrevisto };
   },
 
+  onKpiDespPeriodoChange() {
+    const selMes = document.getElementById('fin-kpi-desp-mes');
+    const selAno = document.getElementById('fin-kpi-desp-ano');
+    if (selMes) this.kpiDespMes = selMes.value;
+    if (selAno) this.kpiDespAno = selAno.value;
+    this.renderIndicadores();
+  },
+
   // 1. INDICADORES FINANCEIROS NO TOPO
   renderIndicadores() {
     const lancamentos = this.getLancamentos();
     const hoje = new Date();
     const hojeIso = this.formatIsoDate(hoje);
-    const mesAtualIso = `${hoje.getFullYear()}-${(hoje.getMonth() + 1).toString().padStart(2, '0')}`;
+    const kpiMes = this.kpiDespMes || String(hoje.getMonth() + 1).padStart(2, '0');
+    const kpiAno = this.kpiDespAno || String(hoje.getFullYear());
+    const mesAtualIso = `${kpiAno}-${kpiMes}`;
+
+    const selKpiMes = document.getElementById('fin-kpi-desp-mes');
+    const selKpiAno = document.getElementById('fin-kpi-desp-ano');
+    if (selKpiMes && selKpiMes.value !== kpiMes) selKpiMes.value = kpiMes;
+    if (selKpiAno && selKpiAno.value !== kpiAno) selKpiAno.value = kpiAno;
 
     // SALDO DISPONÍVEL (Dinheiro real em caixa/bancos = Receitas Efetivadas - Despesas Efetivadas)
     // Pendentes e Estornados NÃO entram no Saldo Disponível
@@ -1275,6 +1298,15 @@ const FinanceiroModule = {
 
     const selMes = document.getElementById('fin-filtro-mes');
     if (selMes) selMes.value = 'TODOS';
+
+    // Reseta o card de Despesas do Mês para o mês atual ao limpar/abrir a aba
+    const hojeNow = new Date();
+    this.kpiDespMes = String(hojeNow.getMonth() + 1).padStart(2, '0');
+    this.kpiDespAno = String(hojeNow.getFullYear());
+    const selKpiMes = document.getElementById('fin-kpi-desp-mes');
+    const selKpiAno = document.getElementById('fin-kpi-desp-ano');
+    if (selKpiMes) selKpiMes.value = this.kpiDespMes;
+    if (selKpiAno) selKpiAno.value = this.kpiDespAno;
 
     document.querySelectorAll('.fin-filter-tab-btn').forEach(btn => {
       btn.classList.toggle('active', btn.getAttribute('data-tab') === 'todos');

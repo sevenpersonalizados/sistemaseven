@@ -48,7 +48,7 @@
   <meta http-equiv="Expires" content="0">
 
   <!-- Estilos Customizados -->
-  <link rel="stylesheet" href="css/styles.css?v=90">
+  <link rel="stylesheet" href="css/styles.css?v=91">
 </head>
 
 <body>
@@ -731,12 +731,38 @@
               <div class="kpi-icon-box blue">⏳</div>
             </div>
 
-            <!-- 5. Despesas do Mês Vigente -->
+            <!-- 5. Despesas do Mês (com seletor rápido de Mês/Ano no próprio card) -->
             <div class="kpi-card" style="border-left: 4px solid #ef4444;">
-              <div class="kpi-info">
-                <div class="kpi-label">Despesas de <span id="fin-kpi-mes-vigente-label" style="color: #fca5a5;">Mês Atual</span></div>
+              <div class="kpi-info" style="min-width: 0;">
+                <div class="kpi-label" style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
+                  <span>Despesas de</span>
+                  <select id="fin-kpi-desp-mes" onchange="FinanceiroModule.onKpiDespPeriodoChange()"
+                    style="background: rgba(239, 68, 68, 0.14); color: #fca5a5; border: 1px solid rgba(239, 68, 68, 0.4); border-radius: 6px; padding: 1px 6px; font-size: 0.74rem; font-weight: 700; cursor: pointer; outline: none;">
+                    <option value="01">Janeiro</option>
+                    <option value="02">Fevereiro</option>
+                    <option value="03">Março</option>
+                    <option value="04">Abril</option>
+                    <option value="05">Maio</option>
+                    <option value="06">Junho</option>
+                    <option value="07">Julho</option>
+                    <option value="08">Agosto</option>
+                    <option value="09">Setembro</option>
+                    <option value="10">Outubro</option>
+                    <option value="11">Novembro</option>
+                    <option value="12">Dezembro</option>
+                  </select>
+                  <select id="fin-kpi-desp-ano" onchange="FinanceiroModule.onKpiDespPeriodoChange()"
+                    style="background: rgba(239, 68, 68, 0.14); color: #fca5a5; border: 1px solid rgba(239, 68, 68, 0.4); border-radius: 6px; padding: 1px 5px; font-size: 0.74rem; font-weight: 700; cursor: pointer; outline: none;">
+                    <option value="2025">2025</option>
+                    <option value="2026" selected>2026</option>
+                    <option value="2027">2027</option>
+                    <option value="2028">2028</option>
+                    <option value="2029">2029</option>
+                    <option value="2030">2030</option>
+                  </select>
+                </div>
                 <div class="kpi-value" id="fin-kpi-despesas-mes" style="color: #ef4444;">R$ 0,00</div>
-                <div class="kpi-sub" id="fin-kpi-despesas-mes-sub" style="font-size: 0.72rem; color: var(--text-muted);">Saídas pagas no mês vigente</div>
+                <div class="kpi-sub" id="fin-kpi-despesas-mes-sub" style="font-size: 0.72rem; color: var(--text-muted);">Pagas: R$ 0,00 • Prestações/Pendentes: R$ 0,00</div>
               </div>
               <div class="kpi-icon-box amber">📉</div>
             </div>
@@ -3089,20 +3115,20 @@
   <!-- CONTAINER DE TOASTS -->
   <div class="toast-container" id="toast-container"></div>
 
-  <!-- SCRIPTS DO SISTEMA (com cache-busting v90) -->
-  <script src="js/notifications.js?v=90"></script>
-  <script src="js/storage.js?v=90"></script>
-  <script src="js/auth.js?v=90"></script>
-  <script src="js/crm.js?v=90"></script>
-  <script src="js/encomendas.js?v=90"></script>
-  <script src="js/estoque.js?v=90"></script>
-  <script src="js/financeiro.js?v=90"></script>
-  <script src="js/propostas.js?v=90"></script>
-  <script src="js/calculadora.js?v=90"></script>
-  <script src="js/calculadora-laser.js?v=90"></script>
-  <script src="js/calendario.js?v=90"></script>
-  <script src="js/configuracoes.js?v=90"></script>
-  <script src="js/app.js?v=90"></script>
+  <!-- SCRIPTS DO SISTEMA (com cache-busting v91) -->
+  <script src="js/notifications.js?v=91"></script>
+  <script src="js/storage.js?v=91"></script>
+  <script src="js/auth.js?v=91"></script>
+  <script src="js/crm.js?v=91"></script>
+  <script src="js/encomendas.js?v=91"></script>
+  <script src="js/estoque.js?v=91"></script>
+  <script src="js/financeiro.js?v=91"></script>
+  <script src="js/propostas.js?v=91"></script>
+  <script src="js/calculadora.js?v=91"></script>
+  <script src="js/calculadora-laser.js?v=91"></script>
+  <script src="js/calendario.js?v=91"></script>
+  <script src="js/configuracoes.js?v=91"></script>
+  <script src="js/app.js?v=91"></script>
 </body>
 
 </html>
