@@ -972,6 +972,12 @@ const FinanceiroModule = {
     if (ccMes) ccMes.value = String(proxMes.getMonth() + 1);
     if (ccAno) ccAno.value = String(proxMes.getFullYear());
 
+    const hojeAtual = new Date();
+    const parcMes = document.getElementById('fin-parc-mes-inicio');
+    const parcAno = document.getElementById('fin-parc-ano-inicio');
+    if (parcMes) parcMes.value = String(hojeAtual.getMonth() + 1);
+    if (parcAno) parcAno.value = String(hojeAtual.getFullYear());
+
     this.setModalTipo(tipo);
     this.populateModalSelects();
     this.updateCartaoPreview();
@@ -1149,8 +1155,13 @@ const FinanceiroModule = {
       return;
     }
 
-    const valorParcela = (valor / numParcelas).toFixed(2);
-    info.textContent = `${numParcelas}x de R$ ${App.formatMoney(valorParcela)} (mensais sucessivas)`;
+    const mesesNomes = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
+    const mesInicio = parseInt(document.getElementById('fin-parc-mes-inicio')?.value, 10) || (new Date().getMonth() + 1);
+    const anoInicio = parseInt(document.getElementById('fin-parc-ano-inicio')?.value, 10) || new Date().getFullYear();
+    const mesNome = mesesNomes[Math.max(0, Math.min(11, mesInicio - 1))];
+
+    const valorParcela = valor / numParcelas;
+    info.textContent = `${numParcelas}x de ${App.formatMoney(valorParcela)} — 1ª parcela em ${mesNome}/${anoInicio} (todas pendentes até a baixa do administrador)`;
   },
 
   saveLancamento() {
@@ -1283,7 +1294,7 @@ const FinanceiroModule = {
           data: dataFaturaIso,
           forma_pagamento: 'Cartão de Crédito',
           local_pagamento: cartao,
-          status: (p === 1 && status === 'pago') ? 'pago' : 'pendente',
+          status: 'pendente',
           observacoes: obsPartes,
           proprietario,
           parcela_atual: p,
@@ -1318,17 +1329,22 @@ const FinanceiroModule = {
     // Caso de PARCELAMENTO de novo lançamento
     if (isParcelar) {
       const numParcelas = parseInt(document.getElementById('fin-form-num-parcelas').value, 10) || 2;
-      const valorParcela = parseFloat((valor / numParcelas).toFixed(2));
+      const valorBaseParcela = Math.floor((valor / numParcelas) * 100) / 100;
+      const diferencaCentavos = Number((valor - (valorBaseParcela * numParcelas)).toFixed(2));
       const grupoId = 'grp-' + Date.now();
-      const [anoBase, mesBase, diaBase] = data.split('-').map(Number);
+      const [, , diaBaseRaw] = data.split('-').map(Number);
+      const diaBase = Math.min(28, Math.max(1, diaBaseRaw || 15));
+      const mesInicio = parseInt(document.getElementById('fin-parc-mes-inicio')?.value, 10) || (new Date().getMonth() + 1);
+      const anoInicio = parseInt(document.getElementById('fin-parc-ano-inicio')?.value, 10) || new Date().getFullYear();
 
       for (let p = 1; p <= numParcelas; p++) {
-        // Calcula a data de vencimento de cada parcela mensal
-        const dataParcela = new Date(anoBase, mesBase - 1 + (p - 1), diaBase);
+        // Calcula a data de vencimento de cada parcela a partir do mês de início escolhido
+        const dataParcela = new Date(anoInicio, (mesInicio - 1) + (p - 1), diaBase);
         const dataParcelaIso = this.formatIsoDate(dataParcela);
+        const valorParcela = p === numParcelas ? Number((valorBaseParcela + diferencaCentavos).toFixed(2)) : valorBaseParcela;
 
-        // A 1ª parcela herda o status selecionado; as demais parcelas nascem 'pendente'
-        const parcelaStatus = (p === 1) ? status : 'pendente';
+        // Todas as parcelas nascem pendentes; a baixa mensal é feita manualmente pelo administrador após o pagamento
+        const parcelaStatus = 'pendente';
 
         const novoItem = {
           id: `fin-${Date.now()}-${p}`,
@@ -1351,7 +1367,7 @@ const FinanceiroModule = {
           historico_alteracoes: [{
             data: new Date().toISOString(),
             responsavel: StorageService.getActiveProprietario(),
-            acao: 'Lançamento parcelado criado'
+            acao: 'Lançamento parcelado criado (pendente de pagamento mensal)'
           }]
         };
 
@@ -1363,10 +1379,10 @@ const FinanceiroModule = {
         lancamento_id: grupoId,
         descricao: `${descricao} (${numParcelas}x)`,
         valor,
-        detalhes: `${tipo === 'receita' ? 'Receita' : 'Despesa'} em ${numParcelas}x de ${App.formatMoney(valorParcela)} • ${categoria} • ${local}`
+        detalhes: `${tipo === 'receita' ? 'Receita' : 'Despesa'} em ${numParcelas}x de ${App.formatMoney(valor / numParcelas)} • Início ${String(mesInicio).padStart(2, '0')}/${anoInicio} • ${categoria} • ${local}`
       });
 
-      App.toast(`${numParcelas} parcelas de ${App.formatMoney(valorParcela)} registradas!`, 'success');
+      App.toast(`${numParcelas} parcelas de ${App.formatMoney(valor / numParcelas)} registradas como Pendentes!`, 'success');
       App.closeModal('modal-lancamento-financeiro');
       this.render();
       return;

@@ -48,7 +48,7 @@
   <meta http-equiv="Expires" content="0">
 
   <!-- Estilos Customizados -->
-  <link rel="stylesheet" href="css/styles.css?v=76">
+  <link rel="stylesheet" href="css/styles.css?v=77">
 </head>
 
 <body>
@@ -2126,17 +2126,46 @@
                   <option value="10">10x</option>
                   <option value="11">11x</option>
                   <option value="12">12x</option>
+                  <option value="15">15x</option>
+                  <option value="18">18x</option>
+                  <option value="24">24x</option>
                 </select>
               </div>
               <div class="form-group">
-                <label>Simulação das Parcelas</label>
-                <div id="fin-parcelas-calc-info" style="font-size: 0.82rem; font-weight: 700; color: #38bdf8; padding: 10px; background: rgba(56, 189, 248, 0.1); border-radius: 6px; border: 1px solid rgba(56, 189, 248, 0.3);">
-                  Informe o valor para simular.
+                <label>Mês de Início da Despesa (1ª Parcela)</label>
+                <div style="display: grid; grid-template-columns: 1.4fr 1fr; gap: 8px;">
+                  <select id="fin-parc-mes-inicio" class="form-control" onchange="FinanceiroModule.updateCalculoParcelas()">
+                    <option value="1">Janeiro</option>
+                    <option value="2">Fevereiro</option>
+                    <option value="3">Março</option>
+                    <option value="4">Abril</option>
+                    <option value="5">Maio</option>
+                    <option value="6">Junho</option>
+                    <option value="7">Julho</option>
+                    <option value="8">Agosto</option>
+                    <option value="9">Setembro</option>
+                    <option value="10">Outubro</option>
+                    <option value="11">Novembro</option>
+                    <option value="12">Dezembro</option>
+                  </select>
+                  <select id="fin-parc-ano-inicio" class="form-control" onchange="FinanceiroModule.updateCalculoParcelas()">
+                    <option value="2025">2025</option>
+                    <option value="2026" selected>2026</option>
+                    <option value="2027">2027</option>
+                    <option value="2028">2028</option>
+                    <option value="2029">2029</option>
+                  </select>
                 </div>
               </div>
             </div>
-            <div style="font-size: 0.72rem; color: var(--text-muted);">
-              💡 O sistema gerará os lançamentos sucessivos a cada 30 dias com numeração automática (ex: 1/3, 2/3, 3/3).
+            <div class="form-group" style="margin-bottom: 8px;">
+              <label>Simulação das Parcelas</label>
+              <div id="fin-parcelas-calc-info" style="font-size: 0.82rem; font-weight: 700; color: #38bdf8; padding: 10px; background: rgba(56, 189, 248, 0.1); border-radius: 6px; border: 1px solid rgba(56, 189, 248, 0.3);">
+                Informe o valor para simular.
+              </div>
+            </div>
+            <div style="font-size: 0.73rem; color: var(--text-muted); line-height: 1.45;">
+              💡 Todas as parcelas nascem como <strong style="color: #fbbf24;">Pendentes</strong>. A baixa do pagamento mensal só é efetivada pelo administrador ao clicar em <strong style="color: #34d399;">✓ Baixar</strong> após pagar cada parcela.
             </div>
           </div>
 
@@ -2912,20 +2941,20 @@
   <!-- CONTAINER DE TOASTS -->
   <div class="toast-container" id="toast-container"></div>
 
-  <!-- SCRIPTS DO SISTEMA (com cache-busting v76) -->
-  <script src="js/notifications.js?v=76"></script>
-  <script src="js/storage.js?v=76"></script>
-  <script src="js/auth.js?v=76"></script>
-  <script src="js/crm.js?v=76"></script>
-  <script src="js/encomendas.js?v=76"></script>
-  <script src="js/estoque.js?v=76"></script>
-  <script src="js/financeiro.js?v=76"></script>
-  <script src="js/propostas.js?v=76"></script>
-  <script src="js/calculadora.js?v=76"></script>
-  <script src="js/calculadora-laser.js?v=76"></script>
-  <script src="js/calendario.js?v=76"></script>
-  <script src="js/configuracoes.js?v=76"></script>
-  <script src="js/app.js?v=76"></script>
+  <!-- SCRIPTS DO SISTEMA (com cache-busting v77) -->
+  <script src="js/notifications.js?v=77"></script>
+  <script src="js/storage.js?v=77"></script>
+  <script src="js/auth.js?v=77"></script>
+  <script src="js/crm.js?v=77"></script>
+  <script src="js/encomendas.js?v=77"></script>
+  <script src="js/estoque.js?v=77"></script>
+  <script src="js/financeiro.js?v=77"></script>
+  <script src="js/propostas.js?v=77"></script>
+  <script src="js/calculadora.js?v=77"></script>
+  <script src="js/calculadora-laser.js?v=77"></script>
+  <script src="js/calendario.js?v=77"></script>
+  <script src="js/configuracoes.js?v=77"></script>
+  <script src="js/app.js?v=77"></script>
 </body>
 
 </html>
