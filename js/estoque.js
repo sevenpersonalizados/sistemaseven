@@ -96,13 +96,16 @@ const EstoqueModule = {
     if (!tbody) return;
 
     if (filamentos.length === 0) {
-      tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; padding: 32px; color: var(--text-muted);"><div style="font-size: 1.4rem; margin-bottom: 6px;">🧵</div>Nenhum filamento cadastrado ainda. Clique em "+ Adicionar Filamento".</td></tr>`;
+      tbody.innerHTML = `<tr><td colspan="8" style="text-align: center; padding: 32px; color: var(--text-muted);"><div style="font-size: 1.4rem; margin-bottom: 6px;">🧵</div>Nenhum filamento cadastrado ainda. Clique em "+ Adicionar Filamento".</td></tr>`;
       return;
     }
 
     tbody.innerHTML = filamentos.map(f => {
       const preco = Number(f.preco_rolo) || 0;
       const peso = Number(f.peso_rolo_g) || 1000;
+      const pesoAtual = (f.peso_atual_g !== undefined && f.peso_atual_g !== null) ? Number(f.peso_atual_g) : peso;
+      const pctRestante = peso > 0 ? (pesoAtual / peso) * 100 : 0;
+      const pesoAtualColor = pctRestante <= 15 ? '#f87171' : (pctRestante <= 35 ? '#fbbf24' : '#38bdf8');
       const custoG = (Number(f.custo_por_g) || (peso > 0 ? preco / peso : 0)).toFixed(3);
 
       return `
@@ -120,7 +123,11 @@ const EstoqueModule = {
             ${f.local_compra ? `<div style="font-weight: 600; font-size: 0.82rem; color: #f1f5f9;">🏪 ${App.escapeHtml(f.local_compra)}</div>` : '<span style="color: var(--text-muted); font-size: 0.8rem;">—</span>'}
             ${f.data_compra ? `<div style="font-size: 0.72rem; color: #94a3b8; margin-top: 2px;">📅 ${App.formatDate(f.data_compra)}</div>` : ''}
           </td>
-          <td><strong>${peso}g</strong></td>
+          <td><span style="color: var(--text-secondary);">${peso}g</span></td>
+          <td>
+            <strong style="color: ${pesoAtualColor}; font-size: 0.95rem;">${pesoAtual}g</strong>
+            ${pctRestante <= 15 ? `<div class="badge-alerta-estoque status-badge" style="margin-top: 3px; font-size: 0.66rem;">⚠️ Repor</div>` : ''}
+          </td>
           <td><strong>${App.formatMoney(preco)}</strong></td>
           <td>
             <span style="font-weight: 700; color: #10b981; background: rgba(16, 185, 129, 0.15); padding: 3px 8px; border-radius: 999px;">

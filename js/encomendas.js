@@ -939,8 +939,12 @@ const EncomendasModule = {
       }
       const mesmaCor = filamentos.filter(f => (f.cor || '').toLowerCase().trim() === corNorm);
       if (mesmaCor.length > 0) {
-        // Prioriza o rolo da mesma cor com maior peso disponível
-        mesmaCor.sort((a, b) => (Number(b.peso_rolo_g) || 0) - (Number(a.peso_rolo_g) || 0));
+        // Prioriza o rolo da mesma cor com maior peso atual disponível
+        mesmaCor.sort((a, b) => {
+          const pa = (a.peso_atual_g !== undefined && a.peso_atual_g !== null) ? Number(a.peso_atual_g) : (Number(a.peso_rolo_g) || 0);
+          const pb = (b.peso_atual_g !== undefined && b.peso_atual_g !== null) ? Number(b.peso_atual_g) : (Number(b.peso_rolo_g) || 0);
+          return pb - pa;
+        });
         return mesmaCor[0];
       }
     }
@@ -990,20 +994,17 @@ const EncomendasModule = {
       const fil = this.encontrarFilamentoPorCor(item.cor, filIdPref);
 
       if (fil) {
-        const pesoAtual = Number(fil.peso_rolo_g) || 0;
-        const novoPeso = Math.max(0, Math.round((pesoAtual - pesoConsumido) * 10) / 10);
-        const custoG = Number(fil.custo_por_g) > 0
-          ? Number(fil.custo_por_g)
-          : (pesoAtual > 0 ? (Number(fil.preco_rolo) || 0) / pesoAtual : 0);
+        const pesoOriginal = Number(fil.peso_rolo_g) || 1000;
+        const pesoAtual = (fil.peso_atual_g !== undefined && fil.peso_atual_g !== null) ? Number(fil.peso_atual_g) : pesoOriginal;
+        const novoPesoAtual = Math.max(0, Math.round((pesoAtual - pesoConsumido) * 10) / 10);
 
         StorageService.update('filamentos', fil.id, {
-          peso_rolo_g: novoPeso,
-          custo_por_g: custoG
+          peso_atual_g: novoPesoAtual
         });
 
         item.filamento_deduzido_id = fil.id;
         item.filamento_deduzido_g = pesoConsumido;
-        baixasFilamento.push(`-${pesoConsumido}g ${fil.material || 'Filamento'} ${fil.cor || ''} (restam ${novoPeso}g)`);
+        baixasFilamento.push(`-${pesoConsumido}g ${fil.material || 'Filamento'} ${fil.cor || ''} (restam ${novoPesoAtual}g)`);
       } else {
         item.filamento_deduzido_id = null;
         item.filamento_deduzido_g = 0;
@@ -1023,8 +1024,9 @@ const EncomendasModule = {
       if (it.filamento_deduzido_id && Number(it.filamento_deduzido_g) > 0) {
         const fil = (StorageService.get('filamentos') || []).find(f => f.id === it.filamento_deduzido_id);
         if (fil) {
-          const novoPeso = Math.round(((Number(fil.peso_rolo_g) || 0) + Number(it.filamento_deduzido_g)) * 10) / 10;
-          StorageService.update('filamentos', fil.id, { peso_rolo_g: novoPeso });
+          const pesoAtual = (fil.peso_atual_g !== undefined && fil.peso_atual_g !== null) ? Number(fil.peso_atual_g) : (Number(fil.peso_rolo_g) || 0);
+          const novoPesoAtual = Math.round((pesoAtual + Number(it.filamento_deduzido_g)) * 10) / 10;
+          StorageService.update('filamentos', fil.id, { peso_atual_g: novoPesoAtual });
           houveEstorno = true;
         }
         it.filamento_deduzido_id = null;

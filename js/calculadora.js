@@ -829,13 +829,16 @@ const CalculadoraModule = {
     const filamentos = StorageService.get('filamentos') || [];
 
     if (filamentos.length === 0) {
-      container.innerHTML = `<tr><td colspan="7" style="text-align: center; padding: 24px; color: var(--text-muted);">Nenhum filamento cadastrado ainda.</td></tr>`;
+      container.innerHTML = `<tr><td colspan="8" style="text-align: center; padding: 24px; color: var(--text-muted);">Nenhum filamento cadastrado ainda.</td></tr>`;
       return;
     }
 
     container.innerHTML = filamentos.map(f => {
       const preco = Number(f.preco_rolo) || 0;
       const peso = Number(f.peso_rolo_g) || 1000;
+      const pesoAtual = (f.peso_atual_g !== undefined && f.peso_atual_g !== null) ? Number(f.peso_atual_g) : peso;
+      const pctRestante = peso > 0 ? (pesoAtual / peso) * 100 : 0;
+      const pesoAtualColor = pctRestante <= 15 ? '#f87171' : (pctRestante <= 35 ? '#fbbf24' : '#38bdf8');
       const custoG = (Number(f.custo_por_g) || (preco / peso)).toFixed(3);
 
       return `
@@ -855,6 +858,7 @@ const CalculadoraModule = {
             ${f.data_compra ? `<div style="font-size: 0.72rem; color: #94a3b8; margin-top: 2px;">📅 ${App.formatDate(f.data_compra)}</div>` : ''}
           </td>
           <td>${peso}g</td>
+          <td><strong style="color: ${pesoAtualColor};">${pesoAtual}g</strong></td>
           <td><strong>${App.formatMoney(preco)}</strong></td>
           <td>
             <span style="font-weight: 700; color: #10b981; background: rgba(16, 185, 129, 0.15); padding: 3px 8px; border-radius: 999px;">
@@ -913,9 +917,14 @@ const CalculadoraModule = {
     };
 
     if (this.filamentoEditandoId) {
+      const existente = (StorageService.get('filamentos') || []).find(f => f.id === this.filamentoEditandoId);
+      if (existente && (existente.peso_atual_g === undefined || existente.peso_atual_g === null)) {
+        payload.peso_atual_g = peso;
+      }
       StorageService.update('filamentos', this.filamentoEditandoId, payload);
       App.toast('Filamento atualizado com sucesso!', 'success');
     } else {
+      payload.peso_atual_g = peso;
       StorageService.insert('filamentos', payload);
       App.toast('Novo filamento cadastrado!', 'success');
     }
