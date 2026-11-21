@@ -172,7 +172,15 @@ const PropostasModule = {
     }
 
     const padroes = StorageService.getPadroesOrcamentoPedido();
+    const hojeIso = new Date().toISOString().split('T')[0];
+    const diasEntrega = parseInt(padroes.pedido_dias_entrega, 10);
+    const dias = Number.isFinite(diasEntrega) && diasEntrega >= 0 ? diasEntrega : 5;
+    const dataEntregaSug = new Date(Date.now() + dias * 24 * 3600 * 1000).toISOString().split('T')[0];
+
     document.getElementById('prop-titulo').value = padroes.orcamento_titulo || '';
+    document.getElementById('prop-data-orcamento').value = hojeIso;
+    document.getElementById('prop-data-confirmacao').value = '';
+    document.getElementById('prop-data-entrega').value = dataEntregaSug;
     document.getElementById('prop-escopo').value = padroes.orcamento_escopo || '';
     document.getElementById('prop-metodo').value = padroes.orcamento_metodo || '';
     document.getElementById('prop-prazo').value = padroes.orcamento_prazo || '';
@@ -215,6 +223,9 @@ const PropostasModule = {
     }
 
     document.getElementById('prop-titulo').value = p.titulo || '';
+    document.getElementById('prop-data-orcamento').value = p.data_orcamento || (p.criada_em ? p.criada_em.split('T')[0] : '');
+    document.getElementById('prop-data-confirmacao').value = p.data_confirmacao || '';
+    document.getElementById('prop-data-entrega').value = p.data_entrega || '';
     document.getElementById('prop-escopo').value = p.escopo || '';
     document.getElementById('prop-metodo').value = p.metodo || '';
     document.getElementById('prop-prazo').value = p.prazo || '';
@@ -377,22 +388,21 @@ const PropostasModule = {
             </div>
           </div>
 
-          <!-- Linha 2: Personalização / Arte e Observação do Produto -->
-          <div class="form-row" style="margin-bottom: 10px;">
-            <div class="form-group" style="margin-bottom: 0;">
-              <label style="font-size: 0.78rem; font-weight: 600; color: var(--text-primary);">Personalização / Detalhes</label>
-              <input type="text" class="form-control" style="height: 38px;" 
-                     value="${App.escapeHtml(item.personalizacao || '')}" 
-                     placeholder="Ex: Nome da Aniversariante, Frase, Logo..." 
-                     oninput="PropostasModule.updateItemField(${idx}, 'personalizacao', this.value)">
-            </div>
-            <div class="form-group" style="margin-bottom: 0;">
-              <label style="font-size: 0.78rem; font-weight: 600; color: var(--text-primary);">Observação do Item</label>
-              <input type="text" class="form-control" style="height: 38px;" 
-                     value="${App.escapeHtml(item.observacao || '')}" 
-                     placeholder="Ex: Acabamento especial, tamanho, embalagem..." 
-                     oninput="PropostasModule.updateItemField(${idx}, 'observacao', this.value)">
-            </div>
+          <!-- Linha 2: Personalização / Detalhes (campo amplo multi-linha) -->
+          <div class="form-group" style="margin-bottom: 10px;">
+            <label style="font-size: 0.78rem; font-weight: 600; color: var(--text-primary);">Personalização / Detalhes</label>
+            <textarea class="form-control" rows="3" style="min-height: 82px; resize: vertical; line-height: 1.45;" 
+                      placeholder="Ex: Nome da Aniversariante, Frase, Logo, Fonte, Medidas, Posição da gravação..." 
+                      oninput="PropostasModule.updateItemField(${idx}, 'personalizacao', this.value)">${App.escapeHtml(item.personalizacao || '')}</textarea>
+          </div>
+
+          <!-- Linha 2B: Observação do Item -->
+          <div class="form-group" style="margin-bottom: 10px;">
+            <label style="font-size: 0.78rem; font-weight: 600; color: var(--text-primary);">Observação do Item</label>
+            <input type="text" class="form-control" style="height: 38px;" 
+                   value="${App.escapeHtml(item.observacao || '')}" 
+                   placeholder="Ex: Acabamento especial, tamanho, embalagem..." 
+                   oninput="PropostasModule.updateItemField(${idx}, 'observacao', this.value)">
           </div>
 
           <!-- Linha 3: Quantidade, Valor Unitário e Subtotal -->
@@ -434,6 +444,9 @@ const PropostasModule = {
     const telefone = document.getElementById('prop-telefone').value.trim();
     const categoria = document.getElementById('prop-categoria')?.value || '3D';
     const titulo = document.getElementById('prop-titulo').value.trim();
+    const data_orcamento = document.getElementById('prop-data-orcamento')?.value || new Date().toISOString().split('T')[0];
+    const data_confirmacao = document.getElementById('prop-data-confirmacao')?.value || '';
+    const data_entrega = document.getElementById('prop-data-entrega')?.value || '';
     const escopo = document.getElementById('prop-escopo').value.trim();
     const metodo = document.getElementById('prop-metodo').value.trim();
     const prazo = document.getElementById('prop-prazo').value.trim();
@@ -457,6 +470,9 @@ const PropostasModule = {
       telefone,
       categoria,
       titulo: titulo || 'Orçamento de Produtos Personalizados',
+      data_orcamento,
+      data_confirmacao,
+      data_entrega,
       escopo,
       metodo,
       prazo: prazo || '5 a 7 dias úteis',
@@ -512,12 +528,15 @@ const PropostasModule = {
           subtotal: Number(p.investimento) || 0
         }];
 
+    const hojeIso = new Date().toISOString().split('T')[0];
     const novaEncomenda = {
       cliente_nome: p.cliente,
       categoria: p.categoria || '3D',
       telefone: p.telefone || p.contato || '',
-      data_pedido: new Date().toISOString().split('T')[0],
-      data_entrega_prevista: dataEntregaDefault,
+      data_orcamento: p.data_orcamento || (p.criada_em ? p.criada_em.split('T')[0] : hojeIso),
+      data_confirmacao: p.data_confirmacao || hojeIso,
+      data_pedido: p.data_confirmacao || hojeIso,
+      data_entrega_prevista: p.data_entrega || dataEntregaDefault,
       status: 'Fila', // Fila de Espera!
       pagamento_status: 'Pendente',
       forma_pagamento: 'Pix',
