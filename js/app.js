@@ -482,6 +482,18 @@ const App = {
     this.openImageLightbox(item.foto_anexo, titulo, nomeArq);
   },
 
+  openOrderItemPhoto(table, id, itemIdx) {
+    const list = StorageService.get(table) || [];
+    const record = list.find(x => x.id === id);
+    const it = record?.itens?.[itemIdx];
+    if (!it || !it.foto_anexo) return;
+    const cliente = record.cliente_nome || record.cliente || '';
+    const prod = it.produto_nome || `Item #${itemIdx + 1}`;
+    const titulo = cliente ? `${cliente} — ${prod}` : prod;
+    const nomeArq = it.foto_nome || `anexo-item-${itemIdx + 1}.jpg`;
+    this.openImageLightbox(it.foto_anexo, titulo, nomeArq);
+  },
+
   openImageLightbox(src, title = 'Anexo do Pedido', filename = 'anexo-seven.jpg') {
     if (!src) return;
     this._lightboxData = { src, filename };

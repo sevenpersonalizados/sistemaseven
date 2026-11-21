@@ -112,13 +112,34 @@ const PropostasModule = {
                   👤 Cliente: ${App.escapeHtml(p.cliente)} ${p.telefone ? `<span style="color: var(--text-muted); font-size: 0.78rem;">(${App.escapeHtml(p.telefone)})</span>` : ''}
                 </div>
               </div>
-              ${p.foto_anexo ? `
-                <div onclick="event.stopPropagation(); App.openOrderPhoto('propostas', '${p.id}')" title="Clique para ver a foto em tela cheia e baixar"
-                     style="flex-shrink: 0; position: relative; cursor: pointer; margin-top: 4px;">
-                  <img src="${p.foto_anexo}" alt="Anexo" style="width: 48px; height: 48px; object-fit: cover; border-radius: 8px; border: 1.5px solid rgba(56, 189, 248, 0.55); box-shadow: 0 2px 8px rgba(0,0,0,0.35); display: block;">
-                  <span style="position: absolute; right: -4px; bottom: -4px; background: #0f172a; border: 1px solid rgba(56,189,248,0.6); border-radius: 999px; font-size: 0.62rem; padding: 1px 4px;">🔍</span>
-                </div>
-              ` : ''}
+              ${(() => {
+                const fotosItens = (p.itens || [])
+                  .map((it, i) => ({ src: it.foto_anexo, idx: i, nome: it.produto_nome || `Item ${i + 1}` }))
+                  .filter(f => f.src);
+                if (fotosItens.length > 0) {
+                  return `
+                    <div style="display: flex; gap: 6px; flex-wrap: wrap; flex-shrink: 0; margin-top: 4px;">
+                      ${fotosItens.map(f => `
+                        <div onclick="event.stopPropagation(); App.openOrderItemPhoto('propostas', '${p.id}', ${f.idx})" title="Foto de ${App.escapeHtml(f.nome)} — Clique para ampliar e baixar"
+                             style="position: relative; cursor: pointer;">
+                          <img src="${f.src}" alt="${App.escapeHtml(f.nome)}" style="width: 44px; height: 44px; object-fit: cover; border-radius: 8px; border: 1.5px solid rgba(56, 189, 248, 0.55); box-shadow: 0 2px 8px rgba(0,0,0,0.35); display: block;">
+                          <span style="position: absolute; right: -4px; bottom: -4px; background: #0f172a; border: 1px solid rgba(56,189,248,0.6); border-radius: 999px; font-size: 0.58rem; padding: 1px 3px;">🔍</span>
+                        </div>
+                      `).join('')}
+                    </div>
+                  `;
+                }
+                if (p.foto_anexo) {
+                  return `
+                    <div onclick="event.stopPropagation(); App.openOrderPhoto('propostas', '${p.id}')" title="Clique para ver a foto em tela cheia e baixar"
+                         style="flex-shrink: 0; position: relative; cursor: pointer; margin-top: 4px;">
+                      <img src="${p.foto_anexo}" alt="Anexo" style="width: 48px; height: 48px; object-fit: cover; border-radius: 8px; border: 1.5px solid rgba(56, 189, 248, 0.55); box-shadow: 0 2px 8px rgba(0,0,0,0.35); display: block;">
+                      <span style="position: absolute; right: -4px; bottom: -4px; background: #0f172a; border: 1px solid rgba(56,189,248,0.6); border-radius: 999px; font-size: 0.62rem; padding: 1px 4px;">🔍</span>
+                    </div>
+                  `;
+                }
+                return '';
+              })()}
             </div>
 
             <div style="font-size: 0.82rem; color: var(--text-secondary); line-height: 1.5; margin-bottom: 14px; background: rgba(255,255,255,0.02); padding: 8px 10px; border-radius: 6px; border: 1px solid var(--border);">
@@ -209,7 +230,9 @@ const PropostasModule = {
         observacao: '',
         quantidade: 1,
         preco_unitario: 0,
-        subtotal: 0
+        subtotal: 0,
+        foto_anexo: '',
+        foto_nome: ''
       }
     ];
 
@@ -260,7 +283,9 @@ const PropostasModule = {
           observacao: it.observacao || it.obs || '',
           quantidade: Number(it.quantidade) || 1,
           preco_unitario: Number(it.preco_unitario) || 0,
-          subtotal: Number(it.subtotal) || 0
+          subtotal: Number(it.subtotal) || 0,
+          foto_anexo: it.foto_anexo || '',
+          foto_nome: it.foto_nome || ''
         }))
       : [
           {
@@ -270,7 +295,9 @@ const PropostasModule = {
             observacao: '',
             quantidade: 1,
             preco_unitario: Number(p.investimento) || 0,
-            subtotal: Number(p.investimento) || 0
+            subtotal: Number(p.investimento) || 0,
+            foto_anexo: p.foto_anexo || '',
+            foto_nome: p.foto_nome || ''
           }
         ];
 
@@ -286,8 +313,39 @@ const PropostasModule = {
       observacao: '',
       quantidade: 1,
       preco_unitario: 0,
-      subtotal: 0
+      subtotal: 0,
+      foto_anexo: '',
+      foto_nome: ''
     });
+    this.renderItensTable();
+  },
+
+  async onItemFotoSelected(idx, input) {
+    const file = input?.files?.[0];
+    if (!file || !propostaItensTemp[idx]) return;
+    try {
+      const res = await App.compressImageFile(file);
+      propostaItensTemp[idx].foto_anexo = res.dataUrl;
+      propostaItensTemp[idx].foto_nome = res.nome;
+      this.renderItensTable();
+      App.toast(`Foto anexada ao Item #${idx + 1}! 📷`, 'success');
+    } catch (err) {
+      console.error('Erro ao anexar foto ao item:', err);
+      App.toast('Não foi possível carregar a imagem.', 'error');
+    }
+    input.value = '';
+  },
+
+  abrirItemFotoPreview(idx) {
+    const it = propostaItensTemp[idx];
+    if (!it || !it.foto_anexo) return;
+    App.openImageLightbox(it.foto_anexo, it.produto_nome || `Item #${idx + 1}`, it.foto_nome || `anexo-item-${idx + 1}.jpg`);
+  },
+
+  removerItemFoto(idx) {
+    if (!propostaItensTemp[idx]) return;
+    propostaItensTemp[idx].foto_anexo = '';
+    propostaItensTemp[idx].foto_nome = '';
     this.renderItensTable();
   },
 
@@ -424,6 +482,34 @@ const PropostasModule = {
                    value="${App.escapeHtml(item.observacao || '')}" 
                    placeholder="Ex: Acabamento especial, tamanho, embalagem..." 
                    oninput="PropostasModule.updateItemField(${idx}, 'observacao', this.value)">
+          </div>
+
+          <!-- Linha 2C: Foto / Arte de Referência individual deste Item -->
+          <div class="form-group" style="margin-bottom: 12px;">
+            <label style="font-size: 0.78rem; font-weight: 600; color: var(--text-primary); display: flex; align-items: center; gap: 5px;">
+              <span>📷</span> Foto / Arte de Referência (Item #${idx + 1})
+            </label>
+            <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap; background: rgba(255,255,255,0.02); border: 1px dashed rgba(56, 189, 248, 0.35); border-radius: 6px; padding: 8px 10px;">
+              <input type="file" id="prop-item-foto-input-${idx}" accept="image/*" style="display: none;" onchange="PropostasModule.onItemFotoSelected(${idx}, this)">
+              <button type="button" class="btn btn-secondary btn-sm" onclick="document.getElementById('prop-item-foto-input-${idx}').click()" style="font-size: 0.76rem; padding: 5px 10px;">
+                📎 ${item.foto_anexo ? 'Trocar Foto' : 'Inserir Foto'}
+              </button>
+              ${item.foto_anexo ? `
+                <div style="display: flex; align-items: center; gap: 8px; flex: 1; min-width: 160px;">
+                  <img src="${item.foto_anexo}" alt="Referência Item #${idx + 1}" onclick="PropostasModule.abrirItemFotoPreview(${idx})" title="Clique para ampliar em tela cheia e baixar"
+                       style="width: 42px; height: 42px; object-fit: cover; border-radius: 6px; border: 1.5px solid rgba(56, 189, 248, 0.55); cursor: pointer;">
+                  <div style="flex: 1; min-width: 0;">
+                    <div style="font-size: 0.74rem; color: #ffffff; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${App.escapeHtml(item.foto_nome || 'foto-anexo.jpg')}</div>
+                    <div style="font-size: 0.66rem; color: var(--text-muted);">Clique na foto para ampliar</div>
+                  </div>
+                  <button type="button" class="btn btn-secondary btn-icon" onclick="PropostasModule.removerItemFoto(${idx})" title="Remover foto deste item" style="padding: 4px 7px; color: #f87171;">
+                    🗑️
+                  </button>
+                </div>
+              ` : `
+                <span style="font-size: 0.73rem; color: var(--text-muted);">Opcional — arte ou foto de referência exclusiva deste item</span>
+              `}
+            </div>
           </div>
 
           <!-- Linha 3: Quantidade, Valor Unitário e Subtotal -->
@@ -584,7 +670,9 @@ const PropostasModule = {
           observacao: it.observacao || '',
           quantidade: Number(it.quantidade) || 1,
           preco_unitario: Number(it.preco_unitario) || 0,
-          subtotal: Number(it.subtotal) || 0
+          subtotal: Number(it.subtotal) || 0,
+          foto_anexo: it.foto_anexo || '',
+          foto_nome: it.foto_nome || ''
         }))
       : [{
           produto_nome: p.titulo || 'Pedido Personalizado',
@@ -593,7 +681,9 @@ const PropostasModule = {
           observacao: '',
           quantidade: 1,
           preco_unitario: Number(p.investimento) || 0,
-          subtotal: Number(p.investimento) || 0
+          subtotal: Number(p.investimento) || 0,
+          foto_anexo: p.foto_anexo || '',
+          foto_nome: p.foto_nome || ''
         }];
 
     const hojeIso = new Date().toISOString().split('T')[0];

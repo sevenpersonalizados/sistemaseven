@@ -258,11 +258,25 @@ const EncomendasModule = {
     const coresList = [...new Set((enc.itens || []).filter(i => i.cor).map(i => i.cor))];
 
     const itensHtml = (enc.itens && enc.itens.length > 0)
-      ? enc.itens.map(i => {
+      ? enc.itens.map((i, idx) => {
           const corStr = i.cor ? ` <span style="color: #38bdf8;">[${App.escapeHtml(i.cor)}]</span>` : '';
           const persStr = i.personalizacao ? ` <span style="color: var(--text-muted);">— ${App.escapeHtml(i.personalizacao)}</span>` : '';
           const obsStr = i.observacao ? `<div style="font-size: 0.72rem; color: #fbbf24; margin-left: 12px;">Obs: ${App.escapeHtml(i.observacao)}</div>` : '';
-          return `<div style="margin-bottom: 3px;">• <strong>${i.quantidade}x</strong> ${App.escapeHtml(i.produto_nome || 'Item')}${corStr}${persStr}${obsStr}</div>`;
+          const thumbHtml = i.foto_anexo
+            ? `
+              <div onclick="event.stopPropagation(); App.openOrderItemPhoto('encomendas', '${enc.id}', ${idx})" title="Foto de ${App.escapeHtml(i.produto_nome || 'Item')} — Clique para tela cheia e download"
+                   style="flex-shrink: 0; position: relative; cursor: pointer;">
+                <img src="${i.foto_anexo}" alt="Anexo" style="width: 36px; height: 36px; object-fit: cover; border-radius: 6px; border: 1.5px solid rgba(56, 189, 248, 0.55); display: block;">
+                <span style="position: absolute; right: -4px; bottom: -4px; background: #0f172a; border: 1px solid rgba(56,189,248,0.65); border-radius: 999px; font-size: 0.54rem; padding: 0 3px;">🔍</span>
+              </div>
+            `
+            : '';
+          return `
+            <div style="display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 5px;">
+              <div style="flex: 1; min-width: 0;">• <strong>${i.quantidade}x</strong> ${App.escapeHtml(i.produto_nome || 'Item')}${corStr}${persStr}${obsStr}</div>
+              ${thumbHtml}
+            </div>
+          `;
         }).join('')
       : `<div style="color: var(--text-muted);">• Item personalizado</div>`;
 
@@ -669,6 +683,8 @@ const EncomendasModule = {
           quantidade: Number(it.quantidade) || 1,
           preco_unitario: Number(it.preco_unitario) || 0,
           subtotal: Number(it.subtotal) || 0,
+          foto_anexo: it.foto_anexo || '',
+          foto_nome: it.foto_nome || '',
           estoque_id: it.estoque_id || (it.estoque_item_id ? it.estoque_item_id : 'auto'),
           estoque_item_id: it.estoque_item_id || null,
           estoque_item_nome: it.estoque_item_nome || null,
@@ -1009,11 +1025,24 @@ const EncomendasModule = {
           </div>
 
           <!-- Subtotal do Item -->
-          <div style="display: flex; justify-content: flex-end; align-items: center; gap: 8px; margin-top: 10px; padding-top: 8px; border-top: 1px dashed rgba(255, 255, 255, 0.08);">
-            <span style="font-size: 0.76rem; color: var(--text-muted); text-transform: uppercase; font-weight: 600;">Subtotal do Item:</span>
-            <span id="enc-item-subtotal-${idx}" style="font-size: 1.15rem; font-weight: 800; color: #34d399;">
-              ${App.formatMoney(item.subtotal || 0)}
-            </span>
+          <div style="display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; margin-top: 10px; padding-top: 8px; border-top: 1px dashed rgba(255, 255, 255, 0.08);">
+            <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+              <input type="file" id="enc-item-foto-input-${idx}" accept="image/*" style="display: none;" onchange="EncomendasModule.onItemFotoSelected(${idx}, this)">
+              <button type="button" class="btn btn-secondary btn-sm" onclick="document.getElementById('enc-item-foto-input-${idx}').click()" style="font-size: 0.72rem; padding: 4px 8px;">
+                📷 ${item.foto_anexo ? 'Trocar Foto' : 'Foto Item #' + (idx + 1)}
+              </button>
+              ${item.foto_anexo ? `
+                <img src="${item.foto_anexo}" alt="Item #${idx + 1}" onclick="EncomendasModule.abrirItemFotoPreview(${idx})" title="Clique para ampliar e baixar"
+                     style="width: 34px; height: 34px; object-fit: cover; border-radius: 5px; border: 1.5px solid rgba(56, 189, 248, 0.55); cursor: pointer;">
+                <button type="button" class="btn btn-secondary btn-icon" onclick="EncomendasModule.removerItemFoto(${idx})" title="Remover foto deste item" style="padding: 2px 6px; font-size: 0.7rem; color: #f87171;">🗑️</button>
+              ` : ''}
+            </div>
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <span style="font-size: 0.76rem; color: var(--text-muted); text-transform: uppercase; font-weight: 600;">Subtotal do Item:</span>
+              <span id="enc-item-subtotal-${idx}" style="font-size: 1.15rem; font-weight: 800; color: #34d399;">
+                ${App.formatMoney(item.subtotal || 0)}
+              </span>
+            </div>
           </div>
         </div>
       `;
@@ -1308,5 +1337,34 @@ const EncomendasModule = {
   removerFoto() {
     encomendaFotoTemp = { dataUrl: '', nome: '' };
     this.renderFotoPreview();
+  },
+
+  async onItemFotoSelected(idx, input) {
+    const file = input?.files?.[0];
+    if (!file || !encomendaItensTemp[idx]) return;
+    try {
+      const res = await App.compressImageFile(file);
+      encomendaItensTemp[idx].foto_anexo = res.dataUrl;
+      encomendaItensTemp[idx].foto_nome = res.nome;
+      this.renderItensTable();
+      App.toast(`Foto anexada ao Item #${idx + 1}! 📷`, 'success');
+    } catch (err) {
+      console.error('Erro ao anexar foto ao item da encomenda:', err);
+      App.toast('Não foi possível carregar a imagem.', 'error');
+    }
+    input.value = '';
+  },
+
+  abrirItemFotoPreview(idx) {
+    const it = encomendaItensTemp[idx];
+    if (!it || !it.foto_anexo) return;
+    App.openImageLightbox(it.foto_anexo, it.produto_nome || `Item #${idx + 1}`, it.foto_nome || `anexo-item-${idx + 1}.jpg`);
+  },
+
+  removerItemFoto(idx) {
+    if (!encomendaItensTemp[idx]) return;
+    encomendaItensTemp[idx].foto_anexo = '';
+    encomendaItensTemp[idx].foto_nome = '';
+    this.renderItensTable();
   }
 };

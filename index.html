@@ -48,7 +48,7 @@
   <meta http-equiv="Expires" content="0">
 
   <!-- Estilos Customizados -->
-  <link rel="stylesheet" href="css/styles.css?v=55">
+  <link rel="stylesheet" href="css/styles.css?v=56">
 </head>
 
 <body>
@@ -2260,31 +2260,6 @@
           <input type="hidden" id="prop-investimento" value="0">
         </div>
 
-        <!-- Anexo de Foto / Arte de Referência no Orçamento -->
-        <div class="form-group" style="margin-bottom: 16px;">
-          <label style="font-weight: 700; color: var(--text-primary); display: flex; align-items: center; gap: 6px;">
-            <span>📷</span> Foto / Arte de Referência (Anexo)
-          </label>
-          <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap; background: rgba(255,255,255,0.025); border: 1px dashed rgba(56, 189, 248, 0.4); border-radius: 8px; padding: 12px 14px;">
-            <input type="file" id="prop-foto-input" accept="image/*" style="display: none;" onchange="PropostasModule.onFotoSelected(this)">
-            <button type="button" class="btn btn-secondary btn-sm" onclick="document.getElementById('prop-foto-input').click()" style="font-size: 0.8rem;">
-              📎 Inserir Foto
-            </button>
-            <div id="prop-foto-preview-box" style="display: none; align-items: center; gap: 10px; flex: 1; min-width: 200px;">
-              <img id="prop-foto-preview-img" src="" alt="Preview" onclick="PropostasModule.abrirFotoPreview()" title="Clique para ampliar em tela cheia"
-                style="width: 52px; height: 52px; object-fit: cover; border-radius: 6px; border: 1px solid rgba(56, 189, 248, 0.55); cursor: pointer;">
-              <div style="flex: 1; min-width: 0;">
-                <div id="prop-foto-preview-nome" style="font-size: 0.78rem; color: #ffffff; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;"></div>
-                <div style="font-size: 0.70rem; color: var(--text-muted);">Ficará visível discretamente no cartão da encomenda</div>
-              </div>
-              <button type="button" class="btn btn-secondary btn-icon" onclick="PropostasModule.removerFoto()" title="Remover foto" style="padding: 4px 8px; color: #f87171;">
-                🗑️
-              </button>
-            </div>
-            <span id="prop-foto-empty-hint" style="font-size: 0.76rem; color: var(--text-muted);">Opcional — anexe foto do produto, arte ou referência do cliente</span>
-          </div>
-        </div>
-
         <div class="form-group">
           <label>1. Escopo e Solução dos Produtos</label>
           <textarea id="prop-escopo" class="form-control" rows="2"></textarea>
@@ -2758,20 +2733,20 @@
   <!-- CONTAINER DE TOASTS -->
   <div class="toast-container" id="toast-container"></div>
 
-  <!-- SCRIPTS DO SISTEMA (com cache-busting v55) -->
-  <script src="js/notifications.js?v=55"></script>
-  <script src="js/storage.js?v=55"></script>
-  <script src="js/auth.js?v=55"></script>
-  <script src="js/crm.js?v=55"></script>
-  <script src="js/encomendas.js?v=55"></script>
-  <script src="js/estoque.js?v=55"></script>
-  <script src="js/financeiro.js?v=55"></script>
-  <script src="js/propostas.js?v=55"></script>
-  <script src="js/calculadora.js?v=55"></script>
-  <script src="js/calculadora-laser.js?v=55"></script>
-  <script src="js/calendario.js?v=55"></script>
-  <script src="js/configuracoes.js?v=55"></script>
-  <script src="js/app.js?v=55"></script>
+  <!-- SCRIPTS DO SISTEMA (com cache-busting v56) -->
+  <script src="js/notifications.js?v=56"></script>
+  <script src="js/storage.js?v=56"></script>
+  <script src="js/auth.js?v=56"></script>
+  <script src="js/crm.js?v=56"></script>
+  <script src="js/encomendas.js?v=56"></script>
+  <script src="js/estoque.js?v=56"></script>
+  <script src="js/financeiro.js?v=56"></script>
+  <script src="js/propostas.js?v=56"></script>
+  <script src="js/calculadora.js?v=56"></script>
+  <script src="js/calculadora-laser.js?v=56"></script>
+  <script src="js/calendario.js?v=56"></script>
+  <script src="js/configuracoes.js?v=56"></script>
+  <script src="js/app.js?v=56"></script>
 </body>
 
 </html>
