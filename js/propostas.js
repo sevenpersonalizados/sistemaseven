@@ -437,7 +437,7 @@ const PropostasModule = {
               </span>
             </div>
             ${propostaItensTemp.length > 1 ? `
-              <button type="button" class="btn-icon" style="background: rgba(239, 68, 68, 0.12); border: 1px solid rgba(239, 68, 68, 0.4); color: #f87171; cursor: pointer; padding: 3px 8px; border-radius: 6px; font-size: 0.75rem; font-weight: 600;" 
+              <button type="button" style="display: inline-flex; align-items: center; gap: 5px; white-space: nowrap; flex-shrink: 0; background: rgba(239, 68, 68, 0.14); border: 1px solid rgba(239, 68, 68, 0.45); color: #f87171; cursor: pointer; padding: 5px 10px; border-radius: 6px; font-size: 0.76rem; font-weight: 600;" 
                       onclick="PropostasModule.removeItemRow(${idx})" title="Remover este item">
                 ✕ Excluir Item
               </button>
