@@ -2011,8 +2011,8 @@ const FinanceiroModule = {
     // Caso de COMPRA NO CARTÃO DE CRÉDITO (encaminha cada parcela para a despesa do mês correspondente)
     const isCartaoCredito = tipo === 'despesa' && document.getElementById('fin-form-chk-cartao')?.checked;
     if (isCartaoCredito) {
-      const estabelecimento = document.getElementById('fin-cc-estabelecimento')?.value.trim() || '';
-      const cartao = document.getElementById('fin-cc-cartao')?.value || 'Cartão de Crédito';
+      const estabelecimento = document.getElementById('fin-est-fil-local')?.value.trim() || '';
+      const cartao = local || 'Cartão de Crédito';
       const numParcelas = Math.max(1, parseInt(document.getElementById('fin-cc-parcelas')?.value, 10) || 1);
       const mesInicio = parseInt(document.getElementById('fin-cc-mes-inicio')?.value, 10) || (new Date().getMonth() + 1);
       const anoInicio = parseInt(document.getElementById('fin-cc-ano-inicio')?.value, 10) || new Date().getFullYear();
