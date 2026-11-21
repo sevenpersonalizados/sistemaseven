@@ -867,6 +867,48 @@ const StorageService = {
     this.saveConfig({ ...cfg, marcas_filamento: this.sortLista(lista) });
   },
 
+  /* --- LOCAIS DE COMPRA (FORNECEDORES / LOJAS / MARKETPLACES) --- */
+  getLocaisCompra() {
+    const raw = this.getConfig().locais_compra;
+    if (Array.isArray(raw) && raw.length > 0) return this.sortLista(raw);
+    return this.sortLista([
+      'Amazon', 'Distribuidor Autorizado', 'Loja Física', 'Mercado Livre', 'Shopee', 'Site Oficial da Marca'
+    ]);
+  },
+
+  addLocalCompra(nome) {
+    const val = (nome || '').trim();
+    if (!val) return;
+    const cfg = this.getConfig();
+    const lista = [...(this.getLocaisCompra())];
+    if (!lista.some(l => l.toLowerCase() === val.toLowerCase())) {
+      lista.push(val);
+      this.saveConfig({ ...cfg, locais_compra: this.sortLista(lista) });
+    }
+  },
+
+  editLocalCompra(index, novoNome) {
+    const val = (novoNome || '').trim();
+    if (!val) return;
+    const cfg = this.getConfig();
+    const lista = [...(this.getLocaisCompra())];
+    if (lista[index] !== undefined) {
+      lista[index] = val;
+      this.saveConfig({ ...cfg, locais_compra: this.sortLista(lista) });
+    }
+  },
+
+  removeLocalCompra(index) {
+    const cfg = this.getConfig();
+    const lista = [...(this.getLocaisCompra())];
+    if (lista.length <= 1) {
+      alert('É necessário manter pelo menos um local de compra cadastrado.');
+      return;
+    }
+    lista.splice(index, 1);
+    this.saveConfig({ ...cfg, locais_compra: this.sortLista(lista) });
+  },
+
   /* --- PRODUTOS ESTABELECIDOS (APENAS NOMES / SEM PREÇOS) --- */
   getProdutosEstabelecidos() {
     const raw = this.getConfig().produtos_estabelecidos || [

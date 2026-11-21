@@ -37,6 +37,7 @@ const ConfiguracoesModule = {
     const formasPagto = StorageService.getFormasPagamento();
     const categoriasDesp = StorageService.getCategoriasDespesa();
     const marcasFilamento = StorageService.getMarcasFilamento();
+    const locaisCompra = StorageService.getLocaisCompra();
     const padroes = StorageService.getPadroesOrcamentoPedido();
 
     const tab = this.activeSubtab;
@@ -321,6 +322,42 @@ const ConfiguracoesModule = {
                     <div style="display: inline-flex; align-items: center; gap: 4px; margin-left: 4px;">
                       <button type="button" class="btn-icon" style="background: transparent; border: none; color: var(--text-muted); cursor: pointer; font-size: 0.75rem; padding: 2px;" title="Renomear" onclick="ConfiguracoesModule.editarMarcaFilamento(${idx})">✏️</button>
                       <button type="button" class="btn-icon" style="background: transparent; border: none; color: var(--danger); cursor: pointer; font-size: 0.78rem; padding: 2px;" title="Remover" onclick="ConfiguracoesModule.removerMarcaFilamento(${idx})">✕</button>
+                    </div>
+                  </div>
+                `).join('')}
+              </div>
+            </div>
+
+            <!-- 7. GRUPO: LOCAIS DE COMPRA -->
+            <div class="cfg-group-box" style="background: rgba(255, 255, 255, 0.02); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 1.25rem; border-left: 4px solid #14b8a6;">
+              <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.5rem;">
+                <div>
+                  <h4 style="margin: 0; font-size: 1rem; font-weight: 700; color: #2dd4bf; display: flex; align-items: center; gap: 6px;">
+                    <span>🏪</span> Locais de Compra
+                  </h4>
+                  <p style="margin: 3px 0 0 0; font-size: 0.76rem; color: var(--text-muted);">
+                    Lojas, marketplaces e fornecedores pré-selecionados no campo Local da Compra
+                  </p>
+                </div>
+                <span class="cfg-count-pill">${locaisCompra.length}</span>
+              </div>
+
+              <!-- Input para adicionar novo local de compra -->
+              <div style="display: flex; gap: 0.45rem; margin: 0.85rem 0;">
+                <input type="text" id="cfg_new_local_compra" class="form-control" style="height: 38px; font-size: 0.84rem;" placeholder="Ex: Mercado Livre, Shopee, Amazon..." onkeydown="if(event.key==='Enter'){event.preventDefault(); ConfiguracoesModule.adicionarLocalCompra();}">
+                <button type="button" class="btn btn-primary" style="height: 38px; padding: 0 0.95rem; font-size: 0.82rem; flex-shrink: 0;" onclick="ConfiguracoesModule.adicionarLocalCompra()">
+                  + Adicionar
+                </button>
+              </div>
+
+              <!-- Lista de locais de compra -->
+              <div class="cfg-tags-list" style="display: flex; flex-wrap: wrap; gap: 0.5rem;">
+                ${locaisCompra.map((item, idx) => `
+                  <div class="cfg-tag-item" style="display: inline-flex; align-items: center; gap: 0.45rem; background: rgba(20, 184, 166, 0.08); border: 1px solid rgba(20, 184, 166, 0.35); border-radius: 8px; padding: 0.4rem 0.75rem; font-size: 0.84rem; color: #ffffff;">
+                    <span style="font-weight: 600;">${App.escapeHtml(item)}</span>
+                    <div style="display: inline-flex; align-items: center; gap: 4px; margin-left: 4px;">
+                      <button type="button" class="btn-icon" style="background: transparent; border: none; color: var(--text-muted); cursor: pointer; font-size: 0.75rem; padding: 2px;" title="Renomear" onclick="ConfiguracoesModule.editarLocalCompra(${idx})">✏️</button>
+                      <button type="button" class="btn-icon" style="background: transparent; border: none; color: var(--danger); cursor: pointer; font-size: 0.78rem; padding: 2px;" title="Remover" onclick="ConfiguracoesModule.removerLocalCompra(${idx})">✕</button>
                     </div>
                   </div>
                 `).join('')}
@@ -711,6 +748,56 @@ const ConfiguracoesModule = {
       this.render();
       if (typeof CalculadoraModule !== 'undefined' && CalculadoraModule.popularOpcoesFormFilamento) {
         CalculadoraModule.popularOpcoesFormFilamento();
+      }
+    }
+  },
+
+  /* --- GESTÃO DE LOCAIS DE COMPRA --- */
+  adicionarLocalCompra() {
+    const input = document.getElementById('cfg_new_local_compra');
+    const valor = input ? input.value.trim() : '';
+    if (!valor) return;
+    StorageService.addLocalCompra(valor);
+    input.value = '';
+    App.toast(`Local de compra "${valor}" adicionado!`, 'success');
+    this.render();
+    if (typeof CalculadoraModule !== 'undefined' && CalculadoraModule.popularOpcoesFormFilamento) {
+      CalculadoraModule.popularOpcoesFormFilamento();
+    }
+    if (typeof FinanceiroModule !== 'undefined' && FinanceiroModule.popularCamposEstoqueAuto) {
+      FinanceiroModule.popularCamposEstoqueAuto();
+    }
+  },
+
+  editarLocalCompra(index) {
+    const locais = StorageService.getLocaisCompra();
+    const atual = locais[index];
+    const novoNome = prompt('Editar nome do local de compra:', atual);
+    if (novoNome && novoNome.trim() && novoNome.trim() !== atual) {
+      StorageService.editLocalCompra(index, novoNome.trim());
+      App.toast('Local de compra atualizado!', 'info');
+      this.render();
+      if (typeof CalculadoraModule !== 'undefined' && CalculadoraModule.popularOpcoesFormFilamento) {
+        CalculadoraModule.popularOpcoesFormFilamento();
+      }
+      if (typeof FinanceiroModule !== 'undefined' && FinanceiroModule.popularCamposEstoqueAuto) {
+        FinanceiroModule.popularCamposEstoqueAuto();
+      }
+    }
+  },
+
+  removerLocalCompra(index) {
+    const locais = StorageService.getLocaisCompra();
+    const nome = locais[index];
+    if (confirm(`Remover "${nome}" da lista de locais de compra?`)) {
+      StorageService.removeLocalCompra(index);
+      App.toast('Local de compra removido.', 'info');
+      this.render();
+      if (typeof CalculadoraModule !== 'undefined' && CalculadoraModule.popularOpcoesFormFilamento) {
+        CalculadoraModule.popularOpcoesFormFilamento();
+      }
+      if (typeof FinanceiroModule !== 'undefined' && FinanceiroModule.popularCamposEstoqueAuto) {
+        FinanceiroModule.popularCamposEstoqueAuto();
       }
     }
   },

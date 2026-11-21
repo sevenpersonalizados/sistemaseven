@@ -1666,6 +1666,15 @@ const FinanceiroModule = {
       selMarca.innerHTML = marcas.map(m => `<option value="${App.escapeHtml(m)}">${App.escapeHtml(m)}</option>`).join('');
       if (atual && marcas.includes(atual)) selMarca.value = atual;
     }
+
+    const locaisCompra = StorageService.getLocaisCompra() || [];
+    const selLocalCompra = document.getElementById('fin-est-fil-local');
+    if (selLocalCompra) {
+      const atual = selLocalCompra.value;
+      selLocalCompra.innerHTML = `<option value="">— Selecione o local da compra —</option>` +
+        locaisCompra.map(l => `<option value="${App.escapeHtml(l)}">${App.escapeHtml(l)}</option>`).join('');
+      if (atual && locaisCompra.includes(atual)) selLocalCompra.value = atual;
+    }
   },
 
   onEstoqueAutoTipoChange(tipoEst) {

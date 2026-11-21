@@ -880,8 +880,8 @@ const CalculadoraModule = {
     if (badgeMargem) badgeMargem.textContent = `${cfg.margem_lucro_padrao || 100}%`;
   },
 
-  // Popula os selects de Marca e Cor do formulário de filamentos com as opções pré-programadas
-  popularOpcoesFormFilamento(marcaSelecionada = null, corSelecionada = null) {
+  // Popula os selects de Marca, Cor e Local da Compra do formulário de filamentos com as opções pré-programadas
+  popularOpcoesFormFilamento(marcaSelecionada = null, corSelecionada = null, localSelecionado = null) {
     const selMarca = document.getElementById('fil-modal-marca');
     if (selMarca) {
       const marcas = StorageService.getMarcasFilamento() || [];
@@ -906,6 +906,20 @@ const CalculadoraModule = {
       selCor.innerHTML = listaCores.map(c => `
         <option value="${App.escapeHtml(c)}" ${corSelecionada && c.toLowerCase() === corSelecionada.toLowerCase() ? 'selected' : ''}>
           ${App.escapeHtml(c)}
+        </option>
+      `).join('');
+    }
+
+    const selLocal = document.getElementById('fil-modal-local-compra');
+    if (selLocal) {
+      const locais = StorageService.getLocaisCompra() || [];
+      const listaLocais = [...locais];
+      if (localSelecionado && !listaLocais.some(l => l.toLowerCase() === localSelecionado.toLowerCase())) {
+        listaLocais.push(localSelecionado);
+      }
+      selLocal.innerHTML = `<option value="">— Selecione o local —</option>` + listaLocais.map(l => `
+        <option value="${App.escapeHtml(l)}" ${localSelecionado && l.toLowerCase() === localSelecionado.toLowerCase() ? 'selected' : ''}>
+          ${App.escapeHtml(l)}
         </option>
       `).join('');
     }
@@ -1064,7 +1078,7 @@ const CalculadoraModule = {
     if (!f) return;
 
     this.filamentoEditandoId = id;
-    this.popularOpcoesFormFilamento(f.marca, f.cor);
+    this.popularOpcoesFormFilamento(f.marca, f.cor, f.local_compra);
 
     document.getElementById('fil-modal-material').value = f.material || 'PLA';
     document.getElementById('fil-modal-marca').value = f.marca || '';
