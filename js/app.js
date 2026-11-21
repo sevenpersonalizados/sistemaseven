@@ -168,8 +168,15 @@ const App = {
       return !isFin;
     });
 
-    // Itens em Estoque (com destaque caso haja itens em nível crítico)
+    // Itens em Estoque e Filamentos abaixo de 300g (com destaque caso haja itens em nível crítico)
+    const filamentos = (StorageService.get('filamentos') || []).filter(f => f.ativo !== false);
     const estoqueBaixo = est.filter(i => Number(i.quantidade_atual) <= Number(i.estoque_minimo));
+    const filamentosBaixos = filamentos.filter(f => {
+      const pesoAtual = (f.peso_atual_g !== undefined && f.peso_atual_g !== null) ? Number(f.peso_atual_g) : (Number(f.peso_rolo_g) || 0);
+      return pesoAtual < 300;
+    });
+    const totalCriticos = estoqueBaixo.length + filamentosBaixos.length;
+    const totalEstoque = est.length + filamentos.length;
 
     // Atualiza badges do menu lateral e da barra inferior mobile
     const bProp = document.getElementById('nav-badge-propostas');
@@ -193,11 +200,11 @@ const App = {
 
     const bEst = document.getElementById('nav-badge-estoque');
     if (bEst) {
-      bEst.textContent = est.length;
-      bEst.className = estoqueBaixo.length > 0 ? 'badge-counter highlight' : 'badge-counter';
-      bEst.title = estoqueBaixo.length > 0
-        ? `${est.length} itens cadastrados (${estoqueBaixo.length} abaixo do mínimo)`
-        : `${est.length} itens cadastrados no estoque`;
+      bEst.textContent = totalEstoque;
+      bEst.className = totalCriticos > 0 ? 'badge-counter highlight' : 'badge-counter';
+      bEst.title = totalCriticos > 0
+        ? `${totalEstoque} itens cadastrados (${totalCriticos} em nível crítico)`
+        : `${totalEstoque} itens cadastrados no estoque`;
     }
   },
 
@@ -255,6 +262,11 @@ const App = {
     // 3. Atualiza Badges de alerta no menu lateral e na barra inferior mobile
     this.updateBadges();
     const estoqueBaixo = est.filter(i => Number(i.quantidade_atual) <= Number(i.estoque_minimo));
+    const filamentosAtivos = (StorageService.get('filamentos') || []).filter(f => f.ativo !== false);
+    const filamentosBaixos = filamentosAtivos.filter(f => {
+      const pesoAtual = (f.peso_atual_g !== undefined && f.peso_atual_g !== null) ? Number(f.peso_atual_g) : (Number(f.peso_rolo_g) || 0);
+      return pesoAtual < 300;
+    });
 
     // 4. Próximas Entregas (Apenas encomendas em Fila ou Em Produção — pedidos 'Pronto' saem daqui)
     const proximas = enc
@@ -286,23 +298,41 @@ const App = {
       }
     }
 
-    // 5. Alerta de Estoque Baixo na Home
+    // 5. Alerta de Estoque Baixo na Home (Matéria-Prima, Outros e Filamentos < 300g)
     const containerEstoque = document.getElementById('dash-estoque-critico');
     if (containerEstoque) {
-      if (estoqueBaixo.length === 0) {
-        containerEstoque.innerHTML = `<div style="color: var(--success); text-align: center; padding: 24px;">Estoque saudável! Nenhum insumo abaixo do mínimo. ✅</div>`;
+      const alertasUnificados = [
+        ...filamentosBaixos.map(f => {
+          const pesoAtual = (f.peso_atual_g !== undefined && f.peso_atual_g !== null) ? Number(f.peso_atual_g) : (Number(f.peso_rolo_g) || 0);
+          return {
+            titulo: `🧵 ${f.material || 'Filamento'}${f.marca ? ` — ${f.marca}` : ''}`,
+            categoria: 'Filamento 3D',
+            cor: f.cor || '',
+            badge: `${pesoAtual}g (Mín: 300g)`
+          };
+        }),
+        ...estoqueBaixo.map(item => ({
+          titulo: item.nome || 'Material',
+          categoria: item.categoria || '',
+          cor: item.cor || '',
+          badge: `${item.quantidade_atual} ${item.unidade} (Mín: ${item.estoque_minimo})`
+        }))
+      ];
+
+      if (alertasUnificados.length === 0) {
+        containerEstoque.innerHTML = `<div style="color: var(--success); text-align: center; padding: 24px;">Estoque saudável! Nenhum item ou filamento abaixo do mínimo. ✅</div>`;
       } else {
-        containerEstoque.innerHTML = estoqueBaixo.map(item => `
+        containerEstoque.innerHTML = alertasUnificados.map(alerta => `
           <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px; border-bottom: 1px solid var(--border); gap: 10px;">
             <div style="min-width: 0;">
-              <div style="font-weight: 600; color: var(--text-primary);">${this.escapeHtml(item.nome)}</div>
+              <div style="font-weight: 600; color: var(--text-primary);">${this.escapeHtml(alerta.titulo)}</div>
               <div style="font-size: 0.76rem; color: var(--text-muted); display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
-                <span>${this.escapeHtml(item.categoria || '')}</span>
-                ${item.cor ? `<span style="color: #38bdf8; font-weight: 600;">• 🎨 ${this.escapeHtml(item.cor)}</span>` : ''}
+                <span>${this.escapeHtml(alerta.categoria)}</span>
+                ${alerta.cor ? `<span style="color: #38bdf8; font-weight: 600;">• 🎨 ${this.escapeHtml(alerta.cor)}</span>` : ''}
               </div>
             </div>
             <div style="text-align: right; flex-shrink: 0;">
-              <span class="status-badge badge-alerta-estoque">${item.quantidade_atual} ${item.unidade} (Mín: ${item.estoque_minimo})</span>
+              <span class="status-badge badge-alerta-estoque">${this.escapeHtml(alerta.badge)}</span>
             </div>
           </div>
         `).join('');

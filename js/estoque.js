@@ -104,8 +104,8 @@ const EstoqueModule = {
       const preco = Number(f.preco_rolo) || 0;
       const peso = Number(f.peso_rolo_g) || 1000;
       const pesoAtual = (f.peso_atual_g !== undefined && f.peso_atual_g !== null) ? Number(f.peso_atual_g) : peso;
-      const pctRestante = peso > 0 ? (pesoAtual / peso) * 100 : 0;
-      const pesoAtualColor = pctRestante <= 15 ? '#f87171' : (pctRestante <= 35 ? '#fbbf24' : '#38bdf8');
+      const isCritico = pesoAtual < 300;
+      const pesoAtualColor = isCritico ? '#f87171' : (pesoAtual < 500 ? '#fbbf24' : '#38bdf8');
       const custoG = (Number(f.custo_por_g) || (peso > 0 ? preco / peso : 0)).toFixed(3);
 
       return `
@@ -126,7 +126,7 @@ const EstoqueModule = {
           <td><span style="color: var(--text-secondary);">${peso}g</span></td>
           <td>
             <strong style="color: ${pesoAtualColor}; font-size: 0.95rem;">${pesoAtual}g</strong>
-            ${pctRestante <= 15 ? `<div class="badge-alerta-estoque status-badge" style="margin-top: 3px; font-size: 0.66rem;">⚠️ Repor</div>` : ''}
+            ${isCritico ? `<div class="badge-alerta-estoque status-badge" style="margin-top: 3px; font-size: 0.66rem;">⚠️ Repor (&lt;300g)</div>` : ''}
           </td>
           <td><strong>${App.formatMoney(preco)}</strong></td>
           <td>
