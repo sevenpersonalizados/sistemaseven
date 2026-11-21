@@ -138,7 +138,7 @@ const CalculadoraModule = {
         const custoG = (Number(f.custo_por_g) > 0 ? Number(f.custo_por_g) : (Number(f.preco_rolo) / pesoRolo)).toFixed(3);
         const pesoAtual = (f.peso_atual_g !== undefined && f.peso_atual_g !== null) ? Number(f.peso_atual_g) : pesoRolo;
         return `<option value="${f.id}" ${f.id === currentId ? 'selected' : ''}>
-          ${App.escapeHtml(f.material)} ${f.cor ? '— ' + App.escapeHtml(f.cor) : ''} (${App.escapeHtml(f.marca || 'Genérico')}) • R$ ${custoG.replace('.', ',')}/g (${pesoAtual}g)
+          ${App.escapeHtml(f.material)}${f.tipo_filamento ? ' ' + App.escapeHtml(f.tipo_filamento) : ''} ${f.cor ? '— ' + App.escapeHtml(f.cor) : ''} (${App.escapeHtml(f.marca || 'Genérico')}) • R$ ${custoG.replace('.', ',')}/g (${pesoAtual}g)
         </option>`;
       }).join('');
     };
@@ -886,11 +886,15 @@ const CalculadoraModule = {
     if (selMarca) {
       const marcas = StorageService.getMarcasFilamento() || [];
       const listaMarcas = [...marcas];
+      if (!listaMarcas.some(m => m.toLowerCase() === 'multifila')) {
+        listaMarcas.unshift('Multifila');
+      }
       if (marcaSelecionada && !listaMarcas.some(m => m.toLowerCase() === marcaSelecionada.toLowerCase())) {
         listaMarcas.push(marcaSelecionada);
       }
+      const marcaAlvo = marcaSelecionada || 'Multifila';
       selMarca.innerHTML = listaMarcas.map(m => `
-        <option value="${App.escapeHtml(m)}" ${marcaSelecionada && m.toLowerCase() === marcaSelecionada.toLowerCase() ? 'selected' : ''}>
+        <option value="${App.escapeHtml(m)}" ${m.toLowerCase() === marcaAlvo.toLowerCase() ? 'selected' : ''}>
           ${App.escapeHtml(m)}
         </option>
       `).join('');
@@ -938,6 +942,8 @@ const CalculadoraModule = {
     this.filamentoEditandoId = null;
     this.popularOpcoesFormFilamento();
     document.getElementById('fil-modal-material').value = 'PLA';
+    const tipoInput = document.getElementById('fil-modal-tipo');
+    if (tipoInput) tipoInput.value = '';
     const localInput = document.getElementById('fil-modal-local-compra');
     if (localInput) localInput.value = '';
     const dataInput = document.getElementById('fil-modal-data-compra');
@@ -981,7 +987,7 @@ const CalculadoraModule = {
       return `
         <tr>
           <td>
-            <strong style="color: #ffffff; font-size: 0.92rem;">${App.escapeHtml(f.material)}</strong>
+            <strong style="color: #ffffff; font-size: 0.92rem;">${App.escapeHtml(f.material)}${f.tipo_filamento ? ` <span style="font-size: 0.76rem; font-weight: 700; color: #fbbf24; background: rgba(251, 191, 36, 0.14); border: 1px solid rgba(251, 191, 36, 0.35); padding: 1px 6px; border-radius: 999px; margin-left: 4px;">${App.escapeHtml(f.tipo_filamento)}</span>` : ''}</strong>
             <div style="font-size: 0.74rem; color: #38bdf8; font-weight: 600;">🏷️ ${App.escapeHtml(f.marca || 'Genérica')}</div>
           </td>
           <td>
@@ -1019,7 +1025,8 @@ const CalculadoraModule = {
 
   salvarFilamentoForm() {
     const material = document.getElementById('fil-modal-material')?.value.trim();
-    const marca = document.getElementById('fil-modal-marca')?.value.trim() || 'Voolt3D';
+    const tipoFilamento = document.getElementById('fil-modal-tipo')?.value.trim() || '';
+    const marca = document.getElementById('fil-modal-marca')?.value.trim() || 'Multifila';
     const cor = document.getElementById('fil-modal-cor')?.value.trim() || 'Preto';
     const localCompra = document.getElementById('fil-modal-local-compra')?.value.trim() || '';
     const dataCompra = document.getElementById('fil-modal-data-compra')?.value || '';
@@ -1043,6 +1050,7 @@ const CalculadoraModule = {
 
     const payload = {
       material,
+      tipo_filamento: tipoFilamento,
       marca,
       cor,
       local_compra: localCompra,
@@ -1081,7 +1089,9 @@ const CalculadoraModule = {
     this.popularOpcoesFormFilamento(f.marca, f.cor, f.local_compra);
 
     document.getElementById('fil-modal-material').value = f.material || 'PLA';
-    document.getElementById('fil-modal-marca').value = f.marca || '';
+    const tipoInput = document.getElementById('fil-modal-tipo');
+    if (tipoInput) tipoInput.value = f.tipo_filamento || '';
+    document.getElementById('fil-modal-marca').value = f.marca || 'Multifila';
     document.getElementById('fil-modal-cor').value = f.cor || '';
     
     const localInput = document.getElementById('fil-modal-local-compra');

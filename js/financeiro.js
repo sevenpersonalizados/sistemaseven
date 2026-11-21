@@ -1671,12 +1671,18 @@ const FinanceiroModule = {
       if (atual && cores.includes(atual)) selCorFil.value = atual;
     }
 
-    const marcas = StorageService.getMarcasFilamento() || ['Voolt3D'];
+    const marcasBase = StorageService.getMarcasFilamento() || [];
+    const marcas = [...marcasBase];
+    if (!marcas.some(m => m.toLowerCase() === 'multifila')) {
+      marcas.unshift('Multifila');
+    }
     const selMarca = document.getElementById('fin-est-fil-marca');
     if (selMarca) {
       const atual = selMarca.value;
-      selMarca.innerHTML = marcas.map(m => `<option value="${App.escapeHtml(m)}">${App.escapeHtml(m)}</option>`).join('');
-      if (atual && marcas.includes(atual)) selMarca.value = atual;
+      const multifilaOp = marcas.find(m => m.toLowerCase() === 'multifila') || 'Multifila';
+      const alvo = (atual && marcas.includes(atual)) ? atual : multifilaOp;
+      selMarca.innerHTML = marcas.map(m => `<option value="${App.escapeHtml(m)}" ${m === alvo ? 'selected' : ''}>${App.escapeHtml(m)}</option>`).join('');
+      selMarca.value = alvo;
     }
 
     const locaisCompra = StorageService.getLocaisCompra() || [];
@@ -1714,15 +1720,16 @@ const FinanceiroModule = {
 
     if (tipoEst === 'filamentos') {
       const material = document.getElementById('fin-est-fil-material')?.value || 'PLA';
-      const marca = document.getElementById('fin-est-fil-marca')?.value || 'Voolt3D';
+      const tipoFilamento = document.getElementById('fin-est-fil-tipo')?.value || '';
+      const marca = document.getElementById('fin-est-fil-marca')?.value || 'Multifila';
       const cor = document.getElementById('fin-est-fil-cor')?.value || 'Preto';
       const peso = Math.max(1, parseFloat(document.getElementById('fin-est-fil-peso')?.value) || 1000);
-      const localCompra = document.getElementById('fin-est-fil-local')?.value.trim() ||
-        document.getElementById('fin-cc-estabelecimento')?.value.trim() || '';
+      const localCompra = document.getElementById('fin-est-fil-local')?.value.trim() || '';
       const custoG = peso > 0 ? (valor / peso) : 0;
 
       StorageService.insert('filamentos', {
         material,
+        tipo_filamento: tipoFilamento,
         marca,
         cor,
         local_compra: localCompra,
@@ -1738,7 +1745,7 @@ const FinanceiroModule = {
       if (typeof CalculadoraModule !== 'undefined' && CalculadoraModule.renderFilamentoSelect) {
         CalculadoraModule.renderFilamentoSelect();
       }
-      return ` 🧵 Filamento ${material} ${cor} (${peso}g) adicionado ao Estoque!`;
+      return ` 🧵 Filamento ${material}${tipoFilamento ? ' ' + tipoFilamento : ''} ${cor} (${peso}g) adicionado ao Estoque!`;
     }
 
     // Matéria Prima ou Outros

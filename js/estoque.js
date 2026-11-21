@@ -111,7 +111,7 @@ const EstoqueModule = {
       return `
         <tr>
           <td>
-            <strong style="color: #ffffff; font-size: 0.92rem;">${App.escapeHtml(f.material)}</strong>
+            <strong style="color: #ffffff; font-size: 0.92rem;">${App.escapeHtml(f.material)}${f.tipo_filamento ? ` <span style="font-size: 0.74rem; font-weight: 700; color: #fbbf24; background: rgba(251, 191, 36, 0.14); border: 1px solid rgba(251, 191, 36, 0.35); padding: 1px 6px; border-radius: 999px; margin-left: 4px;">${App.escapeHtml(f.tipo_filamento)}</span>` : ''}</strong>
             <div style="font-size: 0.74rem; color: #38bdf8; font-weight: 600;">🏷️ ${App.escapeHtml(f.marca || 'Genérica')}</div>
           </td>
           <td>

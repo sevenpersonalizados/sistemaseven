@@ -3,7 +3,7 @@
  * Suporte a modo standalone no iPhone (iOS), cache e Notificações Push
  */
 
-const CACHE_NAME = 'seven-cache-v98';
+const CACHE_NAME = 'seven-cache-v99';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
@@ -37,7 +37,7 @@ self.addEventListener('install', (event) => {
             .then((res) => {
               if (res.ok) return cache.put(url, res);
             })
-            .catch(() => {});
+            .catch(() => { });
         })
       );
     })
@@ -60,7 +60,7 @@ self.addEventListener('fetch', (event) => {
   if (event.request.url.includes('supabase.co') || event.request.url.includes('cdn.jsdelivr.net')) {
     return;
   }
-  
+
   event.respondWith(
     fetch(event.request, { cache: 'no-cache' })
       .then((networkResponse) => {
