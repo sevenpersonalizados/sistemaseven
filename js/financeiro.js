@@ -42,10 +42,10 @@ const FinanceiroModule = {
 
     this.render();
 
-    // Reatividade a eventos do sistema (inclui Encomendas interligadas em tempo real)
+    // Reatividade a eventos do sistema (inclui Encomendas, Tabela de Preço e Estoque em tempo real)
     window.addEventListener('seven_data_updated', (e) => {
       const t = e.detail?.table;
-      if (!t || t === 'financeiro_lancamentos' || t === 'financeiro_auditoria' || t === 'despesas' || t === 'config' || t === 'encomendas') {
+      if (!t || t === 'financeiro_lancamentos' || t === 'financeiro_auditoria' || t === 'despesas' || t === 'config' || t === 'encomendas' || t === 'calc_3d_historico' || t === 'estoque') {
         this.render();
       }
     });
@@ -244,6 +244,89 @@ const FinanceiroModule = {
     this.renderTabelaLancamentos();
   },
 
+  calcularCustoUnitarioItemEncomenda(item, historico3D, estoqueItens) {
+    if (!item) return 0;
+
+    // 1. Prioridade: Tabela de Preço (Histórico 3D) por ID vinculado ou nome do produto
+    let h = null;
+    if (item.calc_3d_historico_id) {
+      h = historico3D.find(rec => rec.id === item.calc_3d_historico_id);
+    }
+    if (!h && item.produto_nome) {
+      const nomeNorm = item.produto_nome.toLowerCase().trim();
+      h = historico3D.find(rec => (rec.produto_nome || '').toLowerCase().trim() === nomeNorm);
+    }
+    if (h) {
+      const qtdLote = Math.max(1, Number(h.quantidade_pecas) || 1);
+      const custoUnit3D = Number(h.custo_unitario) || ((Number(h.custo_total) || 0) / qtdLote);
+      if (custoUnit3D > 0) return custoUnit3D;
+    }
+
+    // 2. Fallback: Custo unitário de compra cadastrado no Estoque (Matéria-Prima / Outros)
+    let mat = null;
+    if (item.estoque_item_id) {
+      mat = estoqueItens.find(m => m.id === item.estoque_item_id);
+    }
+    if (!mat && typeof EncomendasModule !== 'undefined' && EncomendasModule.encontrarItemEstoque) {
+      mat = EncomendasModule.encontrarItemEstoque(item.produto_nome, item.cor, item.estoque_id);
+    }
+    if (mat && Number(mat.custo_unitario) > 0) {
+      return Number(mat.custo_unitario);
+    }
+
+    return 0;
+  },
+
+  calcularResumoLucroEncomendas() {
+    const encomendas = StorageService.get('encomendas') || [];
+    const historico3D = StorageService.get('calc_3d_historico') || [];
+    const estoqueItens = StorageService.get('estoque') || [];
+
+    let lucroRealizado = 0;
+    let vendaRealizada = 0;
+    let custoRealizado = 0;
+    let lucroPrevisto = 0;
+
+    encomendas.forEach(enc => {
+      if (!enc || enc.status === 'Cancelada') return;
+      const valorTotal = Number(enc.valor_total) || 0;
+      if (valorTotal <= 0) return;
+
+      const valorPago = enc.pagamento_status === 'Pago'
+        ? valorTotal
+        : Math.min(valorTotal, Math.max(0, Number(enc.valor_pago) || 0));
+      const ratioPago = valorTotal > 0 ? (valorPago / valorTotal) : 0;
+
+      const itens = (enc.itens && enc.itens.length > 0) ? enc.itens : [];
+      let vendaEnc = 0;
+      let custoEnc = 0;
+
+      if (itens.length > 0) {
+        itens.forEach(it => {
+          const qtd = Math.max(1, Number(it.quantidade) || 1);
+          const vendaIt = Number(it.subtotal) || (qtd * (Number(it.preco_unitario) || 0));
+          const custoUnit = this.calcularCustoUnitarioItemEncomenda(it, historico3D, estoqueItens);
+          vendaEnc += vendaIt;
+          custoEnc += custoUnit * qtd;
+        });
+      } else {
+        vendaEnc = valorTotal;
+      }
+
+      const lucroEnc = vendaEnc - custoEnc;
+      if (ratioPago > 0) {
+        lucroRealizado += lucroEnc * ratioPago;
+        vendaRealizada += vendaEnc * ratioPago;
+        custoRealizado += custoEnc * ratioPago;
+      }
+      if (ratioPago < 1) {
+        lucroPrevisto += lucroEnc * (1 - ratioPago);
+      }
+    });
+
+    return { lucroRealizado, vendaRealizada, custoRealizado, lucroPrevisto };
+  },
+
   // 1. INDICADORES FINANCEIROS NO TOPO
   renderIndicadores() {
     const lancamentos = this.getLancamentos();
@@ -310,7 +393,8 @@ const FinanceiroModule = {
 
     saldoDisponivel = receitasEfetivadasTotal - despesasEfetivadasTotal;
     const saldoProjetado = saldoDisponivel - valoresAPagar;
-    const lucroRealizado = lucroEncomendasRecebidas;
+    const resumoLucro = this.calcularResumoLucroEncomendas();
+    const lucroRealizado = resumoLucro.lucroRealizado;
 
     // Atualiza elementos no DOM
     const elSaldo = document.getElementById('fin-kpi-saldo');
@@ -344,12 +428,16 @@ const FinanceiroModule = {
     }
     if (elLucro) {
       elLucro.textContent = App.formatMoney(lucroRealizado);
-      elLucro.style.color = lucroRealizado > 0 ? '#34d399' : '#94a3b8';
+      elLucro.style.color = lucroRealizado > 0 ? '#34d399' : (lucroRealizado < 0 ? '#f87171' : '#94a3b8');
     }
     if (elLucroSub) {
-      elLucroSub.textContent = valoresAReceber > 0
-        ? `Recebido de encomendas • + ${App.formatMoney(valoresAReceber)} a receber`
-        : 'Recebido de encomendas pagas';
+      if (resumoLucro.vendaRealizada > 0) {
+        elLucroSub.textContent = `Venda: ${App.formatMoney(resumoLucro.vendaRealizada)} − Custo: ${App.formatMoney(resumoLucro.custoRealizado)}`;
+      } else if (resumoLucro.lucroPrevisto > 0) {
+        elLucroSub.textContent = `Previsto em encomendas abertas: ${App.formatMoney(resumoLucro.lucroPrevisto)}`;
+      } else {
+        elLucroSub.textContent = 'Valor vendido − custo (Tabela de Preço / Estoque)';
+      }
     }
     if (elPagar) {
       elPagar.textContent = App.formatMoney(valoresAPagar);
