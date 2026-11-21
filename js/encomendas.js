@@ -264,26 +264,26 @@ const EncomendasModule = {
 
     const itensHtml = itensList.length > 0
       ? itensList.map((i, idx) => {
-          const corStr = i.cor ? ` <span style="color: #38bdf8;">[${App.escapeHtml(i.cor)}]</span>` : '';
-          const thumbHtml = i.foto_anexo
-            ? `
+        const corStr = i.cor ? ` <span style="color: #38bdf8;">[${App.escapeHtml(i.cor)}]</span>` : '';
+        const thumbHtml = i.foto_anexo
+          ? `
               <div onclick="event.stopPropagation(); App.openOrderItemPhoto('encomendas', '${enc.id}', ${idx})" title="Foto de ${App.escapeHtml(i.produto_nome || 'Item')} — Clique para tela cheia e download"
                    style="flex-shrink: 0; position: relative; cursor: pointer;">
                 <img src="${i.foto_anexo}" alt="Anexo Item ${idx + 1}" style="width: 44px; height: 44px; object-fit: cover; border-radius: 7px; border: 1.5px solid rgba(56, 189, 248, 0.6); box-shadow: 0 2px 8px rgba(0,0,0,0.35); display: block;">
                 <span style="position: absolute; right: 2px; bottom: 2px; background: rgba(15, 23, 42, 0.88); border: 1px solid rgba(56,189,248,0.65); border-radius: 999px; font-size: 0.54rem; line-height: 1; padding: 2px 3px;">🔍</span>
               </div>
             `
-            : '';
-          const descParts = [];
-          if (i.personalizacao && i.personalizacao.trim()) {
-            descParts.push(`<div style="font-size: 0.78rem; color: #e2e8f0; margin-top: 3px; white-space: pre-line; line-height: 1.4;">${App.escapeHtml(i.personalizacao.trim())}</div>`);
-          }
-          if (i.observacao && i.observacao.trim()) {
-            descParts.push(`<div style="font-size: 0.74rem; color: #fbbf24; margin-top: 2px;">Obs: ${App.escapeHtml(i.observacao.trim())}</div>`);
-          }
+          : '';
+        const descParts = [];
+        if (i.personalizacao && i.personalizacao.trim()) {
+          descParts.push(`<div style="font-size: 0.78rem; color: #e2e8f0; margin-top: 3px; white-space: pre-line; line-height: 1.4;">${App.escapeHtml(i.personalizacao.trim())}</div>`);
+        }
+        if (i.observacao && i.observacao.trim()) {
+          descParts.push(`<div style="font-size: 0.74rem; color: #fbbf24; margin-top: 2px;">Obs: ${App.escapeHtml(i.observacao.trim())}</div>`);
+        }
 
-          if (multiItens) {
-            return `
+        if (multiItens) {
+          return `
               <div style="display: flex; justify-content: space-between; align-items: center; gap: 10px; background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(148, 163, 184, 0.22); border-radius: 8px; padding: 9px 11px;">
                 <div style="flex: 1; min-width: 0;">
                   <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
@@ -295,9 +295,9 @@ const EncomendasModule = {
                 ${thumbHtml}
               </div>
             `;
-          }
+        }
 
-          return `
+        return `
             <div style="display: flex; justify-content: space-between; align-items: center; gap: 10px;">
               <div style="flex: 1; min-width: 0;">
                 <div>• <strong>${i.quantidade}x</strong> ${App.escapeHtml(i.produto_nome || 'Item')}${corStr}</div>
@@ -306,7 +306,7 @@ const EncomendasModule = {
               ${thumbHtml}
             </div>
           `;
-        }).join('')
+      }).join('')
       : `<div style="color: var(--text-muted);">• Item personalizado</div>`;
 
     // Oculta o texto automático antigo ("Origem: Orçamento... Prazo Comercial... Condições...")
@@ -571,15 +571,15 @@ const EncomendasModule = {
       this.deduzirEstoque(enc);
       window.dispatchEvent(new CustomEvent('seven_data_updated', { detail: { table: 'estoque' } }));
     }
-    
+
     StorageService.update('encomendas', id, { status: newStatus });
-    
+
     if (newStatus === 'Entregue' || newStatus === 'Cancelada' || (newStatus === 'Pronto' && enc.pagamento_status === 'Pago')) {
       App.toast(`Status alterado para "${newStatus}"! Encomenda movida para Finalizados. 🎉`, 'success');
     } else {
       App.toast(`Status da encomenda ${StorageService.formatOrderNumber(enc)} alterado para "${newStatus}".`, 'info');
     }
-    
+
     this.render();
     this.renderFinalizados();
     if (typeof EstoqueModule !== 'undefined') EstoqueModule.render();
@@ -589,22 +589,22 @@ const EncomendasModule = {
   quickUpdatePagamento(id, newPagto) {
     const enc = StorageService.get('encomendas').find(e => e.id === id);
     if (!enc) return;
-    
+
     const updateData = { pagamento_status: newPagto };
     if (newPagto === 'Pago') {
       updateData.valor_pago = Number(enc.valor_total) || 0;
     } else if (newPagto === 'Pendente') {
       updateData.valor_pago = 0;
     }
-    
+
     StorageService.update('encomendas', id, updateData);
-    
+
     if (enc.status === 'Entregue' || enc.status === 'Cancelada' || (enc.status === 'Pronto' && newPagto === 'Pago')) {
       App.toast(`Pagamento atualizado! Encomenda no histórico de Finalizados. 🎉`, 'success');
     } else {
       App.toast(`Financeiro da encomenda ${StorageService.formatOrderNumber(enc)} alterado para "${newPagto}".`, 'info');
     }
-    
+
     this.render();
     this.renderFinalizados();
     App.renderDashboard();
@@ -615,8 +615,8 @@ const EncomendasModule = {
   },
 
   openNewModalFromLead(lead = null) {
-    document.getElementById('enc-modal-title').textContent = lead 
-      ? `Nova Encomenda — ${lead.lead_name}` 
+    document.getElementById('enc-modal-title').textContent = lead
+      ? `Nova Encomenda — ${lead.lead_name}`
       : 'Nova Encomenda de Personalizados';
     document.getElementById('enc-form-id').value = '';
     document.getElementById('enc-form-cliente').value = lead?.lead_name || '';
@@ -730,20 +730,20 @@ const EncomendasModule = {
 
     encomendaItensTemp = (enc.itens && enc.itens.length > 0)
       ? enc.itens.map(it => ({
-          produto_nome: it.produto_nome || '',
-          cor: it.cor || '',
-          personalizacao: it.personalizacao || '',
-          observacao: it.observacao || it.obs || '',
-          quantidade: Number(it.quantidade) || 1,
-          preco_unitario: Number(it.preco_unitario) || 0,
-          subtotal: Number(it.subtotal) || 0,
-          foto_anexo: it.foto_anexo || '',
-          foto_nome: it.foto_nome || '',
-          estoque_id: it.estoque_id || (it.estoque_item_id ? it.estoque_item_id : 'auto'),
-          estoque_item_id: it.estoque_item_id || null,
-          estoque_item_nome: it.estoque_item_nome || null,
-          qtd_deduzida_estoque: Number(it.qtd_deduzida_estoque) || 0
-        }))
+        produto_nome: it.produto_nome || '',
+        cor: it.cor || '',
+        personalizacao: it.personalizacao || '',
+        observacao: it.observacao || it.obs || '',
+        quantidade: Number(it.quantidade) || 1,
+        preco_unitario: Number(it.preco_unitario) || 0,
+        subtotal: Number(it.subtotal) || 0,
+        foto_anexo: it.foto_anexo || '',
+        foto_nome: it.foto_nome || '',
+        estoque_id: it.estoque_id || (it.estoque_item_id ? it.estoque_item_id : 'auto'),
+        estoque_item_id: it.estoque_item_id || null,
+        estoque_item_nome: it.estoque_item_nome || null,
+        qtd_deduzida_estoque: Number(it.qtd_deduzida_estoque) || 0
+      }))
       : [{ produto_nome: '', cor: '', personalizacao: '', observacao: '', quantidade: 1, preco_unitario: 0, subtotal: 0, foto_anexo: '', foto_nome: '', estoque_id: 'auto', estoque_item_id: null, estoque_item_nome: null, qtd_deduzida_estoque: 0 }];
 
     this.renderItensTable();
@@ -862,7 +862,7 @@ const EncomendasModule = {
       return itensEstoque.find(e => e.id === estoqueId) || null;
     }
     if (estoqueId === 'none' || !produtoNome) return null;
-    
+
     const nomeNorm = produtoNome.toLowerCase().trim();
     const corNorm = (cor || '').toLowerCase().trim();
 
@@ -1213,13 +1213,13 @@ const EncomendasModule = {
           const qtdADeduzir = Number(item.quantidade) || 0;
           const matAtualizado = StorageService.get('estoque').find(m => m.id === mat.id) || mat;
           const novoSaldo = Math.max(0, Number(matAtualizado.quantidade_atual) - qtdADeduzir);
-          
+
           StorageService.update('estoque', mat.id, { quantidade_atual: novoSaldo });
-          
+
           item.estoque_item_id = mat.id;
           item.estoque_item_nome = mat.nome;
           item.qtd_deduzida_estoque = qtdADeduzir;
-          
+
           baixasRealizadas.push(`${qtdADeduzir}x ${mat.nome} (restam ${novoSaldo} ${mat.unidade})`);
         } else {
           item.estoque_item_id = null;

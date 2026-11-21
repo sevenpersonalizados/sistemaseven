@@ -431,6 +431,9 @@ const CalculadoraModule = {
           </td>
           <td style="text-align: right;">
             <div style="display: flex; gap: 6px; justify-content: flex-end;">
+              <button class="btn btn-secondary btn-icon" onclick="CalculadoraModule.abrirModalEditarPreco('${item.id}')" style="color: #38bdf8;" title="Editar preço de venda">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+              </button>
               <button class="btn btn-secondary btn-icon" onclick="CalculadoraModule.carregarNaCalculadora('${item.id}')" title="Reutilizar dados na calculadora">
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
               </button>
@@ -599,6 +602,101 @@ const CalculadoraModule = {
     `;
 
     App.openModal('modal-calc-detalhes');
+  },
+
+  abrirModalEditarPreco(id) {
+    const historico = StorageService.get('calc_3d_historico') || [];
+    const item = historico.find(i => i.id === id);
+    if (!item) return;
+
+    const qtd = Math.max(1, Number(item.quantidade_pecas) || 1);
+    const custoTotal = Number(item.custo_total) || 0;
+    const precoTotal = Number(item.preco_venda_total) || (custoTotal * 2);
+    const precoUnit = Number(item.preco_venda_unitario) || (precoTotal / qtd);
+
+    document.getElementById('calc-edit-preco-id').value = item.id;
+    document.getElementById('calc-edit-preco-produto').textContent = item.produto_nome || 'Peça 3D';
+    document.getElementById('calc-edit-preco-info').textContent =
+      `${qtd} ${qtd === 1 ? 'peça' : 'peças'} • Custo total: ${App.formatMoney(custoTotal)} (${App.formatMoney(custoTotal / qtd)}/un)`;
+
+    document.getElementById('calc-edit-preco-unit').value = precoUnit.toFixed(2);
+    document.getElementById('calc-edit-preco-total').value = precoTotal.toFixed(2);
+
+    this.atualizarPreviewEditPreco();
+    App.openModal('modal-calc-editar-preco');
+    setTimeout(() => document.getElementById('calc-edit-preco-unit')?.focus(), 80);
+  },
+
+  onEditPrecoUnitInput(val) {
+    const id = document.getElementById('calc-edit-preco-id')?.value;
+    const item = (StorageService.get('calc_3d_historico') || []).find(i => i.id === id);
+    const qtd = Math.max(1, Number(item?.quantidade_pecas) || 1);
+    const unit = parseFloat(val) || 0;
+    const totalEl = document.getElementById('calc-edit-preco-total');
+    if (totalEl) totalEl.value = (unit * qtd).toFixed(2);
+    this.atualizarPreviewEditPreco();
+  },
+
+  onEditPrecoTotalInput(val) {
+    const id = document.getElementById('calc-edit-preco-id')?.value;
+    const item = (StorageService.get('calc_3d_historico') || []).find(i => i.id === id);
+    const qtd = Math.max(1, Number(item?.quantidade_pecas) || 1);
+    const total = parseFloat(val) || 0;
+    const unitEl = document.getElementById('calc-edit-preco-unit');
+    if (unitEl) unitEl.value = (total / qtd).toFixed(2);
+    this.atualizarPreviewEditPreco();
+  },
+
+  atualizarPreviewEditPreco() {
+    const id = document.getElementById('calc-edit-preco-id')?.value;
+    const item = (StorageService.get('calc_3d_historico') || []).find(i => i.id === id);
+    const custoTotal = Number(item?.custo_total) || 0;
+    const precoTotal = parseFloat(document.getElementById('calc-edit-preco-total')?.value) || 0;
+    const lucro = precoTotal - custoTotal;
+    const margem = custoTotal > 0 ? Math.round((lucro / custoTotal) * 100) : 0;
+
+    const previewEl = document.getElementById('calc-edit-preco-preview');
+    if (previewEl) {
+      previewEl.style.borderColor = lucro < 0 ? 'rgba(239, 68, 68, 0.45)' : 'rgba(16, 185, 129, 0.3)';
+      previewEl.style.background = lucro < 0 ? 'rgba(239, 68, 68, 0.08)' : 'rgba(16, 185, 129, 0.08)';
+      previewEl.innerHTML = `
+        <span style="color: ${lucro < 0 ? '#f87171' : '#34d399'};">Lucro estimado: <strong>${App.formatMoney(lucro)}</strong></span>
+        <span style="color: ${lucro < 0 ? '#f87171' : '#fb923c'}; font-weight: 700;">Margem: ${margem >= 0 ? '+' : ''}${margem}%</span>
+      `;
+    }
+  },
+
+  salvarPrecoEditado() {
+    const id = document.getElementById('calc-edit-preco-id')?.value;
+    const item = (StorageService.get('calc_3d_historico') || []).find(i => i.id === id);
+    if (!item) return;
+
+    const qtd = Math.max(1, Number(item.quantidade_pecas) || 1);
+    const custoTotal = Number(item.custo_total) || 0;
+    const precoTotal = parseFloat(document.getElementById('calc-edit-preco-total')?.value);
+    const precoUnit = parseFloat(document.getElementById('calc-edit-preco-unit')?.value);
+
+    if (isNaN(precoTotal) || precoTotal < 0 || isNaN(precoUnit) || precoUnit < 0) {
+      App.toast('Informe um preço de venda válido.', 'warning');
+      return;
+    }
+
+    const lucroTotal = precoTotal - custoTotal;
+    const lucroUnit = lucroTotal / qtd;
+    const margemPct = custoTotal > 0 ? Math.round((lucroTotal / custoTotal) * 100) : 0;
+
+    StorageService.update('calc_3d_historico', id, {
+      preco_venda_total: Number(precoTotal.toFixed(2)),
+      preco_venda_unitario: Number(precoUnit.toFixed(2)),
+      lucro_total: Number(lucroTotal.toFixed(2)),
+      lucro_estimado_total: Number(lucroTotal.toFixed(2)),
+      lucro_estimado_unitario: Number(lucroUnit.toFixed(2)),
+      margem_lucro_pct: margemPct
+    });
+
+    App.closeModal('modal-calc-editar-preco');
+    this.renderHistorico(document.getElementById('calc-historico-busca')?.value || '');
+    App.toast(`Preço de "${item.produto_nome}" atualizado para ${App.formatMoney(precoUnit)}/un! 💰`, 'success');
   },
 
   excluirHistorico(id) {

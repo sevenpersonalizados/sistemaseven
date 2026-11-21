@@ -48,7 +48,7 @@
   <meta http-equiv="Expires" content="0">
 
   <!-- Estilos Customizados -->
-  <link rel="stylesheet" href="css/styles.css?v=64">
+  <link rel="stylesheet" href="css/styles.css?v=65">
 </head>
 
 <body>
@@ -2786,6 +2786,49 @@
     </div>
   </div>
 
+  <!-- MODAL: EDITAR PREÇO DE VENDA (HISTÓRICO 3D) -->
+  <div class="modal-overlay" id="modal-calc-editar-preco">
+    <div class="modal-container" style="max-width: 480px;">
+      <div class="modal-header">
+        <h3 style="color: #ffffff; display: flex; align-items: center; gap: 8px;">
+          <span>✏️</span> Editar Preço de Venda (3D)
+        </h3>
+        <button class="btn-icon"
+          style="background: transparent; border: none; color: var(--text-muted); cursor: pointer;"
+          onclick="App.closeModal('modal-calc-editar-preco')">✕</button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="calc-edit-preco-id">
+        <div style="background: rgba(255, 255, 255, 0.03); border: 1px solid var(--border); border-radius: 8px; padding: 12px 14px; margin-bottom: 14px;">
+          <div id="calc-edit-preco-produto" style="font-weight: 700; color: #ffffff; font-size: 0.98rem;">—</div>
+          <div id="calc-edit-preco-info" style="font-size: 0.78rem; color: var(--text-muted); margin-top: 3px;">—</div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>Preço de Venda Unitário (R$) *</label>
+            <input type="number" step="0.01" min="0" id="calc-edit-preco-unit" class="form-control"
+              oninput="CalculadoraModule.onEditPrecoUnitInput(this.value)" placeholder="0,00">
+          </div>
+          <div class="form-group">
+            <label>Preço de Venda Total (R$) *</label>
+            <input type="number" step="0.01" min="0" id="calc-edit-preco-total" class="form-control"
+              oninput="CalculadoraModule.onEditPrecoTotalInput(this.value)" placeholder="0,00">
+          </div>
+        </div>
+
+        <div id="calc-edit-preco-preview" style="background: rgba(16, 185, 129, 0.08); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 8px; padding: 10px 14px; font-size: 0.82rem; color: #34d399; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
+          <span>Lucro estimado: <strong>R$ 0,00</strong></span>
+          <span style="color: #fb923c; font-weight: 700;">Margem: 0%</span>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="App.closeModal('modal-calc-editar-preco')">Cancelar</button>
+        <button type="button" class="btn btn-primary" onclick="CalculadoraModule.salvarPrecoEditado()">💾 Salvar Novo Preço</button>
+      </div>
+    </div>
+  </div>
+
   <!-- LIGHTBOX DE IMAGEM EM TELA CHEIA COM DOWNLOAD -->
   <div id="modal-image-lightbox"
     onclick="if (event.target === this) App.closeImageLightbox()"
@@ -2813,20 +2856,20 @@
   <!-- CONTAINER DE TOASTS -->
   <div class="toast-container" id="toast-container"></div>
 
-  <!-- SCRIPTS DO SISTEMA (com cache-busting v64) -->
-  <script src="js/notifications.js?v=64"></script>
-  <script src="js/storage.js?v=64"></script>
-  <script src="js/auth.js?v=64"></script>
-  <script src="js/crm.js?v=64"></script>
-  <script src="js/encomendas.js?v=64"></script>
-  <script src="js/estoque.js?v=64"></script>
-  <script src="js/financeiro.js?v=64"></script>
-  <script src="js/propostas.js?v=64"></script>
-  <script src="js/calculadora.js?v=64"></script>
-  <script src="js/calculadora-laser.js?v=64"></script>
-  <script src="js/calendario.js?v=64"></script>
-  <script src="js/configuracoes.js?v=64"></script>
-  <script src="js/app.js?v=64"></script>
+  <!-- SCRIPTS DO SISTEMA (com cache-busting v65) -->
+  <script src="js/notifications.js?v=65"></script>
+  <script src="js/storage.js?v=65"></script>
+  <script src="js/auth.js?v=65"></script>
+  <script src="js/crm.js?v=65"></script>
+  <script src="js/encomendas.js?v=65"></script>
+  <script src="js/estoque.js?v=65"></script>
+  <script src="js/financeiro.js?v=65"></script>
+  <script src="js/propostas.js?v=65"></script>
+  <script src="js/calculadora.js?v=65"></script>
+  <script src="js/calculadora-laser.js?v=65"></script>
+  <script src="js/calendario.js?v=65"></script>
+  <script src="js/configuracoes.js?v=65"></script>
+  <script src="js/app.js?v=65"></script>
 </body>
 
 </html>
