@@ -526,6 +526,177 @@ const FinanceiroModule = {
     this.renderTabelaLancamentos();
   },
 
+  findParcelasByGroupKey(groupKey) {
+    const manuais = this.getLancamentosManuais();
+    return manuais.filter(d => {
+      if ((Number(d.total_parcelas) || 1) <= 1) return false;
+      const baseDesc = (d.descricao || 'Despesa Parcelada').replace(/\s*\(\d+\/\d+\)\s*$/, '').trim();
+      const key = d.id_grupo_parcela || `parc-${baseDesc.toLowerCase()}-${d.total_parcelas}`;
+      return key === groupKey;
+    }).sort((a, b) => (Number(a.parcela_atual) || 0) - (Number(b.parcela_atual) || 0) || (a.data || '').localeCompare(b.data || ''));
+  },
+
+  openEditGrupoParcelas(groupKey) {
+    const parcelas = this.findParcelasByGroupKey(groupKey);
+    if (parcelas.length === 0) {
+      App.toast('Compra parcelada não encontrada.', 'error');
+      return;
+    }
+
+    const first = parcelas[0];
+    const baseDesc = (first.descricao || '').replace(/\s*\(\d+\/\d+\)\s*$/, '').trim();
+    const valorTotal = parcelas.reduce((s, p) => s + (Number(p.valor) || 0), 0);
+    const [anoIni, mesIni, diaIni] = (first.data || this.formatIsoDate(new Date())).split('-').map(Number);
+
+    document.getElementById('fin-grp-edit-key').value = groupKey;
+    document.getElementById('fin-grp-edit-descricao').value = baseDesc;
+    document.getElementById('fin-grp-edit-valor-total').value = valorTotal.toFixed(2);
+    document.getElementById('fin-grp-edit-dia').value = Math.min(28, Math.max(1, diaIni || 15));
+    document.getElementById('fin-grp-edit-mes-inicio').value = String(mesIni || (new Date().getMonth() + 1));
+    document.getElementById('fin-grp-edit-ano-inicio').value = String(anoIni || new Date().getFullYear());
+    document.getElementById('fin-grp-edit-local').value = first.local_pagamento || '';
+
+    const selCat = document.getElementById('fin-grp-edit-categoria');
+    if (selCat) {
+      const cats = StorageService.getCategoriasDespesa();
+      const lista = cats.includes(first.categoria) ? cats : [...cats, first.categoria || 'Outros'];
+      selCat.innerHTML = lista.map(c => `<option value="${App.escapeHtml(c)}">${App.escapeHtml(c)}</option>`).join('');
+      selCat.value = first.categoria || cats[0] || 'Outros';
+    }
+
+    const selCentro = document.getElementById('fin-grp-edit-centro');
+    if (selCentro) {
+      const centros = StorageService.getCentrosCusto();
+      const lista = centros.includes(first.centro_custo) ? centros : [...centros, first.centro_custo || 'Geral'];
+      selCentro.innerHTML = lista.map(c => `<option value="${App.escapeHtml(c)}">${App.escapeHtml(c)}</option>`).join('');
+      selCentro.value = first.centro_custo || centros[0] || 'Geral';
+    }
+
+    const selForma = document.getElementById('fin-grp-edit-forma');
+    if (selForma) {
+      const formas = StorageService.getFormasPagamento();
+      const formaAtual = first.forma_pagamento || 'Cartão de Crédito';
+      const lista = formas.includes(formaAtual) ? formas : [...formas, formaAtual];
+      selForma.innerHTML = lista.map(f => `<option value="${App.escapeHtml(f)}">${App.escapeHtml(f)}</option>`).join('');
+      selForma.value = formaAtual;
+    }
+
+    this.updateEditGrupoPreview();
+    App.openModal('modal-editar-grupo-parcelas');
+  },
+
+  updateEditGrupoPreview() {
+    const groupKey = document.getElementById('fin-grp-edit-key')?.value;
+    const parcelas = this.findParcelasByGroupKey(groupKey);
+    const n = Math.max(1, parcelas.length);
+    const valorTotal = parseFloat(document.getElementById('fin-grp-edit-valor-total')?.value) || 0;
+    const dia = Math.min(28, Math.max(1, parseInt(document.getElementById('fin-grp-edit-dia')?.value, 10) || 15));
+    const mes = parseInt(document.getElementById('fin-grp-edit-mes-inicio')?.value, 10) || 1;
+    const ano = parseInt(document.getElementById('fin-grp-edit-ano-inicio')?.value, 10) || new Date().getFullYear();
+    const mesesNomes = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
+
+    const el = document.getElementById('fin-grp-edit-preview');
+    if (el) {
+      el.textContent = `💡 ${n}x de ${App.formatMoney(valorTotal / n)} • 1ª parcela em ${String(dia).padStart(2, '0')} de ${mesesNomes[mes - 1]}/${ano} (status das parcelas já pagas será preservado).`;
+    }
+  },
+
+  saveEditGrupoParcelas() {
+    const groupKey = document.getElementById('fin-grp-edit-key')?.value;
+    const parcelas = this.findParcelasByGroupKey(groupKey);
+    if (parcelas.length === 0) return;
+
+    const descricao = document.getElementById('fin-grp-edit-descricao')?.value.trim();
+    const valorTotal = parseFloat(document.getElementById('fin-grp-edit-valor-total')?.value) || 0;
+    const dia = Math.min(28, Math.max(1, parseInt(document.getElementById('fin-grp-edit-dia')?.value, 10) || 15));
+    const mesInicio = parseInt(document.getElementById('fin-grp-edit-mes-inicio')?.value, 10) || 1;
+    const anoInicio = parseInt(document.getElementById('fin-grp-edit-ano-inicio')?.value, 10) || new Date().getFullYear();
+    const categoria = document.getElementById('fin-grp-edit-categoria')?.value || 'Outros';
+    const centro = document.getElementById('fin-grp-edit-centro')?.value || 'Geral';
+    const forma = document.getElementById('fin-grp-edit-forma')?.value || 'Cartão de Crédito';
+    const local = document.getElementById('fin-grp-edit-local')?.value.trim() || 'Cartão';
+
+    if (!descricao) {
+      App.toast('Informe a descrição da compra.', 'error');
+      return;
+    }
+    if (valorTotal <= 0) {
+      App.toast('O valor total deve ser maior que zero.', 'error');
+      return;
+    }
+
+    const n = parcelas.length;
+    const valorBase = Math.floor((valorTotal / n) * 100) / 100;
+    const difCentavos = Number((valorTotal - (valorBase * n)).toFixed(2));
+    const responsavel = StorageService.getActiveProprietario();
+
+    parcelas.forEach((p, idx) => {
+      const numParc = Number(p.parcela_atual) || (idx + 1);
+      const totalParc = Number(p.total_parcelas) || n;
+      const dataNova = this.formatIsoDate(new Date(anoInicio, (mesInicio - 1) + idx, dia));
+      const valorParc = idx === n - 1 ? Number((valorBase + difCentavos).toFixed(2)) : valorBase;
+
+      const hist = p.historico_alteracoes || [];
+      hist.push({
+        data: new Date().toISOString(),
+        responsavel,
+        acao: 'Edição da compra parcelada completa'
+      });
+
+      StorageService.update('financeiro_lancamentos', p.id, {
+        descricao: `${descricao} (${numParc}/${totalParc})`,
+        valor: valorParc,
+        data: dataNova,
+        categoria,
+        centro_custo: centro,
+        forma_pagamento: forma,
+        local_pagamento: local,
+        historico_alteracoes: hist
+      });
+    });
+
+    StorageService.logFinanceiroAuditoria({
+      acao: 'Edição (Compra Total)',
+      lancamento_id: groupKey,
+      descricao: `${descricao} (${n}x)`,
+      valor: valorTotal,
+      detalhes: `Todas as ${n} parcelas atualizadas para ${App.formatMoney(valorTotal / n)}/mês • ${categoria} • ${local}`
+    });
+
+    App.closeModal('modal-editar-grupo-parcelas');
+    this.render();
+    App.toast(`Compra "${descricao}" (${n} parcelas) atualizada com sucesso!`, 'success');
+  },
+
+  excluirGrupoParcelas(groupKey) {
+    const parcelas = this.findParcelasByGroupKey(groupKey);
+    if (parcelas.length === 0) return;
+
+    const baseDesc = (parcelas[0].descricao || 'Compra Parcelada').replace(/\s*\(\d+\/\d+\)\s*$/, '').trim();
+    const valorTotal = parcelas.reduce((s, p) => s + (Number(p.valor) || 0), 0);
+
+    if (!confirm(`Tem certeza que deseja excluir TODA a compra "${baseDesc}"?\n\nIsso removerá todas as ${parcelas.length} parcelas (Total: ${App.formatMoney(valorTotal)}) definitivamente.`)) {
+      return;
+    }
+
+    parcelas.forEach(p => {
+      StorageService.delete('financeiro_lancamentos', p.id);
+    });
+
+    this.expandedParcelaGroups.delete(groupKey);
+
+    StorageService.logFinanceiroAuditoria({
+      acao: 'Exclusão (Compra Total)',
+      lancamento_id: groupKey,
+      descricao: `${baseDesc} (${parcelas.length}x)`,
+      valor: valorTotal,
+      detalhes: `Excluídas todas as ${parcelas.length} parcelas da compra`
+    });
+
+    this.render();
+    App.toast(`Compra "${baseDesc}" (${parcelas.length} parcelas) excluída completamente.`, 'info');
+  },
+
   renderLancamentoRowHtml(item, hojeIso, isChildParcela = false) {
     const isReceita = item.tipo === 'receita';
     const isEstornado = !!item.estornado || item.status === 'estornado';
@@ -843,9 +1014,17 @@ const FinanceiroModule = {
               - ${App.formatMoney(totalGrupo)}
             </td>
             <td style="text-align: right; white-space: nowrap;" onclick="event.stopPropagation()">
-              <button type="button" class="btn btn-secondary btn-sm" onclick="FinanceiroModule.toggleParcelaGroup('${safeKey}')" style="padding: 4px 10px; font-size: 0.74rem; border-color: rgba(56, 189, 248, 0.45); color: #38bdf8;">
-                ${isExpanded ? '▼ Ocultar' : `▶ Parcelas (${g.parcelas.length})`}
-              </button>
+              <div style="display: inline-flex; align-items: center; gap: 5px;">
+                <button type="button" class="btn btn-secondary btn-sm" onclick="FinanceiroModule.toggleParcelaGroup('${safeKey}')" style="padding: 4px 10px; font-size: 0.74rem; border-color: rgba(56, 189, 248, 0.45); color: #38bdf8;">
+                  ${isExpanded ? '▼ Ocultar' : `▶ Parcelas (${g.parcelas.length})`}
+                </button>
+                <button type="button" class="btn btn-secondary btn-icon" onclick="FinanceiroModule.openEditGrupoParcelas('${safeKey}')" title="Editar compra total (todas as parcelas)">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                </button>
+                <button type="button" class="btn btn-secondary btn-icon" onclick="FinanceiroModule.excluirGrupoParcelas('${safeKey}')" title="Excluir compra total (todas as parcelas)" style="color: #f87171;">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                </button>
+              </div>
             </td>
           </tr>
         `;

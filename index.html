@@ -48,7 +48,7 @@
   <meta http-equiv="Expires" content="0">
 
   <!-- Estilos Customizados -->
-  <link rel="stylesheet" href="css/styles.css?v=80">
+  <link rel="stylesheet" href="css/styles.css?v=81">
 </head>
 
 <body>
@@ -2921,6 +2921,101 @@
     </div>
   </div>
 
+  <!-- MODAL: EDITAR COMPRA PARCELADA COMPLETA (TODAS AS PARCELAS) -->
+  <div class="modal-overlay" id="modal-editar-grupo-parcelas">
+    <div class="modal-container" style="max-width: 580px;">
+      <div class="modal-header">
+        <h3 style="color: #ffffff; display: flex; align-items: center; gap: 8px;">
+          <span>✏️</span> Editar Compra Parcelada (Total)
+        </h3>
+        <button class="btn-icon"
+          style="background: transparent; border: none; color: var(--text-muted); cursor: pointer;"
+          onclick="App.closeModal('modal-editar-grupo-parcelas')">✕</button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="fin-grp-edit-key">
+
+        <div class="form-group">
+          <label>Descrição da Compra *</label>
+          <input type="text" id="fin-grp-edit-descricao" class="form-control" placeholder="Ex: Impressora 3D">
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>Valor Total da Compra (R$) *</label>
+            <input type="number" step="0.01" min="0" id="fin-grp-edit-valor-total" class="form-control"
+              oninput="FinanceiroModule.updateEditGrupoPreview()" placeholder="0,00">
+          </div>
+          <div class="form-group">
+            <label>Dia de Vencimento Mensal</label>
+            <input type="number" min="1" max="28" id="fin-grp-edit-dia" class="form-control"
+              oninput="FinanceiroModule.updateEditGrupoPreview()" value="15">
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>Mês de Início (1ª Parcela)</label>
+            <select id="fin-grp-edit-mes-inicio" class="form-control" onchange="FinanceiroModule.updateEditGrupoPreview()">
+              <option value="1">Janeiro</option>
+              <option value="2">Fevereiro</option>
+              <option value="3">Março</option>
+              <option value="4">Abril</option>
+              <option value="5">Maio</option>
+              <option value="6">Junho</option>
+              <option value="7">Julho</option>
+              <option value="8">Agosto</option>
+              <option value="9">Setembro</option>
+              <option value="10">Outubro</option>
+              <option value="11">Novembro</option>
+              <option value="12">Dezembro</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Ano de Início</label>
+            <select id="fin-grp-edit-ano-inicio" class="form-control" onchange="FinanceiroModule.updateEditGrupoPreview()">
+              <option value="2025">2025</option>
+              <option value="2026">2026</option>
+              <option value="2027">2027</option>
+              <option value="2028">2028</option>
+              <option value="2029">2029</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>Categoria</label>
+            <select id="fin-grp-edit-categoria" class="form-control"></select>
+          </div>
+          <div class="form-group">
+            <label>Centro de Custo</label>
+            <select id="fin-grp-edit-centro" class="form-control"></select>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>Forma de Pagamento</label>
+            <select id="fin-grp-edit-forma" class="form-control"></select>
+          </div>
+          <div class="form-group">
+            <label>Local / Cartão</label>
+            <input type="text" id="fin-grp-edit-local" class="form-control" placeholder="Ex: Nubank, Mastercard...">
+          </div>
+        </div>
+
+        <div id="fin-grp-edit-preview" style="background: rgba(56, 189, 248, 0.08); border: 1px solid rgba(56, 189, 248, 0.35); border-radius: 8px; padding: 10px 12px; font-size: 0.8rem; color: #38bdf8; font-weight: 600;">
+          —
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="App.closeModal('modal-editar-grupo-parcelas')">Cancelar</button>
+        <button type="button" class="btn btn-primary" onclick="FinanceiroModule.saveEditGrupoParcelas()">💾 Salvar Alterações na Compra</button>
+      </div>
+    </div>
+  </div>
+
   <!-- MODAL: EDITAR PREÇO DE VENDA (HISTÓRICO 3D) -->
   <div class="modal-overlay" id="modal-calc-editar-preco">
     <div class="modal-container" style="max-width: 480px;">
@@ -2991,20 +3086,20 @@
   <!-- CONTAINER DE TOASTS -->
   <div class="toast-container" id="toast-container"></div>
 
-  <!-- SCRIPTS DO SISTEMA (com cache-busting v80) -->
-  <script src="js/notifications.js?v=80"></script>
-  <script src="js/storage.js?v=80"></script>
-  <script src="js/auth.js?v=80"></script>
-  <script src="js/crm.js?v=80"></script>
-  <script src="js/encomendas.js?v=80"></script>
-  <script src="js/estoque.js?v=80"></script>
-  <script src="js/financeiro.js?v=80"></script>
-  <script src="js/propostas.js?v=80"></script>
-  <script src="js/calculadora.js?v=80"></script>
-  <script src="js/calculadora-laser.js?v=80"></script>
-  <script src="js/calendario.js?v=80"></script>
-  <script src="js/configuracoes.js?v=80"></script>
-  <script src="js/app.js?v=80"></script>
+  <!-- SCRIPTS DO SISTEMA (com cache-busting v81) -->
+  <script src="js/notifications.js?v=81"></script>
+  <script src="js/storage.js?v=81"></script>
+  <script src="js/auth.js?v=81"></script>
+  <script src="js/crm.js?v=81"></script>
+  <script src="js/encomendas.js?v=81"></script>
+  <script src="js/estoque.js?v=81"></script>
+  <script src="js/financeiro.js?v=81"></script>
+  <script src="js/propostas.js?v=81"></script>
+  <script src="js/calculadora.js?v=81"></script>
+  <script src="js/calculadora-laser.js?v=81"></script>
+  <script src="js/calendario.js?v=81"></script>
+  <script src="js/configuracoes.js?v=81"></script>
+  <script src="js/app.js?v=81"></script>
 </body>
 
 </html>
