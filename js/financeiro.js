@@ -31,12 +31,13 @@ const FinanceiroModule = {
   currentEstornoId: null,
 
   init() {
-    // Inicializa mês padrão para o mês atual
+    // Inicializa exibindo Todo o Histórico para não ocultar encomendas com entrega em outros meses
     const hoje = new Date();
-    const mm = (hoje.getMonth() + 1).toString().padStart(2, '0');
-    this.filtroMesAno = `${hoje.getFullYear()}-${mm}`;
+    this.filtroMesAno = 'TODOS';
     this.chartAno = hoje.getFullYear();
     this.chartMes = hoje.getMonth() + 1;
+    const selMes = document.getElementById('fin-filtro-mesano');
+    if (selMes) selMes.value = 'TODOS';
 
     this.render();
 
@@ -125,6 +126,7 @@ const FinanceiroModule = {
         origem: 'encomenda',
         encomenda_id: enc.id,
         encomenda_numero: numPedido,
+        encomenda_status: enc.status || 'Fila',
         parcela_atual: 1,
         total_parcelas: 1
       };
@@ -599,7 +601,8 @@ const FinanceiroModule = {
       const isEncomenda = item.origem === 'encomenda' && item.encomenda_id;
       let metaTags = '';
       if (isEncomenda) {
-        metaTags += `<span style="font-size: 0.68rem; font-weight: 700; background: rgba(16, 185, 129, 0.16); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.4); padding: 1px 6px; border-radius: 4px; margin-left: 6px;">🛍️ Encomenda</span>`;
+        const stLabel = item.encomenda_status ? ` • ${App.escapeHtml(item.encomenda_status)}` : '';
+        metaTags += `<span style="font-size: 0.68rem; font-weight: 700; background: rgba(16, 185, 129, 0.16); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.4); padding: 1px 6px; border-radius: 4px; margin-left: 6px;">🛍️ Encomenda${stLabel}</span>`;
       }
       if (item.total_parcelas && item.total_parcelas > 1) {
         metaTags += `<span style="font-size: 0.68rem; font-weight: 700; background: rgba(56, 189, 248, 0.18); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.4); padding: 1px 6px; border-radius: 4px; margin-left: 6px;">Parcela ${item.parcela_atual}/${item.total_parcelas}</span>`;

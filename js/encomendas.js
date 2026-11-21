@@ -583,6 +583,7 @@ const EncomendasModule = {
     this.render();
     this.renderFinalizados();
     if (typeof EstoqueModule !== 'undefined') EstoqueModule.render();
+    if (typeof FinanceiroModule !== 'undefined') FinanceiroModule.render();
     App.renderDashboard();
   },
 
