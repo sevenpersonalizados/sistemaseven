@@ -63,7 +63,8 @@ const INITIAL_DATA = {
       pedido_dias_entrega: 5,
       pedido_forma_pagto: 'Pix',
       pedido_obs: ''
-    }
+    },
+    sequencia_pedidos: 0
   },
   crm_cards: [],
   estoque: [],
@@ -312,7 +313,7 @@ const StorageService = {
         let body = `Alteração em ${table}`;
         if (table === 'encomendas') {
           title = '⚙️ Encomenda Atualizada!';
-          body = `Pedido #${newRecord.id.substring(newRecord.id.length - 5)} (${newRecord.cliente_nome}): ${newRecord.status} • ${newRecord.pagamento_status}`;
+          body = `Pedido ${this.formatOrderNumber(newRecord)} (${newRecord.cliente_nome}): ${newRecord.status} • ${newRecord.pagamento_status}`;
         } else if (table === 'crm_cards') {
           title = '💬 Lead Atualizado no CRM!';
           body = `${newRecord.lead_name} avançou para etapa: ${newRecord.stage}!`;
@@ -537,10 +538,65 @@ const StorageService = {
     window.dispatchEvent(new CustomEvent('seven_data_updated', { detail: { table } }));
   },
 
+  /**
+   * Formata o número do pedido no padrão #AASS (ex: #2601).
+   * Caso o registro antigo ainda não possua numero_pedido, usa fallback do ID.
+   */
+  formatOrderNumber(encOrId) {
+    if (!encOrId) return '#----';
+    if (typeof encOrId === 'object') {
+      if (encOrId.numero_pedido) return `#${String(encOrId.numero_pedido).replace(/^#/, '')}`;
+      if (encOrId.id) return `#${String(encOrId.id).substring(String(encOrId.id).length - 5)}`;
+      return '#----';
+    }
+    const enc = (this.get('encomendas') || []).find(e => e.id === encOrId);
+    if (enc && enc.numero_pedido) return `#${String(enc.numero_pedido).replace(/^#/, '')}`;
+    return `#${String(encOrId).substring(String(encOrId).length - 5)}`;
+  },
+
+  /**
+   * Gera o próximo número sequencial de pedido no formato AASS (ex: 2601, 2602... 2699, 26100).
+   * Quando mudar o ano, muda apenas os 2 dígitos iniciais (AA), mantendo a sequência numérica contínua!
+   */
+  getProximoNumeroPedido() {
+    const cfg = this.getConfig() || {};
+    const encomendas = this.get('encomendas') || [];
+
+    let maxSeq = Number(cfg.sequencia_pedidos) || 0;
+    encomendas.forEach(e => {
+      const numStr = String(e.numero_pedido || '').replace(/\D/g, '');
+      if (numStr.length >= 3) {
+        const seqPart = parseInt(numStr.substring(2), 10);
+        if (Number.isFinite(seqPart) && seqPart > maxSeq) {
+          maxSeq = seqPart;
+        }
+      }
+    });
+
+    if (encomendas.length > maxSeq) {
+      maxSeq = encomendas.length;
+    }
+
+    const nextSeq = maxSeq + 1;
+    const ano2 = String(new Date().getFullYear()).slice(-2);
+    const seqStr = String(nextSeq).padStart(2, '0');
+    const numeroPedido = `${ano2}${seqStr}`;
+
+    // Persiste a nova sequência no config (local + Supabase) para não repetir mesmo se um pedido for excluído
+    this.saveConfig({ sequencia_pedidos: nextSeq });
+
+    return numeroPedido;
+  },
+
   insert(table, item) {
     const list = this.get(table);
+    const extraFields = {};
+    if (table === 'encomendas' && !item.numero_pedido) {
+      extraFields.numero_pedido = this.getProximoNumeroPedido();
+    }
     const newItem = {
       ...item,
+      ...extraFields,
       id: item.id || `${table.substring(0, 3)}-${Date.now()}`,
       created_at: item.created_at || new Date().toISOString(),
       updated_at: new Date().toISOString()

@@ -180,6 +180,7 @@ const EncomendasModule = {
           const itensStr = (e.itens || []).map(i => `${i.produto_nome || ''} ${i.cor || ''} ${i.personalizacao || ''}`).join(' ').toLowerCase();
           return (e.cliente_nome || '').toLowerCase().includes(termoBusca) ||
             (e.telefone || '').toLowerCase().includes(termoBusca) ||
+            (e.numero_pedido || '').toLowerCase().includes(termoBusca.replace(/^#/, '')) ||
             (e.id || '').toLowerCase().includes(termoBusca) ||
             (e.observacoes || '').toLowerCase().includes(termoBusca) ||
             itensStr.includes(termoBusca);
@@ -320,18 +321,19 @@ const EncomendasModule = {
 
     const borderColor = isLate ? 'rgba(239, 68, 68, 0.6)' : (grupo?.borderColor || 'rgba(0, 168, 243, 0.4)');
     const cardShadow = isLate ? '0 4px 18px rgba(239, 68, 68, 0.14)' : '0 4px 16px rgba(0, 0, 0, 0.25)';
+    const numPedido = StorageService.formatOrderNumber(enc);
 
     return `
       <div class="panel-box dash-row-clickable" data-enc-id="${enc.id}"
            onclick="EncomendasModule.openEditModal('${enc.id}')"
-           title="Clique para abrir detalhes completos da encomenda #${enc.id.substring(enc.id.length - 5)}"
+           title="Clique para abrir detalhes completos da encomenda ${numPedido}"
            style="margin-bottom: 0; display: flex; flex-direction: column; justify-content: space-between; border-color: ${borderColor}; box-shadow: ${cardShadow}; background: rgba(15, 23, 42, 0.65); padding: 16px;">
         <div>
-          <!-- Topo: #ID, Categoria e Prazo de Entrega -->
+          <!-- Topo: #Número do Pedido, Categoria e Prazo de Entrega -->
           <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; gap: 8px; flex-wrap: wrap;">
             <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
               <span style="font-size: 0.76rem; font-weight: 800; color: #ffffff; background: rgba(255,255,255,0.08); padding: 2px 8px; border-radius: 6px;">
-                #${enc.id.substring(enc.id.length - 5)}
+                ${numPedido}
               </span>
               ${this.getCategoriaBadge(enc.categoria)}
             </div>
@@ -441,12 +443,13 @@ const EncomendasModule = {
 
     const coresList = [...new Set((enc.itens || []).filter(i => i.cor).map(i => i.cor))];
     const hasItemObs = (enc.itens || []).some(i => i.observacao && i.observacao.trim());
+    const numPedido = StorageService.formatOrderNumber(enc);
 
     return `
-      <tr class="dash-row-clickable" data-enc-id="${enc.id}" onclick="EncomendasModule.openEditModal('${enc.id}')" title="Clique para abrir detalhes da encomenda #${enc.id.substring(enc.id.length - 5)}">
+      <tr class="dash-row-clickable" data-enc-id="${enc.id}" onclick="EncomendasModule.openEditModal('${enc.id}')" title="Clique para abrir detalhes da encomenda ${numPedido}">
         <td>
           <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 4px; flex-wrap: wrap;">
-            <strong>#${enc.id.substring(enc.id.length - 5)}</strong>
+            <strong>${numPedido}</strong>
             ${this.getCategoriaBadge(enc.categoria)}
           </div>
           <div style="font-size: 0.76rem; color: var(--text-muted);">${App.formatDate(enc.data_pedido)}</div>
@@ -574,7 +577,7 @@ const EncomendasModule = {
     if (newStatus === 'Entregue' || newStatus === 'Cancelada' || (newStatus === 'Pronto' && enc.pagamento_status === 'Pago')) {
       App.toast(`Status alterado para "${newStatus}"! Encomenda movida para Finalizados. 🎉`, 'success');
     } else {
-      App.toast(`Status da encomenda #${id.substring(id.length - 5)} alterado para "${newStatus}".`, 'info');
+      App.toast(`Status da encomenda ${StorageService.formatOrderNumber(enc)} alterado para "${newStatus}".`, 'info');
     }
     
     this.render();
@@ -599,7 +602,7 @@ const EncomendasModule = {
     if (enc.status === 'Entregue' || enc.status === 'Cancelada' || (enc.status === 'Pronto' && newPagto === 'Pago')) {
       App.toast(`Pagamento atualizado! Encomenda no histórico de Finalizados. 🎉`, 'success');
     } else {
-      App.toast(`Financeiro da encomenda #${id.substring(id.length - 5)} alterado para "${newPagto}".`, 'info');
+      App.toast(`Financeiro da encomenda ${StorageService.formatOrderNumber(enc)} alterado para "${newPagto}".`, 'info');
     }
     
     this.render();
@@ -685,7 +688,7 @@ const EncomendasModule = {
     const enc = StorageService.get('encomendas').find(e => e.id === id);
     if (!enc) return;
 
-    document.getElementById('enc-modal-title').textContent = `Editar Encomenda #${enc.id.substring(enc.id.length - 5)}`;
+    document.getElementById('enc-modal-title').textContent = `Editar Encomenda ${StorageService.formatOrderNumber(enc)}`;
     document.getElementById('enc-form-id').value = enc.id;
     document.getElementById('enc-form-cliente').value = enc.cliente_nome || '';
     document.getElementById('enc-form-telefone').value = enc.telefone || '';
@@ -1296,11 +1299,13 @@ const EncomendasModule = {
       const coresList = [...new Set((enc.itens || []).filter(i => i.cor).map(i => i.cor))];
       const hasItemObs = (enc.itens || []).some(i => i.observacao && i.observacao.trim());
 
+      const numPedido = StorageService.formatOrderNumber(enc);
+
       return `
-        <tr class="dash-row-clickable" data-enc-id="${enc.id}" onclick="EncomendasModule.openEditModal('${enc.id}')" title="Clique para abrir detalhes da encomenda #${enc.id.substring(enc.id.length - 5)}">
+        <tr class="dash-row-clickable" data-enc-id="${enc.id}" onclick="EncomendasModule.openEditModal('${enc.id}')" title="Clique para abrir detalhes da encomenda ${numPedido}">
           <td>
             <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 4px; flex-wrap: wrap;">
-              <strong>#${enc.id.substring(enc.id.length - 5)}</strong>
+              <strong>${numPedido}</strong>
               ${this.getCategoriaBadge(enc.categoria)}
             </div>
             <div style="font-size: 0.76rem; color: var(--text-muted);">${App.formatDate(enc.data_pedido)}</div>

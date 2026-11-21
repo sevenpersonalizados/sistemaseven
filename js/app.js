@@ -266,9 +266,9 @@ const App = {
         containerEntregas.innerHTML = `<div style="text-align: center; color: var(--text-muted); padding: 24px;">Nenhuma entrega pendente no momento! 🎉</div>`;
       } else {
         containerEntregas.innerHTML = proximas.map(e => `
-          <div class="dash-row-clickable" onclick="EncomendasModule.openEditModal('${e.id}')" title="Clique para abrir detalhes da encomenda #${e.id.substring(e.id.length - 5)}" style="display: flex; justify-content: space-between; align-items: center; padding: 12px; border-bottom: 1px solid var(--border); border-radius: 6px;">
+          <div class="dash-row-clickable" onclick="EncomendasModule.openEditModal('${e.id}')" title="Clique para abrir detalhes da encomenda ${StorageService.formatOrderNumber(e)}" style="display: flex; justify-content: space-between; align-items: center; padding: 12px; border-bottom: 1px solid var(--border); border-radius: 6px;">
             <div style="flex: 1; min-width: 0; padding-right: 12px;">
-              <div style="font-weight: 600; color: var(--text-primary);">${this.escapeHtml(e.cliente_nome)} <span style="font-size: 0.76rem; color: var(--text-muted); font-weight: normal;">#${e.id.substring(e.id.length - 5)}</span></div>
+              <div style="font-weight: 600; color: var(--text-primary);">${this.escapeHtml(e.cliente_nome)} <span style="font-size: 0.76rem; color: var(--text-muted); font-weight: normal;">${StorageService.formatOrderNumber(e)}</span></div>
               <div style="font-size: 0.78rem; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${(e.itens || []).map(i => i.produto_nome).join(', ') || 'Pedido Personalizado'}</div>
             </div>
             <div style="display: flex; align-items: center; gap: 8px; flex-shrink: 0;" onclick="event.stopPropagation()">
@@ -349,10 +349,10 @@ const App = {
                   const zapLink = foneLimpo ? `https://wa.me/55${foneLimpo}?text=${zapMsg}` : null;
 
                   return `
-                    <tr class="dash-row-clickable" onclick="EncomendasModule.openEditModal('${e.id}')" title="Clique para abrir detalhes da encomenda #${e.id.substring(e.id.length - 5)}">
+                    <tr class="dash-row-clickable" onclick="EncomendasModule.openEditModal('${e.id}')" title="Clique para abrir detalhes da encomenda ${StorageService.formatOrderNumber(e)}">
                       <td>
                         <div style="font-weight: 600; color: var(--text-primary);">${this.escapeHtml(e.cliente_nome)}</div>
-                        <div style="font-size: 0.78rem; color: var(--text-muted);">#${e.id.substring(e.id.length - 5)} • ${this.escapeHtml(e.telefone || 'Sem fone')}</div>
+                        <div style="font-size: 0.78rem; color: var(--text-muted);">${StorageService.formatOrderNumber(e)} • ${this.escapeHtml(e.telefone || 'Sem fone')}</div>
                       </td>
                       <td>
                         <div style="font-size: 0.84rem; max-width: 250px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${this.escapeHtml(itensStr)}">

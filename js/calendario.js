@@ -161,7 +161,7 @@ const CalendarModule = {
         badgeHtml = `
           <div class="cal-mini-pill status-${statusSlug}" 
                onclick="event.stopPropagation(); CalendarModule.openEncomenda('${e.id}')"
-               title="Ir para a encomenda #${e.id.substring(e.id.length - 5)} - ${App.escapeHtml(e.cliente_nome)}">
+               title="Ir para a encomenda ${StorageService.formatOrderNumber(e)} - ${App.escapeHtml(e.cliente_nome)}">
             <span>${icon}</span>
             <span class="cal-mini-text">${App.escapeHtml(clienteShort)}</span>
           </div>
@@ -179,7 +179,7 @@ const CalendarModule = {
     }
 
     const tooltip = temOrdens 
-      ? `${ordensNoDia.length} encomenda(s) para entrega em ${App.formatDate(dateStr)}:\n` + ordensNoDia.map(o => `• #${o.id.substring(o.id.length - 5)} ${o.cliente_nome} (${o.status})`).join('\n') + '\nClique para ver detalhes'
+      ? `${ordensNoDia.length} encomenda(s) para entrega em ${App.formatDate(dateStr)}:\n` + ordensNoDia.map(o => `• ${StorageService.formatOrderNumber(o)} ${o.cliente_nome} (${o.status})`).join('\n') + '\nClique para ver detalhes'
       : App.formatDate(dateStr);
 
     return `
@@ -294,11 +294,11 @@ const CalendarModule = {
           return `
             <div class="dash-row-clickable" 
                  onclick="CalendarModule.openEncomenda('${e.id}')"
-                 title="Ir para a encomenda #${e.id.substring(e.id.length - 5)}"
+                 title="Ir para a encomenda ${StorageService.formatOrderNumber(e)}"
                  style="background: rgba(255, 255, 255, 0.04); border: 1px solid ${isLate ? 'rgba(239, 68, 68, 0.4)' : 'rgba(255, 255, 255, 0.08)'}; border-radius: 6px; padding: 8px 10px; display: flex; justify-content: space-between; align-items: center; gap: 8px;">
               <div style="flex: 1; min-width: 0;">
                 <div style="font-weight: 700; color: #ffffff; font-size: 0.82rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
-                  ${icon} ${App.escapeHtml(e.cliente_nome)} <span style="font-size: 0.72rem; color: var(--text-muted); font-weight: normal;">#${e.id.substring(e.id.length - 5)}</span>
+                  ${icon} ${App.escapeHtml(e.cliente_nome)} <span style="font-size: 0.72rem; color: var(--text-muted); font-weight: normal;">${StorageService.formatOrderNumber(e)}</span>
                 </div>
                 <div style="font-size: 0.74rem; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
                   ${App.escapeHtml(produtos)}
