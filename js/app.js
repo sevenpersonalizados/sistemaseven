@@ -122,6 +122,7 @@ const App = {
       EncomendasModule.render();
     } else if (viewName === 'financeiro') {
       if (typeof FinanceiroModule !== 'undefined') {
+        FinanceiroModule.limparFiltros();
         FinanceiroModule.render();
       }
     } else if (viewName === 'tabela-preco') {

@@ -903,6 +903,8 @@ const FinanceiroModule = {
     const countEl = document.getElementById('fin-table-count');
     if (!tbodyRec || !tbodyDesp) return;
 
+    this.updateFiltrosVisualState();
+
     let items = this.getLancamentos();
     const hojeIso = this.formatIsoDate(new Date());
 
@@ -1184,6 +1186,56 @@ const FinanceiroModule = {
     const atual = this.filtroAno || 'TODOS';
     selAno.innerHTML = `<option value="TODOS">Ano: Todos</option>` +
       anos.map(a => `<option value="${a}" ${a === atual ? 'selected' : ''}>${a}</option>`).join('');
+  },
+
+  updateFiltrosVisualState() {
+    const controls = [
+      { id: 'fin-search-input', active: !!this.searchQuery },
+      { id: 'fin-filtro-tipo', active: !!this.filtroTipo },
+      { id: 'fin-filtro-status', active: !!this.filtroStatus },
+      { id: 'fin-filtro-centro', active: !!this.filtroCentro },
+      { id: 'fin-filtro-ano', active: !!(this.filtroAno && this.filtroAno !== 'TODOS') },
+      { id: 'fin-filtro-mes', active: !!(this.filtroMes && this.filtroMes !== 'TODOS') }
+    ];
+
+    let activeCount = 0;
+    controls.forEach(c => {
+      const el = document.getElementById(c.id);
+      if (!el) return;
+      if (c.active) {
+        activeCount++;
+        el.style.borderColor = '#38bdf8';
+        el.style.backgroundColor = 'rgba(56, 189, 248, 0.16)';
+        el.style.color = '#ffffff';
+        el.style.boxShadow = '0 0 0 1px rgba(56, 189, 248, 0.5), 0 0 12px rgba(56, 189, 248, 0.22)';
+        el.style.fontWeight = '700';
+      } else {
+        el.style.borderColor = '';
+        el.style.backgroundColor = '';
+        el.style.color = '';
+        el.style.boxShadow = '';
+        el.style.fontWeight = '';
+      }
+    });
+
+    if (this.activeTab && this.activeTab !== 'todos') activeCount++;
+
+    const btnLimpar = document.getElementById('fin-btn-limpar-filtros');
+    if (btnLimpar) {
+      if (activeCount > 0) {
+        btnLimpar.textContent = `✕ Limpar (${activeCount})`;
+        btnLimpar.style.borderColor = 'rgba(245, 158, 11, 0.7)';
+        btnLimpar.style.backgroundColor = 'rgba(245, 158, 11, 0.18)';
+        btnLimpar.style.color = '#fbbf24';
+        btnLimpar.style.fontWeight = '700';
+      } else {
+        btnLimpar.textContent = 'Limpar';
+        btnLimpar.style.borderColor = '';
+        btnLimpar.style.backgroundColor = '';
+        btnLimpar.style.color = '';
+        btnLimpar.style.fontWeight = '';
+      }
+    }
   },
 
   onFiltroAnoChange(val) {
