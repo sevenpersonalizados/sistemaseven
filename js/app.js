@@ -101,7 +101,7 @@ const App = {
       encomendas: { title: 'Encomendas & Produção', sub: 'Controle de prazos, etapas e personalizações' },
       finalizados: { title: 'Histórico de Finalizados', sub: 'Encomendas entregues, canceladas e concluídas' },
       estoque: { title: 'Estoque', sub: 'Matéria-prima, filamentos 3D e outros materiais' },
-      financeiro: { title: 'Financeiro & Fluxo de Caixa', sub: 'Entradas, despesas operacionais e balanço' },
+      financeiro: { title: 'Gestão Financeira', sub: 'Entradas, despesas operacionais e balanço' },
       'tabela-preco': { title: 'Tabela de Preço', sub: 'Histórico de Impressões & Produção 3D com edição de preço de venda' },
       calculadora: { title: 'Calculadora de Filamentos', sub: 'Custos de produção 3D: filamento, energia elétrica e desgaste operacional' },
       'calculadora-laser': { title: 'Calculadora Laser', sub: 'Corte & Gravação: R$ 30,00/h de máquina, chapas de MDF por cores e acrílicos' },
