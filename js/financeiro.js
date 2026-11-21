@@ -1583,6 +1583,12 @@ const FinanceiroModule = {
       }
     }
 
+    // Oculta o campo Centro de Custo quando for Despesa (Categoria ocupa largura total)
+    const grpCentro = document.getElementById('fin-group-centro-custo');
+    const rowCatCentro = document.getElementById('fin-row-cat-centro');
+    if (grpCentro) grpCentro.style.display = tipo === 'despesa' ? 'none' : '';
+    if (rowCatCentro) rowCatCentro.style.gridTemplateColumns = tipo === 'despesa' ? '1fr' : '';
+
     // Exibe o bloco de Compra no Cartão de Crédito somente em Despesas (e novos lançamentos)
     const ccWrapper = document.getElementById('fin-cc-wrapper');
     if (ccWrapper) {
@@ -1728,7 +1734,7 @@ const FinanceiroModule = {
     const descricao = document.getElementById('fin-form-descricao').value.trim();
     const valor = parseFloat(document.getElementById('fin-form-valor').value) || 0;
     const categoria = document.getElementById('fin-form-categoria').value;
-    const centro = document.getElementById('fin-form-centro').value;
+    const centro = tipo === 'despesa' ? 'Geral' : (document.getElementById('fin-form-centro')?.value || 'Geral');
     const data = document.getElementById('fin-form-data').value;
     const forma = document.getElementById('fin-form-forma').value;
     const local = document.getElementById('fin-form-local').value;
