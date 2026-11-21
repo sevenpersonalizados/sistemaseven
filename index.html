@@ -48,7 +48,7 @@
   <meta http-equiv="Expires" content="0">
 
   <!-- Estilos Customizados -->
-  <link rel="stylesheet" href="css/styles.css?v=71">
+  <link rel="stylesheet" href="css/styles.css?v=72">
 </head>
 
 <body>
@@ -270,7 +270,7 @@
 
         <!-- 1. VIEW DASHBOARD -->
         <section class="view-section active" id="view-dashboard">
-          <div class="kpis-grid">
+          <div class="kpis-grid" style="grid-template-columns: minmax(260px, 340px);">
             <div class="kpi-card dash-row-clickable" onclick="App.navigate('encomendas')"
               title="Clique para ver todas as encomendas em aberto">
               <div class="kpi-info">
@@ -282,47 +282,6 @@
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" />
                   <line x1="3" y1="6" x2="21" y2="6" />
-                </svg>
-              </div>
-            </div>
-
-            <div class="kpi-card">
-              <div class="kpi-info">
-                <div class="kpi-label">Receita Realizada (Mês)</div>
-                <div class="kpi-value" id="dash-kpi-receita">R$ 0,00</div>
-                <div class="kpi-sub">Valores recebidos</div>
-              </div>
-              <div class="kpi-icon-box green">
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <line x1="12" y1="1" x2="12" y2="23" />
-                  <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
-                </svg>
-              </div>
-            </div>
-
-            <div class="kpi-card">
-              <div class="kpi-info">
-                <div class="kpi-label">Despesas Operacionais</div>
-                <div class="kpi-value" id="dash-kpi-despesa">R$ 0,00</div>
-                <div class="kpi-sub">Matéria-prima e custos</div>
-              </div>
-              <div class="kpi-icon-box amber">
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
-                </svg>
-              </div>
-            </div>
-
-            <div class="kpi-card">
-              <div class="kpi-info">
-                <div class="kpi-label">Saldo Líquido Estimado</div>
-                <div class="kpi-value" id="dash-kpi-saldo">R$ 0,00</div>
-                <div class="kpi-sub">Balanço do mês</div>
-              </div>
-              <div class="kpi-icon-box blue">
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <polyline points="23 6 13.5 15.5 8.5 10.5 1 18" />
-                  <polyline points="17 6 23 6 23 12" />
                 </svg>
               </div>
             </div>
@@ -2878,20 +2837,20 @@
   <!-- CONTAINER DE TOASTS -->
   <div class="toast-container" id="toast-container"></div>
 
-  <!-- SCRIPTS DO SISTEMA (com cache-busting v71) -->
-  <script src="js/notifications.js?v=71"></script>
-  <script src="js/storage.js?v=71"></script>
-  <script src="js/auth.js?v=71"></script>
-  <script src="js/crm.js?v=71"></script>
-  <script src="js/encomendas.js?v=71"></script>
-  <script src="js/estoque.js?v=71"></script>
-  <script src="js/financeiro.js?v=71"></script>
-  <script src="js/propostas.js?v=71"></script>
-  <script src="js/calculadora.js?v=71"></script>
-  <script src="js/calculadora-laser.js?v=71"></script>
-  <script src="js/calendario.js?v=71"></script>
-  <script src="js/configuracoes.js?v=71"></script>
-  <script src="js/app.js?v=71"></script>
+  <!-- SCRIPTS DO SISTEMA (com cache-busting v72) -->
+  <script src="js/notifications.js?v=72"></script>
+  <script src="js/storage.js?v=72"></script>
+  <script src="js/auth.js?v=72"></script>
+  <script src="js/crm.js?v=72"></script>
+  <script src="js/encomendas.js?v=72"></script>
+  <script src="js/estoque.js?v=72"></script>
+  <script src="js/financeiro.js?v=72"></script>
+  <script src="js/propostas.js?v=72"></script>
+  <script src="js/calculadora.js?v=72"></script>
+  <script src="js/calculadora-laser.js?v=72"></script>
+  <script src="js/calendario.js?v=72"></script>
+  <script src="js/configuracoes.js?v=72"></script>
+  <script src="js/app.js?v=72"></script>
 </body>
 
 </html>
