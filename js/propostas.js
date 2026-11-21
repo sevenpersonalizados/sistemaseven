@@ -400,7 +400,10 @@ const PropostasModule = {
     if (!h) return;
 
     const precoUnit = Number(h.preco_venda_unitario) || (Number(h.preco_venda_total) / (Number(h.quantidade_pecas) || 1)) || Number(h.custo_unitario) || 0;
+    const gramasUnit = (Number(h.gramas) || 0) / Math.max(1, Number(h.quantidade_pecas) || 1);
     item.calc_3d_historico_id = h.id;
+    item.calc_3d_filamento_id = h.filamento_id || '';
+    item.gramas_unitario = Number(gramasUnit.toFixed(2));
     item.produto_nome = h.produto_nome || item.produto_nome;
     item.preco_unitario = Number(precoUnit.toFixed(2));
     item.subtotal = (Number(item.quantidade) || 1) * item.preco_unitario;
@@ -684,18 +687,40 @@ const PropostasModule = {
 
     App.closeModal('modal-proposta');
 
+    // Se estava editando um orçamento já salvo, estorna eventual baixa anterior de filamento para recalcular com precisão
+    if (idExistente && typeof EncomendasModule !== 'undefined' && EncomendasModule.estornarFilamentosItens) {
+      const propAntiga = (StorageService.get('propostas') || []).find(pr => pr.id === idExistente);
+      if (propAntiga && propAntiga.itens) {
+        EncomendasModule.estornarFilamentosItens(propAntiga.itens);
+      }
+      payload.itens.forEach(it => {
+        it.filamento_deduzido_id = null;
+        it.filamento_deduzido_g = 0;
+      });
+    }
+
     if (aprovarDireto === true) {
       // Vai direto para a Fila de Espera em Encomendas SEM inserir em "propostas"
       // (Se estava editando um orçamento já salvo, remove o antigo de "propostas")
       this.converterParaEncomenda(payload, idExistente || null);
     } else {
+      // Deduz o peso dos itens do Histórico 3D no estoque de filamentos da cor correspondente
+      let baixasFil = [];
+      if (typeof EncomendasModule !== 'undefined' && EncomendasModule.deduzirFilamentosItens) {
+        baixasFil = EncomendasModule.deduzirFilamentosItens(payload.itens);
+      }
+
       if (idExistente) {
         StorageService.update('propostas', idExistente, payload);
       } else {
         payload.criada_em = new Date().toISOString();
         StorageService.insert('propostas', payload);
       }
-      App.toast('Orçamento salvo com sucesso! Permanece na aba Orçamentos até ser aprovado.', 'success');
+      let msg = 'Orçamento salvo com sucesso! Permanece na aba Orçamentos até ser aprovado.';
+      if (baixasFil.length > 0) {
+        msg += ` 🧵 Filamento: ${baixasFil.join(', ')}`;
+      }
+      App.toast(msg, 'success');
       this.renderList();
     }
   },
@@ -763,7 +788,12 @@ const PropostasModule = {
           preco_unitario: Number(it.preco_unitario) || 0,
           subtotal: Number(it.subtotal) || 0,
           foto_anexo: it.foto_anexo || '',
-          foto_nome: it.foto_nome || ''
+          foto_nome: it.foto_nome || '',
+          calc_3d_historico_id: it.calc_3d_historico_id || '',
+          calc_3d_filamento_id: it.calc_3d_filamento_id || '',
+          gramas_unitario: Number(it.gramas_unitario) || 0,
+          filamento_deduzido_id: it.filamento_deduzido_id || null,
+          filamento_deduzido_g: Number(it.filamento_deduzido_g) || 0
         }))
       : [{
           produto_nome: p.titulo || 'Pedido Personalizado',
@@ -813,6 +843,10 @@ const PropostasModule = {
           baixas.push(`${qtdADeduzir}x ${mat.nome} (restam ${novoSaldo} ${mat.unidade})`);
         }
       });
+      if (EncomendasModule.deduzirFilamentosItens) {
+        const baixasFil = EncomendasModule.deduzirFilamentosItens(novaEncomenda.itens);
+        baixasFil.forEach(b => baixas.push(`🧵 ${b}`));
+      }
       if (baixas.length > 0) {
         window.dispatchEvent(new CustomEvent('seven_data_updated', { detail: { table: 'estoque' } }));
       }
@@ -1000,6 +1034,10 @@ const PropostasModule = {
 
   deleteProposta(id) {
     if (confirm('Deseja excluir este orçamento?')) {
+      const p = (StorageService.get('propostas') || []).find(item => item.id === id);
+      if (p && p.itens && typeof EncomendasModule !== 'undefined' && EncomendasModule.estornarFilamentosItens) {
+        EncomendasModule.estornarFilamentosItens(p.itens);
+      }
       StorageService.delete('propostas', id);
       App.toast('Orçamento excluído.', 'info');
       this.renderList();

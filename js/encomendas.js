@@ -739,6 +739,11 @@ const EncomendasModule = {
         subtotal: Number(it.subtotal) || 0,
         foto_anexo: it.foto_anexo || '',
         foto_nome: it.foto_nome || '',
+        calc_3d_historico_id: it.calc_3d_historico_id || '',
+        calc_3d_filamento_id: it.calc_3d_filamento_id || '',
+        gramas_unitario: Number(it.gramas_unitario) || 0,
+        filamento_deduzido_id: it.filamento_deduzido_id || null,
+        filamento_deduzido_g: Number(it.filamento_deduzido_g) || 0,
         estoque_id: it.estoque_id || (it.estoque_item_id ? it.estoque_item_id : 'auto'),
         estoque_item_id: it.estoque_item_id || null,
         estoque_item_nome: it.estoque_item_nome || null,
@@ -788,7 +793,10 @@ const EncomendasModule = {
     if (!h) return;
 
     const precoUnit = Number(h.preco_venda_unitario) || (Number(h.preco_venda_total) / (Number(h.quantidade_pecas) || 1)) || Number(h.custo_unitario) || 0;
+    const gramasUnit = (Number(h.gramas) || 0) / Math.max(1, Number(h.quantidade_pecas) || 1);
     item.calc_3d_historico_id = h.id;
+    item.calc_3d_filamento_id = h.filamento_id || '';
+    item.gramas_unitario = Number(gramasUnit.toFixed(2));
     item.produto_nome = h.produto_nome || item.produto_nome;
     item.preco_unitario = Number(precoUnit.toFixed(2));
     item.subtotal = (Number(item.quantidade) || 1) * item.preco_unitario;
@@ -919,6 +927,115 @@ const EncomendasModule = {
     `;
   },
 
+  encontrarFilamentoPorCor(cor, filamentoIdPreferido = null) {
+    const filamentos = (StorageService.get('filamentos') || []).filter(f => f.ativo !== false);
+    if (filamentos.length === 0) return null;
+
+    const corNorm = (cor || '').toLowerCase().trim();
+    if (corNorm) {
+      if (filamentoIdPreferido) {
+        const pref = filamentos.find(f => f.id === filamentoIdPreferido && (f.cor || '').toLowerCase().trim() === corNorm);
+        if (pref) return pref;
+      }
+      const mesmaCor = filamentos.filter(f => (f.cor || '').toLowerCase().trim() === corNorm);
+      if (mesmaCor.length > 0) {
+        // Prioriza o rolo da mesma cor com maior peso disponível
+        mesmaCor.sort((a, b) => (Number(b.peso_rolo_g) || 0) - (Number(a.peso_rolo_g) || 0));
+        return mesmaCor[0];
+      }
+    }
+
+    if (filamentoIdPreferido) {
+      return filamentos.find(f => f.id === filamentoIdPreferido) || null;
+    }
+    return null;
+  },
+
+  deduzirFilamentosItens(itens) {
+    const baixasFilamento = [];
+    if (!itens || !Array.isArray(itens)) return baixasFilamento;
+    const historico3D = StorageService.get('calc_3d_historico') || [];
+
+    itens.forEach(item => {
+      // Evita dupla baixa caso já tenha sido deduzido ao salvar o orçamento
+      if (item.filamento_deduzido_id && Number(item.filamento_deduzido_g) > 0) {
+        return;
+      }
+
+      let gramasUnit = Number(item.gramas_unitario) || 0;
+      let filIdPref = item.calc_3d_filamento_id || null;
+
+      if ((!gramasUnit || !filIdPref) && item.calc_3d_historico_id) {
+        const h = historico3D.find(rec => rec.id === item.calc_3d_historico_id);
+        if (h) {
+          if (!gramasUnit) {
+            gramasUnit = (Number(h.gramas) || 0) / Math.max(1, Number(h.quantidade_pecas) || 1);
+            item.gramas_unitario = Number(gramasUnit.toFixed(2));
+          }
+          if (!filIdPref && h.filamento_id) {
+            filIdPref = h.filamento_id;
+            item.calc_3d_filamento_id = filIdPref;
+          }
+        }
+      }
+
+      if (gramasUnit <= 0) {
+        item.filamento_deduzido_id = null;
+        item.filamento_deduzido_g = 0;
+        return;
+      }
+
+      const qtd = Math.max(1, Number(item.quantidade) || 1);
+      const pesoConsumido = Math.round(gramasUnit * qtd * 10) / 10;
+      const fil = this.encontrarFilamentoPorCor(item.cor, filIdPref);
+
+      if (fil) {
+        const pesoAtual = Number(fil.peso_rolo_g) || 0;
+        const novoPeso = Math.max(0, Math.round((pesoAtual - pesoConsumido) * 10) / 10);
+        const custoG = Number(fil.custo_por_g) > 0
+          ? Number(fil.custo_por_g)
+          : (pesoAtual > 0 ? (Number(fil.preco_rolo) || 0) / pesoAtual : 0);
+
+        StorageService.update('filamentos', fil.id, {
+          peso_rolo_g: novoPeso,
+          custo_por_g: custoG
+        });
+
+        item.filamento_deduzido_id = fil.id;
+        item.filamento_deduzido_g = pesoConsumido;
+        baixasFilamento.push(`-${pesoConsumido}g ${fil.material || 'Filamento'} ${fil.cor || ''} (restam ${novoPeso}g)`);
+      } else {
+        item.filamento_deduzido_id = null;
+        item.filamento_deduzido_g = 0;
+      }
+    });
+
+    if (baixasFilamento.length > 0 && typeof EstoqueModule !== 'undefined' && EstoqueModule.renderFilamentos) {
+      EstoqueModule.renderFilamentos();
+    }
+    return baixasFilamento;
+  },
+
+  estornarFilamentosItens(itens) {
+    if (!itens || !Array.isArray(itens)) return;
+    let houveEstorno = false;
+    itens.forEach(it => {
+      if (it.filamento_deduzido_id && Number(it.filamento_deduzido_g) > 0) {
+        const fil = (StorageService.get('filamentos') || []).find(f => f.id === it.filamento_deduzido_id);
+        if (fil) {
+          const novoPeso = Math.round(((Number(fil.peso_rolo_g) || 0) + Number(it.filamento_deduzido_g)) * 10) / 10;
+          StorageService.update('filamentos', fil.id, { peso_rolo_g: novoPeso });
+          houveEstorno = true;
+        }
+        it.filamento_deduzido_id = null;
+        it.filamento_deduzido_g = 0;
+      }
+    });
+    if (houveEstorno && typeof EstoqueModule !== 'undefined' && EstoqueModule.renderFilamentos) {
+      EstoqueModule.renderFilamentos();
+    }
+  },
+
   estornarEstoque(enc) {
     if (!enc || !enc.itens) return;
     enc.itens.forEach(it => {
@@ -930,6 +1047,7 @@ const EncomendasModule = {
         }
       }
     });
+    this.estornarFilamentosItens(enc.itens);
   },
 
   deduzirEstoque(enc) {
@@ -943,6 +1061,7 @@ const EncomendasModule = {
         }
       }
     });
+    this.deduzirFilamentosItens(enc.itens);
   },
 
   updateItemRow(index, field, value) {
@@ -1027,7 +1146,7 @@ const EncomendasModule = {
           <!-- Puxar item pré-salvo da Calculadora de Filamentos (Histórico 3D) -->
           <div class="form-group" style="margin-bottom: 10px; background: rgba(245, 158, 11, 0.06); border: 1px dashed rgba(245, 158, 11, 0.35); border-radius: 8px; padding: 8px 10px;">
             <label style="font-size: 0.74rem; font-weight: 700; color: #fbbf24; display: flex; align-items: center; justify-content: space-between; gap: 6px; margin-bottom: 5px;">
-              <span>🧵 Itens Pré-salvos — Histórico 3D (Calculadora de Filamentos)</span>
+              <span>🏷️ Itens Pré-salvos — Tabela de Preço (Histórico 3D)</span>
               <span style="font-size: 0.68rem; font-weight: 600; color: var(--text-muted);">${historico3D.length} ${historico3D.length === 1 ? 'item salvo' : 'itens salvos'}</span>
             </label>
             <select class="form-control" style="height: 36px; font-size: 0.82rem;"
@@ -1204,8 +1323,13 @@ const EncomendasModule = {
       this.estornarEstoque(encAntiga);
     }
 
-    // 2. Processa as novas baixas no estoque de materiais em tempo real
+    // 2. Processa as novas baixas no estoque de materiais e filamentos em tempo real
     const baixasRealizadas = [];
+    encomendaItensTemp.forEach(item => {
+      item.filamento_deduzido_id = null;
+      item.filamento_deduzido_g = 0;
+    });
+
     if (status !== 'Cancelada') {
       encomendaItensTemp.forEach(item => {
         const mat = this.encontrarItemEstoque(item.produto_nome, item.cor, item.estoque_id);
@@ -1227,6 +1351,9 @@ const EncomendasModule = {
           item.qtd_deduzida_estoque = 0;
         }
       });
+
+      const baixasFil = this.deduzirFilamentosItens(encomendaItensTemp);
+      baixasFil.forEach(b => baixasRealizadas.push(`🧵 ${b}`));
     } else {
       encomendaItensTemp.forEach(item => {
         item.qtd_deduzida_estoque = 0;

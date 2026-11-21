@@ -106,12 +106,14 @@ const CalculadoraModule = {
     const potenciaW = Number(cfg.potencia_impressora_w) || 200;
     const custoHoraOp = Number(cfg.custo_operacional_hora) || 3.50;
 
-    // 1. Custo do filamento
+    // 1. Custo do filamento (usa custo_por_g salvo para não distorcer quando o peso do rolo diminuir no estoque)
     let custoPorGrama = 0.11;
     if (filamento) {
       const precoRolo = Number(filamento.preco_rolo) || 0;
       const pesoRolo = Number(filamento.peso_rolo_g) || 1000;
-      custoPorGrama = pesoRolo > 0 ? (precoRolo / pesoRolo) : 0;
+      custoPorGrama = Number(filamento.custo_por_g) > 0
+        ? Number(filamento.custo_por_g)
+        : (pesoRolo > 0 ? (precoRolo / pesoRolo) : 0);
     }
     const custoMaterial = gramas * custoPorGrama;
 
