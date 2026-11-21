@@ -776,6 +776,42 @@ const EncomendasModule = {
     }
   },
 
+  selecionarHistorico3D(index, historicoId) {
+    const item = encomendaItensTemp[index];
+    if (!item) return;
+    if (!historicoId) {
+      item.calc_3d_historico_id = '';
+      return;
+    }
+    const historico = StorageService.get('calc_3d_historico') || [];
+    const h = historico.find(rec => rec.id === historicoId);
+    if (!h) return;
+
+    const precoUnit = Number(h.preco_venda_unitario) || (Number(h.preco_venda_total) / (Number(h.quantidade_pecas) || 1)) || Number(h.custo_unitario) || 0;
+    item.calc_3d_historico_id = h.id;
+    item.produto_nome = h.produto_nome || item.produto_nome;
+    item.preco_unitario = Number(precoUnit.toFixed(2));
+    item.subtotal = (Number(item.quantidade) || 1) * item.preco_unitario;
+
+    const coresDisponiveis = StorageService.getCoresDisponiveis() || [];
+    const filamentos = StorageService.get('filamentos') || [];
+    const fil = h.filamento_id ? filamentos.find(f => f.id === h.filamento_id) : null;
+    const corCandidata = fil?.cor || '';
+    let corEncontrada = coresDisponiveis.find(c => c.toLowerCase() === corCandidata.toLowerCase());
+    if (!corEncontrada && h.filamento_nome) {
+      const fnLower = h.filamento_nome.toLowerCase();
+      corEncontrada = coresDisponiveis.find(c => fnLower.includes(c.toLowerCase()));
+    }
+    if (corEncontrada) item.cor = corEncontrada;
+
+    if (h.observacoes && !item.observacao) {
+      item.observacao = h.observacoes;
+    }
+
+    this.renderItensTable();
+    App.toast(`Item 3D carregado: "${item.produto_nome}" (${App.formatMoney(item.preco_unitario)}/un) 🧵`, 'success');
+  },
+
   updateItemField(index, field, value) {
     const item = encomendaItensTemp[index];
     if (!item) return;
@@ -951,6 +987,9 @@ const EncomendasModule = {
     }
 
     const coresDisponiveis = StorageService.getCoresDisponiveis();
+    const historico3D = [...(StorageService.get('calc_3d_historico') || [])].sort((a, b) =>
+      String(a.produto_nome || '').localeCompare(String(b.produto_nome || ''), 'pt-BR', { numeric: true, sensitivity: 'base' })
+    );
 
     let total = 0;
 
@@ -983,6 +1022,23 @@ const EncomendasModule = {
                 ✕ Excluir Item
               </button>
             ` : ''}
+          </div>
+
+          <!-- Puxar item pré-salvo da Calculadora de Filamentos (Histórico 3D) -->
+          <div class="form-group" style="margin-bottom: 10px; background: rgba(245, 158, 11, 0.06); border: 1px dashed rgba(245, 158, 11, 0.35); border-radius: 8px; padding: 8px 10px;">
+            <label style="font-size: 0.74rem; font-weight: 700; color: #fbbf24; display: flex; align-items: center; justify-content: space-between; gap: 6px; margin-bottom: 5px;">
+              <span>🧵 Itens Pré-salvos — Histórico 3D (Calculadora de Filamentos)</span>
+              <span style="font-size: 0.68rem; font-weight: 600; color: var(--text-muted);">${historico3D.length} ${historico3D.length === 1 ? 'item salvo' : 'itens salvos'}</span>
+            </label>
+            <select class="form-control" style="height: 36px; font-size: 0.82rem;"
+                    onchange="EncomendasModule.selecionarHistorico3D(${idx}, this.value)">
+              <option value="">${historico3D.length > 0 ? '— Selecionar peça salva no Histórico 3D (preenche nome e preço) —' : 'Nenhum item salvo no Histórico 3D ainda'}</option>
+              ${historico3D.map(h => {
+                const precoUnit = Number(h.preco_venda_unitario) || (Number(h.preco_venda_total) / (Number(h.quantidade_pecas) || 1)) || Number(h.custo_unitario) || 0;
+                const label = `${h.produto_nome || 'Peça 3D'} — ${App.formatMoney(precoUnit)}/un (${h.filamento_nome || '3D'}${h.gramas ? ` • ${h.gramas}g` : ''})`;
+                return `<option value="${App.escapeHtml(h.id)}" ${item.calc_3d_historico_id === h.id ? 'selected' : ''}>${App.escapeHtml(label)}</option>`;
+              }).join('')}
+            </select>
           </div>
 
           <!-- Linha 1: Produto e Cor -->
