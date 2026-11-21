@@ -48,7 +48,7 @@
   <meta http-equiv="Expires" content="0">
 
   <!-- Estilos Customizados -->
-  <link rel="stylesheet" href="css/styles.css?v=44">
+  <link rel="stylesheet" href="css/styles.css?v=45">
 </head>
 
 <body>
@@ -706,56 +706,6 @@
                 <div class="kpi-sub" style="font-size: 0.72rem; color: var(--text-muted);">Receitas pendentes de clientes</div>
               </div>
               <div class="kpi-icon-box blue">⏳</div>
-            </div>
-          </div>
-
-          <!-- 4. FLUXO DE CAIXA (GRÁFICO INTERATIVO COM MODO MENSAL / ANUAL) -->
-          <div class="themed-panel theme-indigo" style="margin-bottom: 22px;">
-            <div class="themed-header" style="flex-wrap: wrap; gap: 10px;">
-              <div style="display: flex; align-items: center; gap: 12px;">
-                <span class="themed-icon-box">📊</span>
-                <div>
-                  <h3 class="themed-title">Fluxo de Caixa & Balanço</h3>
-                  <div class="themed-subtitle">Evolução de entradas, saídas e resultado líquido</div>
-                </div>
-              </div>
-
-              <!-- Controles do Gráfico -->
-              <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
-                <div class="btn-group" style="display: inline-flex; border: 1px solid var(--border); border-radius: 6px; overflow: hidden;">
-                  <button type="button" id="fin-chart-btn-mensal" class="btn btn-secondary btn-sm active" onclick="FinanceiroModule.setChartMode('mensal')" style="border: none; border-radius: 0; padding: 4px 10px; font-size: 0.75rem;">
-                    📅 Mensal
-                  </button>
-                  <button type="button" id="fin-chart-btn-anual" class="btn btn-secondary btn-sm" onclick="FinanceiroModule.setChartMode('anual')" style="border: none; border-radius: 0; padding: 4px 10px; font-size: 0.75rem;">
-                    📈 Anual
-                  </button>
-                </div>
-
-                <select id="fin-chart-select-ano" class="form-control" style="width: auto; padding: 3px 8px; font-size: 0.8rem; height: auto;" onchange="FinanceiroModule.onChartAnoChange(this.value)">
-                  <option value="2025">2025</option>
-                  <option value="2026" selected>2026</option>
-                  <option value="2027">2027</option>
-                </select>
-
-                <select id="fin-chart-select-mes" class="form-control" style="width: auto; padding: 3px 8px; font-size: 0.8rem; height: auto;" onchange="FinanceiroModule.onChartMesChange(this.value)">
-                  <option value="1">Janeiro</option>
-                  <option value="2">Fevereiro</option>
-                  <option value="3">Março</option>
-                  <option value="4">Abril</option>
-                  <option value="5">Maio</option>
-                  <option value="6">Junho</option>
-                  <option value="7">Julho</option>
-                  <option value="8">Agosto</option>
-                  <option value="9">Setembro</option>
-                  <option value="10">Outubro</option>
-                  <option value="11" selected>Novembro</option>
-                  <option value="12">Dezembro</option>
-                </select>
-              </div>
-            </div>
-
-            <div style="height: 280px; position: relative; padding: 14px 18px;">
-              <canvas id="financeiro-chart"></canvas>
             </div>
           </div>
 
@@ -2712,20 +2662,20 @@
   <!-- CONTAINER DE TOASTS -->
   <div class="toast-container" id="toast-container"></div>
 
-  <!-- SCRIPTS DO SISTEMA (com cache-busting v44) -->
-  <script src="js/notifications.js?v=44"></script>
-  <script src="js/storage.js?v=44"></script>
-  <script src="js/auth.js?v=44"></script>
-  <script src="js/crm.js?v=44"></script>
-  <script src="js/encomendas.js?v=44"></script>
-  <script src="js/estoque.js?v=44"></script>
-  <script src="js/financeiro.js?v=44"></script>
-  <script src="js/propostas.js?v=44"></script>
-  <script src="js/calculadora.js?v=44"></script>
-  <script src="js/calculadora-laser.js?v=44"></script>
-  <script src="js/calendario.js?v=44"></script>
-  <script src="js/configuracoes.js?v=44"></script>
-  <script src="js/app.js?v=44"></script>
+  <!-- SCRIPTS DO SISTEMA (com cache-busting v45) -->
+  <script src="js/notifications.js?v=45"></script>
+  <script src="js/storage.js?v=45"></script>
+  <script src="js/auth.js?v=45"></script>
+  <script src="js/crm.js?v=45"></script>
+  <script src="js/encomendas.js?v=45"></script>
+  <script src="js/estoque.js?v=45"></script>
+  <script src="js/financeiro.js?v=45"></script>
+  <script src="js/propostas.js?v=45"></script>
+  <script src="js/calculadora.js?v=45"></script>
+  <script src="js/calculadora-laser.js?v=45"></script>
+  <script src="js/calendario.js?v=45"></script>
+  <script src="js/configuracoes.js?v=45"></script>
+  <script src="js/app.js?v=45"></script>
 </body>
 
 </html>
