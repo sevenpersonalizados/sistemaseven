@@ -862,6 +862,8 @@ const PropostasModule = {
       }
       if (baixas.length > 0) {
         window.dispatchEvent(new CustomEvent('seven_data_updated', { detail: { table: 'estoque' } }));
+        if (typeof EstoqueModule !== 'undefined' && EstoqueModule.render) EstoqueModule.render();
+        if (typeof App !== 'undefined' && App.renderDashboard) App.renderDashboard();
       }
     }
 

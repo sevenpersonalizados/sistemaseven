@@ -883,31 +883,49 @@ const EncomendasModule = {
     }
     if (estoqueId === 'none' || !produtoNome) return null;
 
-    const nomeNorm = produtoNome.toLowerCase().trim();
-    const corNorm = (cor || '').toLowerCase().trim();
+    const norm = (s) => String(s || '')
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase()
+      .replace(/\s+/g, ' ')
+      .trim();
 
-    // 1. Match exato: Nome e Cor
+    const nomeNorm = norm(produtoNome);
+    const corNorm = norm(cor);
+
+    const matchNomeExato = (e) => norm(e.nome) === nomeNorm;
+    const matchNomeInclusao = (e) => {
+      const eNome = norm(e.nome);
+      return eNome && (eNome.includes(nomeNorm) || nomeNorm.includes(eNome));
+    };
+
     if (corNorm) {
-      const matchExato = itensEstoque.find(e => {
-        const eNome = (e.nome || '').toLowerCase().trim();
-        const eCor = (e.cor || '').toLowerCase().trim();
-        return (eNome === nomeNorm || eNome.includes(nomeNorm) || nomeNorm.includes(eNome)) && eCor === corNorm;
-      });
-      if (matchExato) return matchExato;
+      // 1. Nome exato + mesma cor
+      const m1 = itensEstoque.find(e => matchNomeExato(e) && norm(e.cor) === corNorm);
+      if (m1) return m1;
+
+      // 2. Nome por inclusão + mesma cor
+      const m2 = itensEstoque.find(e => matchNomeInclusao(e) && norm(e.cor) === corNorm);
+      if (m2) return m2;
+
+      // 3. Fallback seguro: somente itens de estoque SEM cor definida (nunca baixa de outra cor!)
+      const m3 = itensEstoque.find(e => matchNomeExato(e) && !norm(e.cor));
+      if (m3) return m3;
+
+      const m4 = itensEstoque.find(e => matchNomeInclusao(e) && !norm(e.cor));
+      if (m4) return m4;
+
+      return null;
     }
 
-    // 2. Match por Nome exato
-    const matchNomeExato = itensEstoque.find(e => (e.nome || '').toLowerCase().trim() === nomeNorm);
-    if (matchNomeExato) return matchNomeExato;
-
-    // 3. Match por inclusão (ex: "Copo" em "Copo Térmico Inox 473ml (Tipo Stanley)")
-    const matchInclusao = itensEstoque.find(e => {
-      const eNome = (e.nome || '').toLowerCase().trim();
-      return eNome.includes(nomeNorm) || nomeNorm.includes(eNome);
-    });
-    if (matchInclusao) return matchInclusao;
-
-    return null;
+    // Sem cor informada no pedido: prioriza item sem cor, depois qualquer cor com nome exato ou inclusão
+    return (
+      itensEstoque.find(e => matchNomeExato(e) && !norm(e.cor)) ||
+      itensEstoque.find(e => matchNomeExato(e)) ||
+      itensEstoque.find(e => matchNomeInclusao(e) && !norm(e.cor)) ||
+      itensEstoque.find(e => matchNomeInclusao(e)) ||
+      null
+    );
   },
 
   atualizarBadgeEstoqueItem(index) {
