@@ -29,6 +29,7 @@ const FinanceiroModule = {
   // Lançamento em edição ou estorno
   currentEditId: null,
   currentEstornoId: null,
+  expandedParcelaGroups: new Set(),
 
   init() {
     // Inicializa exibindo Todo o Histórico para não ocultar encomendas com entrega em outros meses
@@ -407,7 +408,7 @@ const FinanceiroModule = {
       if (wrapAud) wrapAud.style.display = 'block';
       this.renderTabelaAuditoria();
     } else {
-      if (wrapLanc) wrapLanc.style.display = 'block';
+      if (wrapLanc) wrapLanc.style.display = 'flex';
       if (wrapAud) wrapAud.style.display = 'none';
       this.renderTabelaLancamentos();
     }
@@ -487,11 +488,127 @@ const FinanceiroModule = {
     }).join('');
   },
 
-  // 6. HISTÓRICO DE MOVIMENTAÇÕES & TABELA
+  toggleParcelaGroup(groupKey) {
+    if (!groupKey) return;
+    if (this.expandedParcelaGroups.has(groupKey)) {
+      this.expandedParcelaGroups.delete(groupKey);
+    } else {
+      this.expandedParcelaGroups.add(groupKey);
+    }
+    this.renderTabelaLancamentos();
+  },
+
+  renderLancamentoRowHtml(item, hojeIso, isChildParcela = false) {
+    const isReceita = item.tipo === 'receita';
+    const isEstornado = !!item.estornado || item.status === 'estornado';
+    const isPendente = item.status === 'pendente';
+    const isVencido = isPendente && item.data < hojeIso;
+    const isEncomenda = item.origem === 'encomenda' && item.encomenda_id;
+
+    let statusHtml = '';
+    if (isEstornado) {
+      statusHtml = `<span class="status-badge" style="background: rgba(148, 163, 184, 0.18); color: #94a3b8; border: 1px solid rgba(148, 163, 184, 0.4);">↩️ Estornado</span>`;
+    } else if (isVencido) {
+      statusHtml = `<span class="status-badge" style="background: rgba(239, 68, 68, 0.22); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.55); font-weight: 700;">🚨 Vencido</span>`;
+    } else if (isPendente) {
+      statusHtml = `<span class="status-badge" style="background: rgba(245, 158, 11, 0.20); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.45);">⏳ Pendente</span>`;
+    } else {
+      statusHtml = `<span class="status-badge" style="background: rgba(16, 185, 129, 0.20); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.45);">✅ ${isReceita ? 'Recebido' : 'Pago'}</span>`;
+    }
+
+    let metaTags = '';
+    if (isEncomenda) {
+      const stLabel = item.encomenda_status ? ` • ${App.escapeHtml(item.encomenda_status)}` : '';
+      metaTags += `<span style="font-size: 0.68rem; font-weight: 700; background: rgba(16, 185, 129, 0.16); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.4); padding: 1px 6px; border-radius: 4px; margin-left: 6px;">🛍️ Encomenda${stLabel}</span>`;
+    }
+    if (item.total_parcelas && item.total_parcelas > 1) {
+      metaTags += `<span style="font-size: 0.68rem; font-weight: 700; background: rgba(56, 189, 248, 0.18); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.4); padding: 1px 6px; border-radius: 4px; margin-left: 6px;">Parcela ${item.parcela_atual}/${item.total_parcelas}</span>`;
+    }
+    if (item.recorrente) {
+      metaTags += `<span style="font-size: 0.68rem; font-weight: 700; background: rgba(168, 85, 247, 0.18); color: #c084fc; border: 1px solid rgba(168, 85, 247, 0.4); padding: 1px 6px; border-radius: 4px; margin-left: 6px;">🔄 Recorrente</span>`;
+    }
+
+    const valorFmt = (isReceita ? '+ ' : '- ') + App.formatMoney(item.valor || 0);
+    const valorColor = isEstornado ? 'var(--text-muted)' : (isReceita ? '#34d399' : '#f87171');
+    const textDecoration = isEstornado ? 'line-through' : 'none';
+    const rowBg = isChildParcela ? 'background: rgba(15, 23, 42, 0.55);' : '';
+
+    return `
+      <tr style="${rowBg} ${isEstornado ? 'opacity: 0.6;' : ''}">
+        <td style="white-space: nowrap; ${isChildParcela ? 'padding-left: 28px; border-left: 3px solid rgba(56, 189, 248, 0.45);' : ''}">
+          <strong>${App.formatDate(item.data)}</strong>
+          ${isVencido ? '<div style="font-size: 0.68rem; color: #ef4444; font-weight: 700;">Atrasada</div>' : ''}
+        </td>
+        <td>
+          <div style="font-weight: 600; color: #ffffff; display: flex; align-items: center; flex-wrap: wrap; gap: 4px;">
+            <span>${isChildParcela ? '↳ ' : ''}${App.escapeHtml(item.descricao)}</span>
+            ${metaTags}
+          </div>
+          ${item.observacoes ? `<div style="font-size: 0.74rem; color: var(--text-muted);">${App.escapeHtml(item.observacoes)}</div>` : ''}
+        </td>
+        <td><span style="font-size: 0.76rem; background: rgba(255, 255, 255, 0.05); padding: 3px 8px; border-radius: 4px; border: 1px solid var(--border);">${App.escapeHtml(item.categoria || 'Geral')}</span></td>
+        <td><span style="font-size: 0.76rem; color: var(--text-secondary);">${App.escapeHtml(item.centro_custo || '—')}</span></td>
+        <td>
+          <div style="font-size: 0.78rem; font-weight: 500;">${App.escapeHtml(item.forma_pagamento || 'Pix')}</div>
+          <div style="font-size: 0.7rem; color: var(--text-muted);">${App.escapeHtml(item.local_pagamento || 'Caixa')}</div>
+        </td>
+        <td>
+          <span style="font-size: 0.72rem; font-weight: 700; color: #38bdf8; background: rgba(56, 189, 248, 0.12); padding: 2px 7px; border-radius: 999px; border: 1px solid rgba(56, 189, 248, 0.3);">
+            👤 ${App.escapeHtml(item.proprietario || 'Proprietário')}
+          </span>
+        </td>
+        <td>${statusHtml}</td>
+        <td style="font-weight: 800; font-size: 0.92rem; color: ${valorColor}; text-decoration: ${textDecoration}; white-space: nowrap;">
+          ${valorFmt}
+        </td>
+        <td style="text-align: right; white-space: nowrap;">
+          <div style="display: inline-flex; align-items: center; gap: 5px;">
+            ${isEncomenda ? `
+              ${isPendente ? `
+                <button type="button" class="btn btn-primary btn-sm" onclick="FinanceiroModule.quitarEncomenda('${item.encomenda_id}')" title="Quitar pagamento desta encomenda" style="padding: 4px 8px; font-size: 0.72rem; background: #10b981;">
+                  ✓ Quitar
+                </button>
+              ` : ''}
+              <button type="button" class="btn btn-secondary btn-sm" onclick="EncomendasModule.openEditModal('${item.encomenda_id}')" title="Abrir encomenda para editar valores ou pagamento" style="padding: 4px 8px; font-size: 0.72rem;">
+                ✏️ Pedido
+              </button>
+            ` : `
+              ${isPendente && !isEstornado ? `
+                <button type="button" class="btn btn-primary btn-sm" onclick="FinanceiroModule.baixarLancamento('${item.id}')" title="Marcar como Pago/Recebido" style="padding: 4px 8px; font-size: 0.72rem; background: #10b981;">
+                  ✓ Baixar
+                </button>
+              ` : ''}
+              <button type="button" class="btn btn-secondary btn-icon" onclick="FinanceiroModule.openDetalhesModal('${item.id}')" title="Ver Detalhes e Auditoria">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+              </button>
+              ${!isEstornado ? `
+                <button type="button" class="btn btn-secondary btn-icon" onclick="FinanceiroModule.openEditModal('${item.id}')" title="Editar Lançamento">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                </button>
+              ` : ''}
+              ${!isPendente && !isEstornado ? `
+                <button type="button" class="btn btn-secondary btn-icon" onclick="FinanceiroModule.openEstornoModal('${item.id}')" title="Registrar Estorno" style="color: #fbbf24;">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
+                </button>
+              ` : ''}
+              <button type="button" class="btn btn-secondary btn-icon" onclick="FinanceiroModule.excluirLancamento('${item.id}')" title="Excluir Lançamento" style="color: #f87171;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+              </button>
+            `}
+          </div>
+        </td>
+      </tr>
+    `;
+  },
+
+  // 6. HISTÓRICO DE MOVIMENTAÇÕES & TABELAS SEPARADAS (RECEITAS E DESPESAS COM PARCELAS AGRUPADAS)
   renderTabelaLancamentos() {
-    const tbody = document.getElementById('fin-table-body');
+    const tbodyRec = document.getElementById('fin-table-body-receitas');
+    const tbodyDesp = document.getElementById('fin-table-body-despesas');
+    const secRec = document.getElementById('fin-sec-receitas');
+    const secDesp = document.getElementById('fin-sec-despesas');
     const countEl = document.getElementById('fin-table-count');
-    if (!tbody) return;
+    if (!tbodyRec || !tbodyDesp) return;
 
     let items = this.getLancamentos();
     const hojeIso = this.formatIsoDate(new Date());
@@ -555,139 +672,163 @@ const FinanceiroModule = {
     // Ordenação: mais recentes primeiro
     items.sort((a, b) => (b.data || '').localeCompare(a.data || ''));
 
+    const receitas = items.filter(i => i.tipo === 'receita');
+    const despesas = items.filter(i => i.tipo !== 'receita');
+
     if (countEl) {
       countEl.textContent = `${items.length} ${items.length === 1 ? 'lançamento' : 'lançamentos'}`;
     }
 
-    if (items.length === 0) {
-      tbody.innerHTML = `
-        <tr>
-          <td colspan="10" style="text-align: center; padding: 36px; color: var(--text-muted);">
-            <div style="font-size: 1.8rem; margin-bottom: 8px;">📂</div>
-            <div>Nenhum lançamento encontrado com os filtros selecionados.</div>
-            <button class="btn btn-secondary btn-sm" onclick="FinanceiroModule.limparFiltros()" style="margin-top: 12px;">
-              Limpar Filtros
-            </button>
-          </td>
-        </tr>
-      `;
-      return;
+    // Controla visibilidade dos blocos quando há filtro exclusivo de tipo/aba
+    if (secRec) {
+      secRec.style.display = (this.activeTab === 'a_pagar' || this.filtroTipo === 'despesa') ? 'none' : 'block';
+    }
+    if (secDesp) {
+      secDesp.style.display = (this.activeTab === 'a_receber' || this.filtroTipo === 'receita') ? 'none' : 'block';
     }
 
-    tbody.innerHTML = items.map(item => {
-      const isReceita = item.tipo === 'receita';
-      const isEstornado = !!item.estornado || item.status === 'estornado';
-      const isPendente = item.status === 'pendente';
-      const isVencido = isPendente && item.data < hojeIso;
+    // Totais e contadores de cada bloco
+    const totalReceitas = receitas.filter(r => !r.estornado && r.status !== 'estornado').reduce((s, r) => s + (Number(r.valor) || 0), 0);
+    const totalDespesas = despesas.filter(d => !d.estornado && d.status !== 'estornado').reduce((s, d) => s + (Number(d.valor) || 0), 0);
 
-      // Status Badge
-      let statusHtml = '';
-      if (isEstornado) {
-        statusHtml = `<span class="status-badge" style="background: rgba(148, 163, 184, 0.18); color: #94a3b8; border: 1px solid rgba(148, 163, 184, 0.4);">↩️ Estornado</span>`;
-      } else if (isVencido) {
-        statusHtml = `<span class="status-badge" style="background: rgba(239, 68, 68, 0.22); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.55); font-weight: 700;">🚨 Vencido</span>`;
-      } else if (isPendente) {
-        statusHtml = `<span class="status-badge" style="background: rgba(245, 158, 11, 0.20); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.45);">⏳ Pendente</span>`;
-      } else {
-        statusHtml = `<span class="status-badge" style="background: rgba(16, 185, 129, 0.20); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.45);">✅ ${isReceita ? 'Recebido' : 'Pago'}</span>`;
-      }
+    const elRecCount = document.getElementById('fin-receitas-count');
+    const elRecTotal = document.getElementById('fin-receitas-total');
+    if (elRecCount) elRecCount.textContent = receitas.length;
+    if (elRecTotal) elRecTotal.textContent = App.formatMoney(totalReceitas);
 
-      // Tipo Badge
-      const tipoBadge = isReceita
-        ? `<span class="status-badge" style="background: rgba(16, 185, 129, 0.15); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.35);">🟢 Receita</span>`
-        : `<span class="status-badge" style="background: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.35);">🔴 Despesa</span>`;
+    const elDespCount = document.getElementById('fin-despesas-count');
+    const elDespTotal = document.getElementById('fin-despesas-total');
+    if (elDespCount) elDespCount.textContent = despesas.length;
+    if (elDespTotal) elDespTotal.textContent = App.formatMoney(totalDespesas);
 
-      // Parcelamento / Recorrência / Encomenda Tags
-      const isEncomenda = item.origem === 'encomenda' && item.encomenda_id;
-      let metaTags = '';
-      if (isEncomenda) {
-        const stLabel = item.encomenda_status ? ` • ${App.escapeHtml(item.encomenda_status)}` : '';
-        metaTags += `<span style="font-size: 0.68rem; font-weight: 700; background: rgba(16, 185, 129, 0.16); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.4); padding: 1px 6px; border-radius: 4px; margin-left: 6px;">🛍️ Encomenda${stLabel}</span>`;
-      }
-      if (item.total_parcelas && item.total_parcelas > 1) {
-        metaTags += `<span style="font-size: 0.68rem; font-weight: 700; background: rgba(56, 189, 248, 0.18); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.4); padding: 1px 6px; border-radius: 4px; margin-left: 6px;">Parcela ${item.parcela_atual}/${item.total_parcelas}</span>`;
-      }
-      if (item.recorrente) {
-        metaTags += `<span style="font-size: 0.68rem; font-weight: 700; background: rgba(168, 85, 247, 0.18); color: #c084fc; border: 1px solid rgba(168, 85, 247, 0.4); padding: 1px 6px; border-radius: 4px; margin-left: 6px;">🔄 Recorrente</span>`;
-      }
-
-      // Valor formatado
-      const valorFmt = (isReceita ? '+ ' : '- ') + App.formatMoney(item.valor || 0);
-      const valorColor = isEstornado ? 'var(--text-muted)' : (isReceita ? '#34d399' : '#f87171');
-      const textDecoration = isEstornado ? 'line-through' : 'none';
-
-      return `
-        <tr style="${isEstornado ? 'opacity: 0.6;' : ''}">
-          <td style="white-space: nowrap;">
-            <strong>${App.formatDate(item.data)}</strong>
-            ${isVencido ? '<div style="font-size: 0.68rem; color: #ef4444; font-weight: 700;">Atrasada</div>' : ''}
-          </td>
-          <td>
-            <div style="font-weight: 600; color: #ffffff; display: flex; align-items: center; flex-wrap: wrap; gap: 4px;">
-              <span>${App.escapeHtml(item.descricao)}</span>
-              ${metaTags}
-            </div>
-            ${item.observacoes ? `<div style="font-size: 0.74rem; color: var(--text-muted);">${App.escapeHtml(item.observacoes)}</div>` : ''}
-          </td>
-          <td>${tipoBadge}</td>
-          <td><span style="font-size: 0.76rem; background: rgba(255, 255, 255, 0.05); padding: 3px 8px; border-radius: 4px; border: 1px solid var(--border);">${App.escapeHtml(item.categoria || 'Geral')}</span></td>
-          <td><span style="font-size: 0.76rem; color: var(--text-secondary);">${App.escapeHtml(item.centro_custo || '—')}</span></td>
-          <td>
-            <div style="font-size: 0.78rem; font-weight: 500;">${App.escapeHtml(item.forma_pagamento || 'Pix')}</div>
-            <div style="font-size: 0.7rem; color: var(--text-muted);">${App.escapeHtml(item.local_pagamento || 'Caixa')}</div>
-          </td>
-          <td>
-            <span style="font-size: 0.72rem; font-weight: 700; color: #38bdf8; background: rgba(56, 189, 248, 0.12); padding: 2px 7px; border-radius: 999px; border: 1px solid rgba(56, 189, 248, 0.3);">
-              👤 ${App.escapeHtml(item.proprietario || 'Proprietário')}
-            </span>
-          </td>
-          <td>${statusHtml}</td>
-          <td style="font-weight: 800; font-size: 0.92rem; color: ${valorColor}; text-decoration: ${textDecoration}; white-space: nowrap;">
-            ${valorFmt}
-          </td>
-          <td style="text-align: right; white-space: nowrap;">
-            <div style="display: inline-flex; align-items: center; gap: 5px;">
-              ${isEncomenda ? `
-                ${isPendente ? `
-                  <button type="button" class="btn btn-primary btn-sm" onclick="FinanceiroModule.quitarEncomenda('${item.encomenda_id}')" title="Quitar pagamento desta encomenda" style="padding: 4px 8px; font-size: 0.72rem; background: #10b981;">
-                    ✓ Quitar
-                  </button>
-                ` : ''}
-                <button type="button" class="btn btn-secondary btn-sm" onclick="EncomendasModule.openEditModal('${item.encomenda_id}')" title="Abrir encomenda para editar valores ou pagamento" style="padding: 4px 8px; font-size: 0.72rem;">
-                  ✏️ Pedido
-                </button>
-              ` : `
-                ${isPendente && !isEstornado ? `
-                  <button type="button" class="btn btn-primary btn-sm" onclick="FinanceiroModule.baixarLancamento('${item.id}')" title="Marcar como Liquidado/Efetivado" style="padding: 4px 8px; font-size: 0.72rem; background: #10b981;">
-                    ✓ Baixar
-                  </button>
-                ` : ''}
-                
-                <button type="button" class="btn btn-secondary btn-icon" onclick="FinanceiroModule.openDetalhesModal('${item.id}')" title="Ver Detalhes e Auditoria">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-                </button>
-
-                ${!isEstornado ? `
-                  <button type="button" class="btn btn-secondary btn-icon" onclick="FinanceiroModule.openEditModal('${item.id}')" title="Editar Lançamento">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-                  </button>
-                ` : ''}
-
-                ${!isPendente && !isEstornado ? `
-                  <button type="button" class="btn btn-secondary btn-icon" onclick="FinanceiroModule.openEstornoModal('${item.id}')" title="Registrar Estorno" style="color: #fbbf24;">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
-                  </button>
-                ` : ''}
-
-                <button type="button" class="btn btn-secondary btn-icon" onclick="FinanceiroModule.excluirLancamento('${item.id}')" title="Excluir Lançamento" style="color: #f87171;">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
-                </button>
-              `}
-            </div>
+    // 1) Renderiza RECEITAS
+    if (receitas.length === 0) {
+      tbodyRec.innerHTML = `
+        <tr>
+          <td colspan="9" style="text-align: center; padding: 24px; color: var(--text-muted);">
+            Nenhuma receita encontrada com os filtros selecionados.
           </td>
         </tr>
       `;
-    }).join('');
+    } else {
+      tbodyRec.innerHTML = receitas.map(item => this.renderLancamentoRowHtml(item, hojeIso, false)).join('');
+    }
+
+    // 2) Renderiza DESPESAS com PARCELAMENTOS AGRUPADOS
+    if (despesas.length === 0) {
+      tbodyDesp.innerHTML = `
+        <tr>
+          <td colspan="9" style="text-align: center; padding: 24px; color: var(--text-muted);">
+            Nenhuma despesa encontrada com os filtros selecionados.
+          </td>
+        </tr>
+      `;
+    } else {
+      const gruposMap = new Map();
+      const avulsas = [];
+
+      despesas.forEach(d => {
+        const isParcelada = (Number(d.total_parcelas) || 1) > 1;
+        if (isParcelada) {
+          const baseDesc = (d.descricao || 'Despesa Parcelada').replace(/\s*\(\d+\/\d+\)\s*$/, '').trim();
+          const key = d.id_grupo_parcela || `parc-${baseDesc.toLowerCase()}-${d.total_parcelas}`;
+          if (!gruposMap.has(key)) {
+            gruposMap.set(key, { key, baseDesc, parcelas: [] });
+          }
+          gruposMap.get(key).parcelas.push(d);
+        } else {
+          avulsas.push(d);
+        }
+      });
+
+      // Combina grupos parcelados + despesas avulsas ordenados pela data mais relevante
+      const entries = [];
+      gruposMap.forEach(g => {
+        g.parcelas.sort((a, b) => (Number(a.parcela_atual) || 0) - (Number(b.parcela_atual) || 0) || (a.data || '').localeCompare(b.data || ''));
+        const primeiraPendente = g.parcelas.find(p => p.status === 'pendente' && !p.estornado);
+        const refData = primeiraPendente?.data || g.parcelas[0]?.data || '';
+        entries.push({ isGroup: true, sortDate: refData, group: g });
+      });
+      avulsas.forEach(d => {
+        entries.push({ isGroup: false, sortDate: d.data || '', item: d });
+      });
+
+      entries.sort((a, b) => (b.sortDate || '').localeCompare(a.sortDate || ''));
+
+      tbodyDesp.innerHTML = entries.map(entry => {
+        if (!entry.isGroup) {
+          return this.renderLancamentoRowHtml(entry.item, hojeIso, false);
+        }
+
+        const g = entry.group;
+        const first = g.parcelas[0];
+        const totalGrupo = g.parcelas.reduce((s, p) => s + (p.estornado ? 0 : (Number(p.valor) || 0)), 0);
+        const pagasCount = g.parcelas.filter(p => (p.status === 'pago' || p.status === 'recebido') && !p.estornado).length;
+        const pendentesCount = g.parcelas.filter(p => p.status === 'pendente' && !p.estornado).length;
+        const vencidasCount = g.parcelas.filter(p => p.status === 'pendente' && !p.estornado && p.data < hojeIso).length;
+        const totalParcelas = Math.max(Number(first.total_parcelas) || g.parcelas.length, g.parcelas.length);
+        const valorParcelaRef = Number(first.valor) || 0;
+        const proxPendente = g.parcelas.find(p => p.status === 'pendente' && !p.estornado);
+        const isExpanded = this.expandedParcelaGroups.has(g.key);
+
+        let statusGroupHtml = '';
+        if (pendentesCount === 0) {
+          statusGroupHtml = `<span class="status-badge" style="background: rgba(16, 185, 129, 0.20); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.45);">✅ Quitado (${pagasCount}/${totalParcelas})</span>`;
+        } else if (vencidasCount > 0) {
+          statusGroupHtml = `<span class="status-badge" style="background: rgba(239, 68, 68, 0.22); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.55); font-weight: 700;">🚨 ${vencidasCount} vencida${vencidasCount > 1 ? 's' : ''} (${pagasCount}/${totalParcelas})</span>`;
+        } else {
+          statusGroupHtml = `<span class="status-badge" style="background: rgba(245, 158, 11, 0.20); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.45);">⏳ ${pagasCount}/${totalParcelas} pagas</span>`;
+        }
+
+        const safeKey = g.key.replace(/'/g, "\\'");
+        const headerRow = `
+          <tr onclick="FinanceiroModule.toggleParcelaGroup('${safeKey}')" style="cursor: pointer; background: rgba(56, 189, 248, 0.05); border-top: 1px solid rgba(56, 189, 248, 0.22);">
+            <td style="white-space: nowrap;">
+              <strong>${App.formatDate(proxPendente ? proxPendente.data : first.data)}</strong>
+              <div style="font-size: 0.68rem; color: var(--text-muted);">${proxPendente ? 'Próx. venc.' : '1ª parcela'}</div>
+            </td>
+            <td>
+              <div style="font-weight: 700; color: #ffffff; display: flex; align-items: center; flex-wrap: wrap; gap: 6px;">
+                <span style="color: #38bdf8; font-size: 0.78rem;">${isExpanded ? '▼' : '▶'}</span>
+                <span>${App.escapeHtml(g.baseDesc)}</span>
+                <span style="font-size: 0.68rem; font-weight: 700; background: rgba(56, 189, 248, 0.18); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.45); padding: 1px 7px; border-radius: 999px;">
+                  💳 ${g.parcelas.length}x Parcelado
+                </span>
+              </div>
+              <div style="font-size: 0.73rem; color: var(--text-muted); margin-top: 2px;">
+                ${g.parcelas.length}x de ${App.formatMoney(valorParcelaRef)} • Clique para ${isExpanded ? 'ocultar' : 'abrir e dar baixa mensal'}
+              </div>
+            </td>
+            <td><span style="font-size: 0.76rem; background: rgba(255, 255, 255, 0.05); padding: 3px 8px; border-radius: 4px; border: 1px solid var(--border);">${App.escapeHtml(first.categoria || 'Geral')}</span></td>
+            <td><span style="font-size: 0.76rem; color: var(--text-secondary);">${App.escapeHtml(first.centro_custo || '—')}</span></td>
+            <td>
+              <div style="font-size: 0.78rem; font-weight: 500;">${App.escapeHtml(first.forma_pagamento || 'Cartão de Crédito')}</div>
+              <div style="font-size: 0.7rem; color: var(--text-muted);">${App.escapeHtml(first.local_pagamento || 'Cartão')}</div>
+            </td>
+            <td>
+              <span style="font-size: 0.72rem; font-weight: 700; color: #38bdf8; background: rgba(56, 189, 248, 0.12); padding: 2px 7px; border-radius: 999px; border: 1px solid rgba(56, 189, 248, 0.3);">
+                👤 ${App.escapeHtml(first.proprietario || 'Proprietário')}
+              </span>
+            </td>
+            <td>${statusGroupHtml}</td>
+            <td style="font-weight: 800; font-size: 0.92rem; color: #f87171; white-space: nowrap;">
+              - ${App.formatMoney(totalGrupo)}
+            </td>
+            <td style="text-align: right; white-space: nowrap;" onclick="event.stopPropagation()">
+              <button type="button" class="btn btn-secondary btn-sm" onclick="FinanceiroModule.toggleParcelaGroup('${safeKey}')" style="padding: 4px 10px; font-size: 0.74rem; border-color: rgba(56, 189, 248, 0.45); color: #38bdf8;">
+                ${isExpanded ? '▼ Ocultar' : `▶ Parcelas (${g.parcelas.length})`}
+              </button>
+            </td>
+          </tr>
+        `;
+
+        const childrenHtml = isExpanded
+          ? g.parcelas.map(p => this.renderLancamentoRowHtml(p, hojeIso, true)).join('')
+          : '';
+
+        return headerRow + childrenHtml;
+      }).join('');
+    }
   },
 
   onSearch(query) {

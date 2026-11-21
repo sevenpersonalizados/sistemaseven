@@ -48,7 +48,7 @@
   <meta http-equiv="Expires" content="0">
 
   <!-- Estilos Customizados -->
-  <link rel="stylesheet" href="css/styles.css?v=77">
+  <link rel="stylesheet" href="css/styles.css?v=78">
 </head>
 
 <body>
@@ -856,25 +856,72 @@
               </button>
             </div>
 
-            <!-- Tabela de Movimentações -->
-            <div id="fin-lancamentos-table-wrap" class="table-responsive">
-              <table class="modern-table">
-                <thead>
-                  <tr>
-                    <th>Data</th>
-                    <th>Descrição</th>
-                    <th>Tipo</th>
-                    <th>Categoria</th>
-                    <th>Centro Custo</th>
-                    <th>Forma / Local</th>
-                    <th>Responsável</th>
-                    <th>Status</th>
-                    <th>Valor</th>
-                    <th style="text-align: right;">Ações</th>
-                  </tr>
-                </thead>
-                <tbody id="fin-table-body"></tbody>
-              </table>
+            <!-- Tabelas de Movimentações Separadas: RECEITAS e DESPESAS (com parcelamentos agrupados) -->
+            <div id="fin-lancamentos-table-wrap" style="display: flex; flex-direction: column; gap: 22px;">
+              <!-- BLOCO 1: RECEITAS -->
+              <div id="fin-sec-receitas" style="background: rgba(16, 185, 129, 0.03); border: 1px solid rgba(16, 185, 129, 0.25); border-left: 4px solid #10b981; border-radius: 10px; overflow: hidden;">
+                <div style="display: flex; justify-content: space-between; align-items: center; padding: 11px 16px; background: rgba(16, 185, 129, 0.08); border-bottom: 1px solid rgba(16, 185, 129, 0.2); flex-wrap: wrap; gap: 8px;">
+                  <div style="display: flex; align-items: center; gap: 8px;">
+                    <span style="font-size: 1rem;">🟢</span>
+                    <strong style="color: #ffffff; font-size: 0.95rem;">Receitas</strong>
+                    <span id="fin-receitas-count" style="font-size: 0.72rem; font-weight: 700; padding: 2px 8px; border-radius: 999px; background: rgba(16, 185, 129, 0.18); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.4);">0</span>
+                  </div>
+                  <div style="font-size: 0.85rem; color: var(--text-secondary);">
+                    Total: <strong id="fin-receitas-total" style="color: #34d399; font-size: 0.96rem;">R$ 0,00</strong>
+                  </div>
+                </div>
+                <div class="table-responsive">
+                  <table class="modern-table" style="margin: 0;">
+                    <thead>
+                      <tr>
+                        <th>Data</th>
+                        <th>Descrição</th>
+                        <th>Categoria</th>
+                        <th>Centro Custo</th>
+                        <th>Forma / Local</th>
+                        <th>Responsável</th>
+                        <th>Status</th>
+                        <th>Valor</th>
+                        <th style="text-align: right;">Ações</th>
+                      </tr>
+                    </thead>
+                    <tbody id="fin-table-body-receitas"></tbody>
+                  </table>
+                </div>
+              </div>
+
+              <!-- BLOCO 2: DESPESAS (PARCELAMENTOS AGRUPADOS) -->
+              <div id="fin-sec-despesas" style="background: rgba(239, 68, 68, 0.03); border: 1px solid rgba(239, 68, 68, 0.25); border-left: 4px solid #ef4444; border-radius: 10px; overflow: hidden;">
+                <div style="display: flex; justify-content: space-between; align-items: center; padding: 11px 16px; background: rgba(239, 68, 68, 0.08); border-bottom: 1px solid rgba(239, 68, 68, 0.2); flex-wrap: wrap; gap: 8px;">
+                  <div style="display: flex; align-items: center; gap: 8px;">
+                    <span style="font-size: 1rem;">🔴</span>
+                    <strong style="color: #ffffff; font-size: 0.95rem;">Despesas</strong>
+                    <span id="fin-despesas-count" style="font-size: 0.72rem; font-weight: 700; padding: 2px 8px; border-radius: 999px; background: rgba(239, 68, 68, 0.18); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.4);">0</span>
+                    <span style="font-size: 0.72rem; color: var(--text-muted);">(Despesas parceladas agrupadas — clique para ver cada parcela)</span>
+                  </div>
+                  <div style="font-size: 0.85rem; color: var(--text-secondary);">
+                    Total: <strong id="fin-despesas-total" style="color: #f87171; font-size: 0.96rem;">R$ 0,00</strong>
+                  </div>
+                </div>
+                <div class="table-responsive">
+                  <table class="modern-table" style="margin: 0;">
+                    <thead>
+                      <tr>
+                        <th>Data</th>
+                        <th>Descrição</th>
+                        <th>Categoria</th>
+                        <th>Centro Custo</th>
+                        <th>Forma / Local</th>
+                        <th>Responsável</th>
+                        <th>Status</th>
+                        <th>Valor</th>
+                        <th style="text-align: right;">Ações</th>
+                      </tr>
+                    </thead>
+                    <tbody id="fin-table-body-despesas"></tbody>
+                  </table>
+                </div>
+              </div>
             </div>
 
             <!-- Tabela de Auditoria (Log Completo de Alterações por Usuário) -->
@@ -2941,20 +2988,20 @@
   <!-- CONTAINER DE TOASTS -->
   <div class="toast-container" id="toast-container"></div>
 
-  <!-- SCRIPTS DO SISTEMA (com cache-busting v77) -->
-  <script src="js/notifications.js?v=77"></script>
-  <script src="js/storage.js?v=77"></script>
-  <script src="js/auth.js?v=77"></script>
-  <script src="js/crm.js?v=77"></script>
-  <script src="js/encomendas.js?v=77"></script>
-  <script src="js/estoque.js?v=77"></script>
-  <script src="js/financeiro.js?v=77"></script>
-  <script src="js/propostas.js?v=77"></script>
-  <script src="js/calculadora.js?v=77"></script>
-  <script src="js/calculadora-laser.js?v=77"></script>
-  <script src="js/calendario.js?v=77"></script>
-  <script src="js/configuracoes.js?v=77"></script>
-  <script src="js/app.js?v=77"></script>
+  <!-- SCRIPTS DO SISTEMA (com cache-busting v78) -->
+  <script src="js/notifications.js?v=78"></script>
+  <script src="js/storage.js?v=78"></script>
+  <script src="js/auth.js?v=78"></script>
+  <script src="js/crm.js?v=78"></script>
+  <script src="js/encomendas.js?v=78"></script>
+  <script src="js/estoque.js?v=78"></script>
+  <script src="js/financeiro.js?v=78"></script>
+  <script src="js/propostas.js?v=78"></script>
+  <script src="js/calculadora.js?v=78"></script>
+  <script src="js/calculadora-laser.js?v=78"></script>
+  <script src="js/calendario.js?v=78"></script>
+  <script src="js/configuracoes.js?v=78"></script>
+  <script src="js/app.js?v=78"></script>
 </body>
 
 </html>
