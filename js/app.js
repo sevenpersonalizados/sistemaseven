@@ -288,12 +288,15 @@ const App = {
         containerEstoque.innerHTML = `<div style="color: var(--success); text-align: center; padding: 24px;">Estoque saudável! Nenhum insumo abaixo do mínimo. ✅</div>`;
       } else {
         containerEstoque.innerHTML = estoqueBaixo.map(item => `
-          <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px; border-bottom: 1px solid var(--border);">
-            <div>
+          <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px; border-bottom: 1px solid var(--border); gap: 10px;">
+            <div style="min-width: 0;">
               <div style="font-weight: 600; color: var(--text-primary);">${this.escapeHtml(item.nome)}</div>
-              <div style="font-size: 0.76rem; color: var(--text-muted);">${item.categoria}</div>
+              <div style="font-size: 0.76rem; color: var(--text-muted); display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
+                <span>${this.escapeHtml(item.categoria || '')}</span>
+                ${item.cor ? `<span style="color: #38bdf8; font-weight: 600;">• 🎨 ${this.escapeHtml(item.cor)}</span>` : ''}
+              </div>
             </div>
-            <div style="text-align: right;">
+            <div style="text-align: right; flex-shrink: 0;">
               <span class="status-badge badge-alerta-estoque">${item.quantidade_atual} ${item.unidade} (Mín: ${item.estoque_minimo})</span>
             </div>
           </div>
