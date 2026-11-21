@@ -48,7 +48,7 @@
   <meta http-equiv="Expires" content="0">
 
   <!-- Estilos Customizados -->
-  <link rel="stylesheet" href="css/styles.css?v=74">
+  <link rel="stylesheet" href="css/styles.css?v=75">
 </head>
 
 <body>
@@ -270,23 +270,6 @@
 
         <!-- 1. VIEW DASHBOARD -->
         <section class="view-section active" id="view-dashboard">
-          <div class="kpis-grid" style="grid-template-columns: minmax(260px, 340px);">
-            <div class="kpi-card dash-row-clickable" onclick="App.navigate('encomendas')"
-              title="Clique para ver todas as encomendas em aberto">
-              <div class="kpi-info">
-                <div class="kpi-label">Encomendas em Aberto</div>
-                <div class="kpi-value" id="dash-kpi-enc-abertas">0</div>
-                <div class="kpi-sub">Fila, Em Produção ou Prontos</div>
-              </div>
-              <div class="kpi-icon-box purple">
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" />
-                  <line x1="3" y1="6" x2="21" y2="6" />
-                </svg>
-              </div>
-            </div>
-          </div>
-
           <!-- GRADE PRINCIPAL DO DASHBOARD (CALENDÁRIO COMPACTO + ALERTAS DE INSUMOS LADO A LADO) -->
           <div class="dashboard-grid">
             <!-- CALENDÁRIO COMPACTO DE ENTREGAS & PRAZOS -->
@@ -303,7 +286,7 @@
                       </span>
                       <span id="dash-cal-enc-abertas" onclick="App.navigate('encomendas')"
                         title="Clique para ver todas as encomendas em aberto"
-                        style="font-size: 0.68rem; font-weight: 700; text-transform: uppercase; padding: 2px 8px; border-radius: 999px; background: rgba(168, 85, 247, 0.2); color: #c084fc; border: 1px solid rgba(168, 85, 247, 0.5); cursor: pointer;">
+                        style="font-size: 0.68rem; font-weight: 700; text-transform: uppercase; padding: 2px 8px; border-radius: 999px; background: rgba(239, 68, 68, 0.22); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.55); cursor: pointer;">
                         0 Em Aberto
                       </span>
                     </div>
@@ -2842,20 +2825,20 @@
   <!-- CONTAINER DE TOASTS -->
   <div class="toast-container" id="toast-container"></div>
 
-  <!-- SCRIPTS DO SISTEMA (com cache-busting v74) -->
-  <script src="js/notifications.js?v=74"></script>
-  <script src="js/storage.js?v=74"></script>
-  <script src="js/auth.js?v=74"></script>
-  <script src="js/crm.js?v=74"></script>
-  <script src="js/encomendas.js?v=74"></script>
-  <script src="js/estoque.js?v=74"></script>
-  <script src="js/financeiro.js?v=74"></script>
-  <script src="js/propostas.js?v=74"></script>
-  <script src="js/calculadora.js?v=74"></script>
-  <script src="js/calculadora-laser.js?v=74"></script>
-  <script src="js/calendario.js?v=74"></script>
-  <script src="js/configuracoes.js?v=74"></script>
-  <script src="js/app.js?v=74"></script>
+  <!-- SCRIPTS DO SISTEMA (com cache-busting v75) -->
+  <script src="js/notifications.js?v=75"></script>
+  <script src="js/storage.js?v=75"></script>
+  <script src="js/auth.js?v=75"></script>
+  <script src="js/crm.js?v=75"></script>
+  <script src="js/encomendas.js?v=75"></script>
+  <script src="js/estoque.js?v=75"></script>
+  <script src="js/financeiro.js?v=75"></script>
+  <script src="js/propostas.js?v=75"></script>
+  <script src="js/calculadora.js?v=75"></script>
+  <script src="js/calculadora-laser.js?v=75"></script>
+  <script src="js/calendario.js?v=75"></script>
+  <script src="js/configuracoes.js?v=75"></script>
+  <script src="js/app.js?v=75"></script>
 </body>
 
 </html>
