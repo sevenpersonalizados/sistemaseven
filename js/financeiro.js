@@ -418,13 +418,12 @@ const FinanceiroModule = {
     if (elMesLabel) {
       elMesLabel.textContent = mesVigenteLabel;
     }
+    const despesasMesTotal = despesasMesPagas + despesasMesPendentes;
     if (elDespMes) {
-      elDespMes.textContent = App.formatMoney(despesasMesPagas);
+      elDespMes.textContent = App.formatMoney(despesasMesTotal);
     }
     if (elDespMesSub) {
-      elDespMesSub.textContent = despesasMesPendentes > 0
-        ? `Pagas no mês • + ${App.formatMoney(despesasMesPendentes)} pendente(s) em ${mesesNomes[hoje.getMonth()]}`
-        : `Saídas pagas em ${mesVigenteLabel}`;
+      elDespMesSub.textContent = `Pagas: ${App.formatMoney(despesasMesPagas)} • Prestações/Pendentes: ${App.formatMoney(despesasMesPendentes)}`;
     }
     if (elLucro) {
       elLucro.textContent = App.formatMoney(lucroRealizado);
