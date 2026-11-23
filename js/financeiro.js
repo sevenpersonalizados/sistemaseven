@@ -33,8 +33,45 @@ const FinanceiroModule = {
   currentEditId: null,
   currentEstornoId: null,
   expandedParcelaGroups: new Set(),
+  ocultarValores: localStorage.getItem('seven_fin_ocultar_valores') === 'true',
+
+  fmtVal(val) {
+    return this.ocultarValores ? 'R$ •••••' : App.formatMoney(val);
+  },
+
+  toggleOcultarValores() {
+    this.ocultarValores = !this.ocultarValores;
+    localStorage.setItem('seven_fin_ocultar_valores', String(this.ocultarValores));
+    this.updateToggleValoresUI();
+    this.render();
+  },
+
+  updateToggleValoresUI() {
+    const btn = document.getElementById('fin-btn-toggle-valores');
+    const lbl = document.getElementById('fin-label-toggle-valores');
+    const icon = document.getElementById('fin-icon-eye');
+    if (!btn) return;
+    if (this.ocultarValores) {
+      if (lbl) lbl.textContent = 'Mostrar Valores';
+      if (icon) {
+        icon.innerHTML = '<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><path d="M14.12 14.12a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/>';
+      }
+      btn.style.borderColor = '#38bdf8';
+      btn.style.background = 'rgba(56, 189, 248, 0.16)';
+      btn.style.color = '#38bdf8';
+    } else {
+      if (lbl) lbl.textContent = 'Ocultar Valores';
+      if (icon) {
+        icon.innerHTML = '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>';
+      }
+      btn.style.borderColor = '';
+      btn.style.background = '';
+      btn.style.color = '';
+    }
+  },
 
   init() {
+    this.updateToggleValoresUI();
     // Inicializa exibindo Todos os Anos e Todos os Meses para não ocultar encomendas futuras
     const hoje = new Date();
     this.filtroAno = 'TODOS';
@@ -436,11 +473,11 @@ const FinanceiroModule = {
     const elLucroSub = document.getElementById('fin-kpi-lucro-sub');
 
     if (elSaldo) {
-      elSaldo.textContent = App.formatMoney(saldoDisponivel);
+      elSaldo.textContent = this.fmtVal(saldoDisponivel);
       elSaldo.style.color = saldoDisponivel >= 0 ? '#10b981' : '#ef4444';
     }
     if (elProjetado) {
-      elProjetado.textContent = App.formatMoney(saldoProjetado);
+      elProjetado.textContent = this.fmtVal(saldoProjetado);
       elProjetado.style.color = saldoProjetado >= 0 ? '#34d399' : '#f87171';
     }
     if (elMesLabel) {
@@ -448,37 +485,37 @@ const FinanceiroModule = {
     }
     const despesasMesTotal = despesasMesPagas + despesasMesPendentes;
     if (elDespMes) {
-      elDespMes.textContent = App.formatMoney(despesasMesTotal);
+      elDespMes.textContent = this.fmtVal(despesasMesTotal);
     }
     if (elDespMesSub) {
-      elDespMesSub.textContent = `Pagas: ${App.formatMoney(despesasMesPagas)} • Prestações/Pendentes: ${App.formatMoney(despesasMesPendentes)}`;
+      elDespMesSub.textContent = `Pagas: ${this.fmtVal(despesasMesPagas)} • Prestações/Pendentes: ${this.fmtVal(despesasMesPendentes)}`;
     }
     if (elLucro) {
-      elLucro.textContent = App.formatMoney(lucroRealizado);
+      elLucro.textContent = this.fmtVal(lucroRealizado);
       elLucro.style.color = lucroRealizado > 0 ? '#34d399' : (lucroRealizado < 0 ? '#f87171' : '#94a3b8');
     }
     if (elLucroSub) {
       if (resumoLucro.vendaRealizada > 0) {
-        elLucroSub.textContent = `Venda: ${App.formatMoney(resumoLucro.vendaRealizada)} − Custo: ${App.formatMoney(resumoLucro.custoRealizado)}`;
+        elLucroSub.textContent = `Venda: ${this.fmtVal(resumoLucro.vendaRealizada)} − Custo: ${this.fmtVal(resumoLucro.custoRealizado)}`;
       } else if (resumoLucro.lucroPrevisto > 0) {
-        elLucroSub.textContent = `Previsto em encomendas abertas: ${App.formatMoney(resumoLucro.lucroPrevisto)}`;
+        elLucroSub.textContent = `Previsto em encomendas abertas: ${this.fmtVal(resumoLucro.lucroPrevisto)}`;
       } else {
         elLucroSub.textContent = 'Valor vendido − custo (Tabela de Preço / Estoque)';
       }
     }
     if (elPagar) {
-      elPagar.textContent = App.formatMoney(valoresAPagar);
+      elPagar.textContent = this.fmtVal(valoresAPagar);
       const badgeVenc = document.getElementById('fin-kpi-vencidas-badge');
       if (badgeVenc) {
         if (contasVencidasCount > 0) {
           badgeVenc.style.display = 'inline-flex';
-          badgeVenc.textContent = `🚨 ${contasVencidasCount} vencida${contasVencidasCount > 1 ? 's' : ''} (${App.formatMoney(contasVencidas)})`;
+          badgeVenc.textContent = `🚨 ${contasVencidasCount} vencida${contasVencidasCount > 1 ? 's' : ''} (${this.fmtVal(contasVencidas)})`;
         } else {
           badgeVenc.style.display = 'none';
         }
       }
     }
-    if (elReceber) elReceber.textContent = App.formatMoney(valoresAReceber);
+    if (elReceber) elReceber.textContent = this.fmtVal(valoresAReceber);
   },
 
   // 3. CONTAS A PAGAR E RECEBER (CARDS DE RESUMO E ABAS DE FILTRO)
@@ -521,8 +558,8 @@ const FinanceiroModule = {
     // Atualiza contadores nas abas
     const logsAuditoria = StorageService.get('financeiro_auditoria') || [];
     this.updateTabBadge('fin-tab-badge-todos', lancamentos.length);
-    this.updateTabBadge('fin-tab-badge-receber', `${aReceberCount} • ${App.formatMoney(aReceberValor)}`);
-    this.updateTabBadge('fin-tab-badge-pagar', `${aPagarCount} • ${App.formatMoney(aPagarValor)}`);
+    this.updateTabBadge('fin-tab-badge-receber', `${aReceberCount} • ${this.fmtVal(aReceberValor)}`);
+    this.updateTabBadge('fin-tab-badge-pagar', `${aPagarCount} • ${this.fmtVal(aPagarValor)}`);
     this.updateTabBadge('fin-tab-badge-vencidos', `${vencidosCount}`, vencidosCount > 0);
     this.updateTabBadge('fin-tab-badge-efetivados', efetivadosCount);
     this.updateTabBadge('fin-tab-badge-estornados', estornadosCount);
@@ -844,7 +881,7 @@ const FinanceiroModule = {
       metaTags += `<span style="font-size: 0.68rem; font-weight: 700; background: rgba(168, 85, 247, 0.18); color: #c084fc; border: 1px solid rgba(168, 85, 247, 0.4); padding: 1px 6px; border-radius: 4px; margin-left: 6px;">🔄 Recorrente</span>`;
     }
 
-    const valorFmt = (isReceita ? '+ ' : '- ') + App.formatMoney(item.valor || 0);
+    const valorFmt = (isReceita ? '+ ' : '- ') + this.fmtVal(item.valor || 0);
     const valorColor = isEstornado ? 'var(--text-muted)' : (isReceita ? '#34d399' : '#f87171');
     const textDecoration = isEstornado ? 'line-through' : 'none';
     const rowBg = isChildParcela ? 'background: rgba(15, 23, 42, 0.55);' : '';
@@ -1015,12 +1052,12 @@ const FinanceiroModule = {
     const elRecCount = document.getElementById('fin-receitas-count');
     const elRecTotal = document.getElementById('fin-receitas-total');
     if (elRecCount) elRecCount.textContent = receitas.length;
-    if (elRecTotal) elRecTotal.textContent = App.formatMoney(totalReceitas);
+    if (elRecTotal) elRecTotal.textContent = this.fmtVal(totalReceitas);
 
     const elDespCount = document.getElementById('fin-despesas-count');
     const elDespTotal = document.getElementById('fin-despesas-total');
     if (elDespCount) elDespCount.textContent = despesas.length;
-    if (elDespTotal) elDespTotal.textContent = App.formatMoney(totalDespesas);
+    if (elDespTotal) elDespTotal.textContent = this.fmtVal(totalDespesas);
 
     // 1) Renderiza RECEITAS
     if (receitas.length === 0) {
@@ -1117,7 +1154,7 @@ const FinanceiroModule = {
                 </span>
               </div>
               <div style="font-size: 0.73rem; color: var(--text-muted); margin-top: 2px;">
-                ${g.parcelas.length}x de ${App.formatMoney(valorParcelaRef)} • Clique para ${isExpanded ? 'ocultar' : 'abrir e dar baixa mensal'}
+                ${g.parcelas.length}x de ${this.fmtVal(valorParcelaRef)} • Clique para ${isExpanded ? 'ocultar' : 'abrir e dar baixa mensal'}
               </div>
             </td>
             <td><span style="font-size: 0.76rem; background: rgba(255, 255, 255, 0.05); padding: 3px 8px; border-radius: 4px; border: 1px solid var(--border);">${App.escapeHtml(first.categoria || 'Geral')}</span></td>
@@ -1133,7 +1170,7 @@ const FinanceiroModule = {
             </td>
             <td>${statusGroupHtml}</td>
             <td style="font-weight: 800; font-size: 0.92rem; color: #f87171; white-space: nowrap;">
-              - ${App.formatMoney(totalGrupo)}
+              - ${this.fmtVal(totalGrupo)}
             </td>
             <td style="text-align: right; white-space: nowrap;" onclick="event.stopPropagation()">
               <div style="display: inline-flex; align-items: center; gap: 5px;">
@@ -1461,7 +1498,7 @@ const FinanceiroModule = {
           tooltip: {
             callbacks: {
               label: function (ctx) {
-                return `${ctx.dataset.label}: ${App.formatMoney(ctx.raw)}`;
+                return `${ctx.dataset.label}: ${FinanceiroModule.fmtVal(ctx.raw)}`;
               }
             }
           }
@@ -1476,7 +1513,7 @@ const FinanceiroModule = {
             ticks: {
               color: '#94a3b8',
               callback: function (val) {
-                return 'R$ ' + val;
+                return FinanceiroModule.ocultarValores ? 'R$ •••' : ('R$ ' + val);
               }
             }
           }

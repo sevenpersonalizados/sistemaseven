@@ -48,7 +48,7 @@
   <meta http-equiv="Expires" content="0">
 
   <!-- Estilos Customizados -->
-  <link rel="stylesheet" href="css/styles.css?v=100">
+  <link rel="stylesheet" href="css/styles.css?v=101">
 </head>
 
 <body>
@@ -667,6 +667,11 @@
             </div>
 
             <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+              <!-- Botão Geral: Ocultar / Mostrar Todos os Valores -->
+              <button type="button" id="fin-btn-toggle-valores" class="btn btn-secondary" onclick="FinanceiroModule.toggleOcultarValores()" title="Ocultar ou mostrar todos os valores do Financeiro" style="display: inline-flex; align-items: center; gap: 6px; font-weight: 600;">
+                <svg id="fin-icon-eye" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                <span id="fin-label-toggle-valores">Ocultar Valores</span>
+              </button>
               <!-- Botões de Ação Rápida -->
               <button type="button" class="btn btn-primary" onclick="FinanceiroModule.openNewLancamentoModal('receita')" style="background: #10b981; border-color: #10b981; font-weight: 700;">
                 <span>+</span> Nova Receita
@@ -3234,20 +3239,20 @@
   <!-- CONTAINER DE TOASTS -->
   <div class="toast-container" id="toast-container"></div>
 
-  <!-- SCRIPTS DO SISTEMA (com cache-busting v100) -->
-  <script src="js/notifications.js?v=100"></script>
-  <script src="js/storage.js?v=100"></script>
-  <script src="js/auth.js?v=100"></script>
-  <script src="js/crm.js?v=100"></script>
-  <script src="js/encomendas.js?v=100"></script>
-  <script src="js/estoque.js?v=100"></script>
-  <script src="js/financeiro.js?v=100"></script>
-  <script src="js/propostas.js?v=100"></script>
-  <script src="js/calculadora.js?v=100"></script>
-  <script src="js/calculadora-laser.js?v=100"></script>
-  <script src="js/calendario.js?v=100"></script>
-  <script src="js/configuracoes.js?v=100"></script>
-  <script src="js/app.js?v=100"></script>
+  <!-- SCRIPTS DO SISTEMA (com cache-busting v101) -->
+  <script src="js/notifications.js?v=101"></script>
+  <script src="js/storage.js?v=101"></script>
+  <script src="js/auth.js?v=101"></script>
+  <script src="js/crm.js?v=101"></script>
+  <script src="js/encomendas.js?v=101"></script>
+  <script src="js/estoque.js?v=101"></script>
+  <script src="js/financeiro.js?v=101"></script>
+  <script src="js/propostas.js?v=101"></script>
+  <script src="js/calculadora.js?v=101"></script>
+  <script src="js/calculadora-laser.js?v=101"></script>
+  <script src="js/calendario.js?v=101"></script>
+  <script src="js/configuracoes.js?v=101"></script>
+  <script src="js/app.js?v=101"></script>
 </body>
 
 </html>
