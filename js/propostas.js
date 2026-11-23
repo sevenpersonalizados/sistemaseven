@@ -950,68 +950,73 @@ const PropostasModule = {
     const itensList = p.itens && p.itens.length > 0 ? p.itens : [];
 
     viewContainer.innerHTML = `
-      <div class="prop-preview-header" style="background: #05070b; color: #ffffff; border-bottom: 3px solid #00a8f3; border-radius: 10px; padding: 24px 28px; margin-bottom: 24px; display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap; -webkit-print-color-adjust: exact; print-color-adjust: exact;">
-        <div style="min-width: 0;">
-          <img src="logo.png" alt="${App.escapeHtml(config.nomeEmpresa || 'Seven Personalizados')}" style="height: 46px; max-width: 100%; width: auto; display: block; margin-bottom: 8px;">
-          <p style="color: #94a3b8; font-size: 0.82rem; margin: 0;">${App.escapeHtml(config.slogan || 'Corte a Laser, Impressão 3D e Brindes Especiais')}</p>
+      <div class="prop-preview-header" style="background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%); color: #0f172a; border: 1px solid #bae6fd; border-bottom: 3px solid #0284c7; border-radius: 10px; padding: 20px 24px; margin-bottom: 18px; display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap; -webkit-print-color-adjust: exact; print-color-adjust: exact;">
+        <div style="display: flex; align-items: center; gap: 12px; min-width: 0;">
+          <img src="logomarca.png" alt="${App.escapeHtml(config.nomeEmpresa || 'Seven Personalizados')}" style="height: 46px; width: auto; display: block; flex-shrink: 0;">
+          <div style="min-width: 0;">
+            <div style="font-family: var(--font-display); font-size: 1.2rem; font-weight: 900; letter-spacing: 0.04em; color: #0f172a; line-height: 1.15;">
+              ${App.escapeHtml((config.nomeEmpresa || 'Seven Personalizados').toUpperCase())}
+            </div>
+            <p style="color: #475569; font-size: 0.8rem; margin: 4px 0 0 0;">${App.escapeHtml(config.slogan || 'Corte a Laser, Impressão 3D e Brindes Especiais')}</p>
+          </div>
         </div>
-        <div class="prop-preview-contact" style="text-align: right; font-size: 0.82rem; color: #e2e8f0; line-height: 1.6; word-break: break-word;">
-          <div><strong style="color: #00a8f3;">WhatsApp:</strong> ${App.escapeHtml(config.telefone || '')}</div>
-          <div><strong style="color: #00a8f3;">E-mail:</strong> ${App.escapeHtml(config.email || '')}</div>
-          <div><strong style="color: #00a8f3;">Emissão:</strong> ${App.formatDate(p.criada_em)}</div>
-          <div><strong style="color: #fbbf24;">Status:</strong> Aguardando Aprovação</div>
+        <div class="prop-preview-contact" style="text-align: right; font-size: 0.82rem; color: #1e293b; line-height: 1.55; word-break: break-word;">
+          <div><strong style="color: #0284c7;">WhatsApp:</strong> ${App.escapeHtml(config.telefone || '')}</div>
+          <div><strong style="color: #0284c7;">E-mail:</strong> ${App.escapeHtml(config.email || '')}</div>
+          <div><strong style="color: #0284c7;">Emissão:</strong> ${App.formatDate(p.criada_em)}</div>
+          <div><strong style="color: #b45309;">Status:</strong> Aguardando Aprovação</div>
         </div>
       </div>
 
-      <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 18px; margin-bottom: 24px;">
-        <div style="font-size: 0.76rem; text-transform: uppercase; color: #0284c7; font-weight: 700; letter-spacing: 0.05em;">Orçamento Comercial Preparado Para</div>
-        <div style="font-size: 1.25rem; font-weight: 700; color: #0f172a; margin-top: 4px;">${App.escapeHtml(p.cliente)}</div>
-        ${p.contato ? `<div style="font-size: 0.88rem; color: #475569;">A/C: ${App.escapeHtml(p.contato)} ${p.telefone ? `(${p.telefone})` : ''}</div>` : ''}
-        ${p.categoria ? `<div style="font-size: 0.82rem; color: #64748b; margin-top: 4px;">Categoria de Produção: <strong style="color: #0284c7;">${App.escapeHtml(p.categoria)}</strong></div>` : ''}
+      <div class="prop-preview-card" style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 14px 18px; margin-bottom: 18px;">
+        <div style="font-size: 0.74rem; text-transform: uppercase; color: #0284c7; font-weight: 700; letter-spacing: 0.05em;">Orçamento Comercial Preparado Para</div>
+        <div style="font-size: 1.2rem; font-weight: 700; color: #0f172a; margin-top: 3px;">${App.escapeHtml(p.cliente)}</div>
+        ${p.contato ? `<div style="font-size: 0.86rem; color: #475569;">A/C: ${App.escapeHtml(p.contato)} ${p.telefone ? `(${p.telefone})` : ''}</div>` : ''}
+        ${p.categoria ? `<div style="font-size: 0.8rem; color: #64748b; margin-top: 3px;">Categoria de Produção: <strong style="color: #0284c7;">${App.escapeHtml(p.categoria)}</strong></div>` : ''}
       </div>
 
-      <div style="margin-bottom: 24px;">
-        <h3 style="color: #0f172a; font-size: 1.05rem; margin-bottom: 8px; border-left: 4px solid #00a8f3; padding-left: 10px;">1. Objetivo e Escopo da Solução</h3>
-        <p style="color: #334155; font-size: 0.95rem; line-height: 1.6; white-space: pre-line;">${App.escapeHtml(p.escopo)}</p>
+      <div class="prop-preview-section" style="margin-bottom: 18px;">
+        <h3 style="color: #0f172a; font-size: 1rem; margin-bottom: 6px; border-left: 4px solid #0284c7; padding-left: 10px;">1. Objetivo e Escopo da Solução</h3>
+        <p style="color: #334155; font-size: 0.9rem; line-height: 1.55; white-space: pre-line; margin: 0;">${App.escapeHtml(p.escopo)}</p>
       </div>
 
       <!-- TABELA DE ITENS DETALHADOS NO PDF/IMPRESSÃO -->
       ${itensList.length > 0 ? `
-        <div style="margin-bottom: 28px;">
-          <h3 style="color: #0f172a; font-size: 1.05rem; margin-bottom: 10px; border-left: 4px solid #00a8f3; padding-left: 10px;">
+        <div class="prop-preview-section" style="margin-bottom: 20px;">
+          <h3 style="color: #0f172a; font-size: 1rem; margin-bottom: 8px; border-left: 4px solid #0284c7; padding-left: 10px;">
             2. Itens do Orçamento & Especificações Técnicas
           </h3>
           <div class="prop-preview-table-wrap" style="width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; border: 1px solid #e2e8f0; border-radius: 8px;">
-            <table style="width: 100%; min-width: 520px; border-collapse: collapse; font-size: 0.88rem;">
+            <table style="width: 100%; min-width: 520px; border-collapse: collapse; font-size: 0.86rem;">
               <thead>
                 <tr style="background: #f1f5f9; color: #334155; text-align: left; border-bottom: 2px solid #cbd5e1;">
-                  <th style="padding: 10px 12px;">Produto / Item</th>
-                  <th style="padding: 10px 12px; width: 90px;">Cor</th>
-                  <th style="padding: 10px 12px;">Personalização & Detalhes</th>
-                  <th style="padding: 10px 12px; text-align: center; width: 55px;">Qtd</th>
-                  <th style="padding: 10px 12px; text-align: right; width: 95px;">Valor Unit.</th>
-                  <th style="padding: 10px 12px; text-align: right; width: 105px;">Subtotal</th>
+                  <th style="padding: 9px 10px;">Produto / Item</th>
+                  <th style="padding: 9px 10px; width: 90px;">Cor</th>
+                  <th style="padding: 9px 10px;">Personalização & Detalhes</th>
+                  <th style="padding: 9px 10px; text-align: center; width: 50px;">Qtd</th>
+                  <th style="padding: 9px 10px; text-align: right; width: 92px;">Valor Unit.</th>
+                  <th style="padding: 9px 10px; text-align: right; width: 102px;">Subtotal</th>
                 </tr>
               </thead>
               <tbody>
                 ${itensList.map(item => `
                   <tr style="border-bottom: 1px solid #e2e8f0; color: #1e293b;">
-                    <td style="padding: 10px 12px; font-weight: 600;">${App.escapeHtml(item.produto_nome || 'Item')}</td>
-                    <td style="padding: 10px 12px; color: #0284c7; font-weight: 600;">${item.cor ? App.escapeHtml(item.cor) : '<span style="color:#94a3b8;">—</span>'}</td>
-                    <td style="padding: 10px 12px; color: #475569;">
+                    <td style="padding: 8px 10px; font-weight: 600;">${App.escapeHtml(item.produto_nome || 'Item')}</td>
+                    <td style="padding: 8px 10px; color: #0284c7; font-weight: 600;">${item.cor ? App.escapeHtml(item.cor) : '<span style="color:#94a3b8;">—</span>'}</td>
+                    <td style="padding: 8px 10px; color: #475569;">
                       ${App.escapeHtml(item.personalizacao || 'Padrão')}
                       ${item.observacao ? `<br><small style="color: #64748b; font-style: italic;">Obs: ${App.escapeHtml(item.observacao)}</small>` : ''}
                     </td>
-                    <td style="padding: 10px 12px; text-align: center; font-weight: 600;">${item.quantidade}</td>
-                    <td style="padding: 10px 12px; text-align: right; white-space: nowrap;">${App.formatMoney(item.preco_unitario || 0)}</td>
-                    <td style="padding: 10px 12px; text-align: right; font-weight: 700; color: #0284c7; white-space: nowrap;">${App.formatMoney(item.subtotal || 0)}</td>
+                    <td style="padding: 8px 10px; text-align: center; font-weight: 600;">${item.quantidade}</td>
+                    <td style="padding: 8px 10px; text-align: right; white-space: nowrap;">${App.formatMoney(item.preco_unitario || 0)}</td>
+                    <td style="padding: 8px 10px; text-align: right; font-weight: 700; color: #0284c7; white-space: nowrap;">${App.formatMoney(item.subtotal || 0)}</td>
                   </tr>
                 `).join('')}
               </tbody>
               <tfoot>
-                <tr style="background: #f8fafc; border-top: 2px solid #00a8f3;">
-                  <td colspan="5" style="padding: 12px; font-weight: 700; color: #0f172a; text-align: right; font-size: 0.95rem;">Investimento Total:</td>
-                  <td style="padding: 12px; font-weight: 800; color: #0284c7; text-align: right; font-size: 1.15rem; white-space: nowrap;">${App.formatMoney(p.investimento)}</td>
+                <tr style="background: #f8fafc; border-top: 2px solid #0284c7;">
+                  <td colspan="5" style="padding: 10px; font-weight: 700; color: #0f172a; text-align: right; font-size: 0.92rem;">Investimento Total:</td>
+                  <td style="padding: 10px; font-weight: 800; color: #0284c7; text-align: right; font-size: 1.1rem; white-space: nowrap;">${App.formatMoney(p.investimento)}</td>
                 </tr>
               </tfoot>
             </table>
@@ -1019,29 +1024,29 @@ const PropostasModule = {
         </div>
       ` : ''}
 
-      <div style="margin-bottom: 24px;">
-        <h3 style="color: #0f172a; font-size: 1.05rem; margin-bottom: 8px; border-left: 4px solid #00a8f3; padding-left: 10px;">3. Nosso Método & Padrão de Entrega</h3>
-        <p style="color: #334155; font-size: 0.92rem; line-height: 1.6; white-space: pre-line;">${App.escapeHtml(p.metodo)}</p>
+      <div class="prop-preview-section" style="margin-bottom: 18px;">
+        <h3 style="color: #0f172a; font-size: 1rem; margin-bottom: 6px; border-left: 4px solid #0284c7; padding-left: 10px;">3. Nosso Método & Padrão de Entrega</h3>
+        <p style="color: #334155; font-size: 0.88rem; line-height: 1.5; white-space: pre-line; margin: 0;">${App.escapeHtml(p.metodo)}</p>
       </div>
 
-      <div class="prop-preview-summary-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 28px;">
-        <div style="background: #f8fafc; border: 1px solid #e2e8f0; padding: 16px; border-radius: 8px;">
-          <div style="font-size: 0.78rem; font-weight: 700; color: #64748b; text-transform: uppercase;">Prazo de Produção</div>
-          <div style="font-size: 1rem; font-weight: 600; color: #0f172a; margin-top: 4px;">⏱️ ${App.escapeHtml(p.prazo)}</div>
+      <div class="prop-preview-summary-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 18px;">
+        <div style="background: #f8fafc; border: 1px solid #e2e8f0; padding: 13px 15px; border-radius: 8px;">
+          <div style="font-size: 0.74rem; font-weight: 700; color: #64748b; text-transform: uppercase;">Prazo de Produção</div>
+          <div style="font-size: 0.95rem; font-weight: 600; color: #0f172a; margin-top: 3px;">⏱️ ${App.escapeHtml(p.prazo)}</div>
         </div>
-        <div style="background: #f0f9ff; border: 1px solid #7dd3fc; padding: 16px; border-radius: 8px; -webkit-print-color-adjust: exact; print-color-adjust: exact;">
-          <div style="font-size: 0.78rem; font-weight: 700; color: #0284c7; text-transform: uppercase;">Investimento Total</div>
-          <div style="font-size: 1.4rem; font-weight: 800; color: #0369a1; margin-top: 2px;">${App.formatMoney(p.investimento)}</div>
+        <div style="background: #f0f9ff; border: 1px solid #7dd3fc; padding: 13px 15px; border-radius: 8px; -webkit-print-color-adjust: exact; print-color-adjust: exact;">
+          <div style="font-size: 0.74rem; font-weight: 700; color: #0284c7; text-transform: uppercase;">Investimento Total</div>
+          <div style="font-size: 1.3rem; font-weight: 800; color: #0369a1; margin-top: 2px;">${App.formatMoney(p.investimento)}</div>
         </div>
       </div>
 
-      <div style="margin-bottom: 28px;">
-        <h3 style="color: #0f172a; font-size: 1.05rem; margin-bottom: 8px; border-left: 4px solid #00a8f3; padding-left: 10px;">4. Condições de Pagamento</h3>
-        <p style="color: #334155; font-size: 0.92rem; line-height: 1.6;">${App.escapeHtml(p.condicoes)}</p>
-        ${config.chavePix ? `<p style="margin-top: 8px; font-size: 0.85rem; color: #0369a1; background: #f0f9ff; padding: 8px 12px; border-radius: 6px; border: 1px solid #bae6fd;"><strong>Chave Pix:</strong> ${App.escapeHtml(config.chavePix)}</p>` : ''}
+      <div class="prop-preview-section" style="margin-bottom: 18px;">
+        <h3 style="color: #0f172a; font-size: 1rem; margin-bottom: 6px; border-left: 4px solid #0284c7; padding-left: 10px;">4. Condições de Pagamento</h3>
+        <p style="color: #334155; font-size: 0.88rem; line-height: 1.5; margin: 0;">${App.escapeHtml(p.condicoes)}</p>
+        ${config.chavePix ? `<p style="margin-top: 8px; font-size: 0.84rem; color: #0369a1; background: #f0f9ff; padding: 7px 11px; border-radius: 6px; border: 1px solid #bae6fd;"><strong>Chave Pix:</strong> ${App.escapeHtml(config.chavePix)}</p>` : ''}
       </div>
 
-      <div style="margin-top: 40px; padding-top: 20px; border-top: 1px dashed #cbd5e1; text-align: center; color: #64748b; font-size: 0.8rem;">
+      <div class="prop-preview-footer" style="margin-top: 22px; padding-top: 12px; border-top: 1px dashed #cbd5e1; text-align: center; color: #64748b; font-size: 0.78rem;">
         Seven Personalizados — Excelência, Precisão e Arte em Cada Detalhe.
       </div>
     `;
