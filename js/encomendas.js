@@ -230,7 +230,7 @@ const EncomendasModule = {
                 Nenhuma encomenda nesta etapa no momento.
               </div>
             ` : `
-              <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(330px, 1fr)); gap: 16px;">
+              <div class="enc-cards-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(min(330px, 100%), 1fr)); gap: 16px;">
                 ${ordensGrupo.map(enc => this.renderOrderCard(enc, grupo)).join('')}
               </div>
             `}

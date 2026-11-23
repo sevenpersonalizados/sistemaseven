@@ -2206,6 +2206,7 @@ select option:checked {
     background: #0b1120 !important;
     border-top: 1px solid rgba(255, 255, 255, 0.15) !important;
     display: flex !important;
+    flex-wrap: wrap !important;
     gap: 10px !important;
     position: sticky !important;
     bottom: 0 !important;
@@ -2214,16 +2215,118 @@ select option:checked {
   }
 
   .modal-footer .btn {
-    flex: 1 !important;
-    padding: 12px 14px !important;
-    font-size: 0.92rem !important;
+    flex: 1 1 130px !important;
+    padding: 11px 12px !important;
+    font-size: 0.86rem !important;
     font-weight: 700 !important;
     border-radius: 10px !important;
+    justify-content: center !important;
   }
 
   .form-row {
     grid-template-columns: 1fr !important;
     gap: 12px !important;
+  }
+
+  /* Preview de Orçamento Comercial no celular (preserva papel branco, botões 2x2 e layout responsivo) */
+  #modal-preview-proposta .modal-container {
+    background: #ffffff !important;
+    color: #111827 !important;
+    max-height: 94dvh !important;
+  }
+
+  #modal-preview-proposta .modal-header {
+    background: #f8fafc !important;
+    border-bottom: 1px solid #e2e8f0 !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 10px !important;
+    padding: 14px 16px !important;
+  }
+
+  #modal-preview-proposta .modal-header h3 {
+    font-size: 1rem !important;
+    margin: 0 !important;
+    color: #0f172a !important;
+  }
+
+  #preview-modal-actions {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    gap: 8px !important;
+    width: 100% !important;
+  }
+
+  #preview-modal-actions .btn,
+  #preview-modal-actions .prop-act-btn {
+    width: 100% !important;
+    padding: 10px 8px !important;
+    font-size: 0.8rem !important;
+    justify-content: center !important;
+    text-align: center !important;
+    white-space: nowrap !important;
+  }
+
+  #modal-preview-proposta .modal-body {
+    padding: 16px 14px 28px 14px !important;
+    background: #ffffff !important;
+    color: #111827 !important;
+    max-height: calc(94dvh - 155px) !important;
+  }
+
+  .prop-preview-header {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    padding: 16px !important;
+    gap: 12px !important;
+  }
+
+  .prop-preview-contact {
+    text-align: left !important;
+    width: 100% !important;
+    border-top: 1px solid rgba(255, 255, 255, 0.12);
+    padding-top: 10px;
+    font-size: 0.8rem !important;
+  }
+
+  .prop-preview-summary-grid {
+    grid-template-columns: 1fr !important;
+    gap: 10px !important;
+  }
+
+  /* Garante que grids de cards (Orçamentos, Encomendas, Configurações, Financeiro) nunca estourem a tela */
+  #propostas-cards-container,
+  .enc-cards-grid,
+  .cfg-groups-grid {
+    grid-template-columns: 1fr !important;
+    gap: 14px !important;
+  }
+
+  .cfg-hero-banner,
+  .fin-header-bar {
+    padding: 14px !important;
+  }
+
+  .cfg-hero-banner > div,
+  .fin-header-bar > div {
+    min-width: 0 !important;
+    width: 100%;
+  }
+
+  .filter-bar {
+    flex-direction: column !important;
+    align-items: stretch !important;
+  }
+
+  .filter-bar > div {
+    max-width: 100% !important;
+    width: 100% !important;
+  }
+
+  /* Barra de filtros do Financeiro no celular */
+  #view-financeiro select.form-control {
+    flex: 1 1 140px;
+    min-width: 0;
   }
 }
 

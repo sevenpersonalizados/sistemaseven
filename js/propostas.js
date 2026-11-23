@@ -935,27 +935,27 @@ const PropostasModule = {
     // Atualiza botões do cabeçalho do preview
     if (actionsContainer) {
       actionsContainer.innerHTML = `
-        <button class="btn" onclick="PropostasModule.enviarWhatsApp('${p.id}')" style="background: #25d366; border-color: #25d366; color: #ffffff; font-weight: 700; display: inline-flex; align-items: center; gap: 6px; box-shadow: 0 2px 8px rgba(37, 211, 102, 0.25);">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
-          Encaminhar via WhatsApp
+        <button class="btn prop-act-btn" onclick="PropostasModule.enviarWhatsApp('${p.id}')" style="background: #25d366; border-color: #25d366; color: #ffffff; font-weight: 700; display: inline-flex; align-items: center; justify-content: center; gap: 6px; box-shadow: 0 2px 8px rgba(37, 211, 102, 0.25);">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" style="flex-shrink: 0;"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+          <span>WhatsApp</span>
         </button>
-        <button class="btn btn-primary" onclick="PropostasModule.aprovarProposta('${p.id}')" style="background: #10b981; border-color: #10b981; font-weight: 600;">
-          ✅ Aprovar & Mover p/ Fila
+        <button class="btn btn-primary prop-act-btn" onclick="PropostasModule.aprovarProposta('${p.id}')" style="background: #10b981; border-color: #10b981; font-weight: 600;">
+          ✅ Aprovar p/ Fila
         </button>
-        <button class="btn btn-secondary" onclick="PropostasModule.imprimirPropostaAtual()">🖨️ Imprimir / PDF</button>
-        <button class="btn btn-secondary" onclick="App.closeModal('modal-preview-proposta')">Fechar</button>
+        <button class="btn btn-secondary prop-act-btn" onclick="PropostasModule.imprimirPropostaAtual()" style="color: #0f172a; background: #e2e8f0; border-color: #cbd5e1;">🖨️ Imprimir / PDF</button>
+        <button class="btn btn-secondary prop-act-btn" onclick="App.closeModal('modal-preview-proposta')" style="color: #0f172a; background: #f1f5f9; border-color: #cbd5e1;">✕ Fechar</button>
       `;
     }
 
     const itensList = p.itens && p.itens.length > 0 ? p.itens : [];
 
     viewContainer.innerHTML = `
-      <div style="background: #05070b; color: #ffffff; border-bottom: 3px solid #00a8f3; border-radius: 10px; padding: 24px 28px; margin-bottom: 24px; display: flex; justify-content: space-between; align-items: center; -webkit-print-color-adjust: exact; print-color-adjust: exact;">
-        <div>
-          <img src="logo.png" alt="${App.escapeHtml(config.nomeEmpresa || 'Seven Personalizados')}" style="height: 46px; width: auto; display: block; margin-bottom: 8px;">
+      <div class="prop-preview-header" style="background: #05070b; color: #ffffff; border-bottom: 3px solid #00a8f3; border-radius: 10px; padding: 24px 28px; margin-bottom: 24px; display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap; -webkit-print-color-adjust: exact; print-color-adjust: exact;">
+        <div style="min-width: 0;">
+          <img src="logo.png" alt="${App.escapeHtml(config.nomeEmpresa || 'Seven Personalizados')}" style="height: 46px; max-width: 100%; width: auto; display: block; margin-bottom: 8px;">
           <p style="color: #94a3b8; font-size: 0.82rem; margin: 0;">${App.escapeHtml(config.slogan || 'Corte a Laser, Impressão 3D e Brindes Especiais')}</p>
         </div>
-        <div style="text-align: right; font-size: 0.82rem; color: #e2e8f0; line-height: 1.6;">
+        <div class="prop-preview-contact" style="text-align: right; font-size: 0.82rem; color: #e2e8f0; line-height: 1.6; word-break: break-word;">
           <div><strong style="color: #00a8f3;">WhatsApp:</strong> ${App.escapeHtml(config.telefone || '')}</div>
           <div><strong style="color: #00a8f3;">E-mail:</strong> ${App.escapeHtml(config.email || '')}</div>
           <div><strong style="color: #00a8f3;">Emissão:</strong> ${App.formatDate(p.criada_em)}</div>
@@ -981,39 +981,41 @@ const PropostasModule = {
           <h3 style="color: #0f172a; font-size: 1.05rem; margin-bottom: 10px; border-left: 4px solid #00a8f3; padding-left: 10px;">
             2. Itens do Orçamento & Especificações Técnicas
           </h3>
-          <table style="width: 100%; border-collapse: collapse; font-size: 0.88rem; margin-top: 8px;">
-            <thead>
-              <tr style="background: #f1f5f9; color: #334155; text-align: left; border-bottom: 2px solid #cbd5e1;">
-                <th style="padding: 10px 12px;">Produto / Item</th>
-                <th style="padding: 10px 12px; width: 100px;">Cor</th>
-                <th style="padding: 10px 12px;">Personalização & Detalhes</th>
-                <th style="padding: 10px 12px; text-align: center; width: 60px;">Qtd</th>
-                <th style="padding: 10px 12px; text-align: right; width: 100px;">Valor Unit.</th>
-                <th style="padding: 10px 12px; text-align: right; width: 110px;">Subtotal</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${itensList.map(item => `
-                <tr style="border-bottom: 1px solid #e2e8f0; color: #1e293b;">
-                  <td style="padding: 10px 12px; font-weight: 600;">${App.escapeHtml(item.produto_nome || 'Item')}</td>
-                  <td style="padding: 10px 12px; color: #0284c7; font-weight: 600;">${item.cor ? App.escapeHtml(item.cor) : '<span style="color:#94a3b8;">—</span>'}</td>
-                  <td style="padding: 10px 12px; color: #475569;">
-                    ${App.escapeHtml(item.personalizacao || 'Padrão')}
-                    ${item.observacao ? `<br><small style="color: #64748b; font-style: italic;">Obs: ${App.escapeHtml(item.observacao)}</small>` : ''}
-                  </td>
-                  <td style="padding: 10px 12px; text-align: center; font-weight: 600;">${item.quantidade}</td>
-                  <td style="padding: 10px 12px; text-align: right;">${App.formatMoney(item.preco_unitario || 0)}</td>
-                  <td style="padding: 10px 12px; text-align: right; font-weight: 700; color: #0284c7;">${App.formatMoney(item.subtotal || 0)}</td>
+          <div class="prop-preview-table-wrap" style="width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; border: 1px solid #e2e8f0; border-radius: 8px;">
+            <table style="width: 100%; min-width: 520px; border-collapse: collapse; font-size: 0.88rem;">
+              <thead>
+                <tr style="background: #f1f5f9; color: #334155; text-align: left; border-bottom: 2px solid #cbd5e1;">
+                  <th style="padding: 10px 12px;">Produto / Item</th>
+                  <th style="padding: 10px 12px; width: 90px;">Cor</th>
+                  <th style="padding: 10px 12px;">Personalização & Detalhes</th>
+                  <th style="padding: 10px 12px; text-align: center; width: 55px;">Qtd</th>
+                  <th style="padding: 10px 12px; text-align: right; width: 95px;">Valor Unit.</th>
+                  <th style="padding: 10px 12px; text-align: right; width: 105px;">Subtotal</th>
                 </tr>
-              `).join('')}
-            </tbody>
-            <tfoot>
-              <tr style="background: #f8fafc; border-top: 2px solid #00a8f3;">
-                <td colspan="5" style="padding: 12px; font-weight: 700; color: #0f172a; text-align: right; font-size: 0.95rem;">Investimento Total:</td>
-                <td style="padding: 12px; font-weight: 800; color: #0284c7; text-align: right; font-size: 1.15rem;">${App.formatMoney(p.investimento)}</td>
-              </tr>
-            </tfoot>
-          </table>
+              </thead>
+              <tbody>
+                ${itensList.map(item => `
+                  <tr style="border-bottom: 1px solid #e2e8f0; color: #1e293b;">
+                    <td style="padding: 10px 12px; font-weight: 600;">${App.escapeHtml(item.produto_nome || 'Item')}</td>
+                    <td style="padding: 10px 12px; color: #0284c7; font-weight: 600;">${item.cor ? App.escapeHtml(item.cor) : '<span style="color:#94a3b8;">—</span>'}</td>
+                    <td style="padding: 10px 12px; color: #475569;">
+                      ${App.escapeHtml(item.personalizacao || 'Padrão')}
+                      ${item.observacao ? `<br><small style="color: #64748b; font-style: italic;">Obs: ${App.escapeHtml(item.observacao)}</small>` : ''}
+                    </td>
+                    <td style="padding: 10px 12px; text-align: center; font-weight: 600;">${item.quantidade}</td>
+                    <td style="padding: 10px 12px; text-align: right; white-space: nowrap;">${App.formatMoney(item.preco_unitario || 0)}</td>
+                    <td style="padding: 10px 12px; text-align: right; font-weight: 700; color: #0284c7; white-space: nowrap;">${App.formatMoney(item.subtotal || 0)}</td>
+                  </tr>
+                `).join('')}
+              </tbody>
+              <tfoot>
+                <tr style="background: #f8fafc; border-top: 2px solid #00a8f3;">
+                  <td colspan="5" style="padding: 12px; font-weight: 700; color: #0f172a; text-align: right; font-size: 0.95rem;">Investimento Total:</td>
+                  <td style="padding: 12px; font-weight: 800; color: #0284c7; text-align: right; font-size: 1.15rem; white-space: nowrap;">${App.formatMoney(p.investimento)}</td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
         </div>
       ` : ''}
 
@@ -1022,7 +1024,7 @@ const PropostasModule = {
         <p style="color: #334155; font-size: 0.92rem; line-height: 1.6; white-space: pre-line;">${App.escapeHtml(p.metodo)}</p>
       </div>
 
-      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 28px;">
+      <div class="prop-preview-summary-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 28px;">
         <div style="background: #f8fafc; border: 1px solid #e2e8f0; padding: 16px; border-radius: 8px;">
           <div style="font-size: 0.78rem; font-weight: 700; color: #64748b; text-transform: uppercase;">Prazo de Produção</div>
           <div style="font-size: 1rem; font-weight: 600; color: #0f172a; margin-top: 4px;">⏱️ ${App.escapeHtml(p.prazo)}</div>
